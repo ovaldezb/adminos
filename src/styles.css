@@ -1,13 +1,22 @@
 /* You can add global styles to this file, and also import other style files */
 @import "tailwindcss";
 @import "remixicon/fonts/remixicon.css";
+
 @plugin "daisyui";
 
 /* Tailwind CSS v4 Configuration */
 @theme {
   /* Custom Colors - Glassy Palette */
   --color-primary: #0ea5e9;
+  --color-primary-content: #ffffff;
   --color-secondary: #8b5cf6;
+  --color-secondary-content: #ffffff;
+  --color-success: #36d399;
+  --color-warning: #fbbd23;
+  --color-error: #f87272;
+  --color-info: #3abff8;
+  
+  /* Neutral Colors */
   --color-neutral-50: #f9fafb;
   --color-neutral-100: #f3f4f6;
   --color-neutral-200: #e5e7eb;
@@ -19,7 +28,18 @@
   --color-neutral-800: #1f2937;
   --color-neutral-900: #111827;
   
-  /* Border Radius Defaults */
+  /* Sky Colors */
+  --color-sky-50: #f0f9ff;
+  --color-sky-100: #e0f2fe;
+  --color-sky-200: #bae6fd;
+  --color-sky-400: #38bdf8;
+  
+  /* Purple Colors */
+  --color-purple-50: #faf5ff;
+  --color-purple-100: #f3e8ff;
+  --color-purple-400: #c084fc;
+  
+  /* Border Radius */
   --radius-2xl: 1rem;
   
   /* Container */
@@ -27,22 +47,31 @@
   --container-max-width-2xl: 1280px;
 }
 
-/* DaisyUI Theme Configuration */
-[data-theme="light"] {
-  --color-primary: #0ea5e9;
-  --color-secondary: #8b5cf6;
+/* Global Styles */
+* {
+  box-sizing: border-box;
 }
 
-/* Global Styles */
-body {
-  @apply bg-gradient-to-br from-neutral-50 to-neutral-100;
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
 }
 
 /* Glassy Effect Utility Classes */
 .glass {
-  @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
 .glass-dark {
-  @apply bg-neutral-800/70 backdrop-blur-lg border border-neutral-700/30 shadow-xl;
+  background: rgba(31, 41, 55, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(55, 65, 81, 0.3);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
