@@ -1,1 +1,48 @@
 /* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+@import "remixicon/fonts/remixicon.css";
+@plugin "daisyui";
+
+/* Tailwind CSS v4 Configuration */
+@theme {
+  /* Custom Colors - Glassy Palette */
+  --color-primary: #0ea5e9;
+  --color-secondary: #8b5cf6;
+  --color-neutral-50: #f9fafb;
+  --color-neutral-100: #f3f4f6;
+  --color-neutral-200: #e5e7eb;
+  --color-neutral-300: #d1d5db;
+  --color-neutral-400: #9ca3af;
+  --color-neutral-500: #6b7280;
+  --color-neutral-600: #4b5563;
+  --color-neutral-700: #374151;
+  --color-neutral-800: #1f2937;
+  --color-neutral-900: #111827;
+  
+  /* Border Radius Defaults */
+  --radius-2xl: 1rem;
+  
+  /* Container */
+  --container-center: true;
+  --container-max-width-2xl: 1280px;
+}
+
+/* DaisyUI Theme Configuration */
+[data-theme="light"] {
+  --color-primary: #0ea5e9;
+  --color-secondary: #8b5cf6;
+}
+
+/* Global Styles */
+body {
+  @apply bg-gradient-to-br from-neutral-50 to-neutral-100;
+}
+
+/* Glassy Effect Utility Classes */
+.glass {
+  @apply bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl;
+}
+
+.glass-dark {
+  @apply bg-neutral-800/70 backdrop-blur-lg border border-neutral-700/30 shadow-xl;
+}
