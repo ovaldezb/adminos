@@ -41,6 +41,33 @@ aside::-webkit-scrollbar-thumb:hover {
   }
 }
 
+@keyframes pulse-subtle {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.stat-card-update {
+  animation: pulse-subtle 0.4s ease-in-out;
+}
+
+/* Fade transition for content changes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.content-transition {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1024px) {
   .drawer-side {

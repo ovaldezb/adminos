@@ -1,4 +1,4 @@
-import { Component, signal, output } from '@angular/core';
+import { Component, signal, output, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface Condominium {
@@ -74,16 +74,32 @@ export class CondoSelectorComponent {
     }
   ]);
 
-  constructor() {
+  constructor(private elementRef: ElementRef) {
     // Seleccionar "Todos" por defecto
     this.selectedCondo.set(this.condominiums()[0]);
   }
 
-  toggleSelector(): void {
-    this.showSelector.set(!this.showSelector());
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: MouseEvent): void {
+    // Si el click fue fuera del componente, cerrar el selector
+    const clickedInside = this.elementRef.nativeElement.contains(event.target);
+    if (!clickedInside && this.showSelector()) {
+      console.log('Click fuera detectado - cerrando dropdown');
+      this.showSelector.set(false);
+    }
   }
 
-  selectCondo(condo: Condominium): void {
+  toggleSelector(event: Event): void {
+    event.stopPropagation();
+    const newState = !this.showSelector();
+    this.showSelector.set(newState);
+    console.log('Dropdown toggled:', newState ? 'ABIERTO' : 'CERRADO');
+  }
+
+  selectCondo(condo: Condominium, event: Event): void {
+    event.stopPropagation();
+    event.preventDefault();
+    console.log('✅ Condominio seleccionado:', condo.name);
     this.selectedCondo.set(condo);
     this.showSelector.set(false);
     this.condoSelected.emit(condo);

@@ -124,7 +124,7 @@
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           @for (stat of stats(); track stat.label) {
-            <div class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+            <div [class]="'glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 ' + (isAnimating() ? 'stat-card-update' : '')">
               <div class="flex items-start justify-between mb-4">
                 <div [class]="'w-14 h-14 rounded-2xl bg-gradient-to-br ' + stat.bgColor + ' flex items-center justify-center'">
                   <i [class]="stat.icon + ' text-3xl ' + stat.color"></i>
@@ -156,7 +156,7 @@
               </button>
             </div>
             
-            <div class="space-y-3">
+            <div [class]="'space-y-3 ' + (isAnimating() ? 'content-transition' : '')">
               @for (activity of recentActivity(); track activity.title) {
                 <div class="flex items-start gap-4 p-4 rounded-xl hover:bg-white/50 transition-all">
                   <div [class]="'w-12 h-12 rounded-xl flex items-center justify-center text-white flex-shrink-0 ' + activity.color">
@@ -241,7 +241,7 @@
         </div>
 
         <!-- Pending Payments Table -->
-        <div class="glass rounded-2xl p-6 shadow-xl mb-8">
+        <div [class]="'glass rounded-2xl p-6 shadow-xl mb-8 ' + (isAnimating() ? 'stat-card-update' : '')">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-bold text-neutral-800 flex items-center gap-2">
               <i class="ri-alarm-warning-fill text-warning"></i>
@@ -259,7 +259,7 @@
             </div>
           </div>
           
-          <div class="overflow-x-auto">
+          <div [class]="'overflow-x-auto ' + (isAnimating() ? 'content-transition' : '')">
             <table class="table">
               <thead>
                 <tr class="text-neutral-700">
@@ -353,4 +353,18 @@
       </div>
     </div>
   </div>
+
+  <!-- Toast Notification -->
+  @if (isAnimating()) {
+    <div class="toast toast-top toast-end z-[60]">
+      <div class="alert glass shadow-xl rounded-2xl">
+        <i class="ri-building-4-fill text-2xl text-primary"></i>
+        <div>
+          <div class="font-bold">Condominio actualizado</div>
+          <div class="text-xs">{{ getCondoName() }}</div>
+        </div>
+        <span class="loading loading-spinner loading-sm text-primary"></span>
+      </div>
+    </div>
+  }
 </div>
