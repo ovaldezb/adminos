@@ -1,0 +1,253 @@
+<!-- Navbar Component -->
+<nav class="glass sticky top-0 z-50 border-b border-white/20">
+  <div class="navbar px-4 lg:px-6">
+    
+    <!-- Left Section - Menu Toggle & Logo -->
+    <div class="navbar-start">
+      <button 
+        (click)="onToggleSidebar()"
+        class="btn btn-ghost btn-circle lg:hidden hover:bg-white/50 transition-all"
+      >
+        <i class="ri-menu-line text-2xl text-neutral-700"></i>
+      </button>
+      
+      <!-- Logo for Desktop -->
+      <div class="hidden lg:flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+          <i class="ri-building-4-fill text-xl text-white"></i>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-neutral-800">CondoAdmin</h2>
+          <p class="text-xs text-neutral-500">Gestión Integral</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Section - Condo Selector & Search (Desktop) -->
+    <div class="navbar-center hidden lg:flex gap-3">
+      <!-- Condo Selector -->
+      @if (showCondoSelector()) {
+        <app-condo-selector (condoSelected)="onCondoSelected($event)" />
+      }
+      
+      <!-- Search -->
+      <div class="form-control w-72">
+        <div class="relative">
+          <input 
+            type="text" 
+            placeholder="Buscar..." 
+            class="input input-bordered w-full rounded-2xl pl-12 bg-white/80 focus:bg-white transition-all"
+          />
+          <i class="ri-search-line absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Section - Actions & Profile -->
+    <div class="navbar-end gap-2">
+      
+      <!-- Search Button (Mobile) -->
+      <button class="btn btn-ghost btn-circle lg:hidden hover:bg-white/50">
+        <i class="ri-search-line text-xl text-neutral-700"></i>
+      </button>
+
+      <!-- Quick Add Button -->
+      <div class="dropdown dropdown-end">
+        <button tabindex="0" class="btn btn-primary rounded-2xl hidden sm:flex">
+          <i class="ri-add-fill text-xl"></i>
+          Nuevo
+        </button>
+        <button tabindex="0" class="btn btn-ghost btn-circle sm:hidden hover:bg-white/50">
+          <i class="ri-add-fill text-xl text-neutral-700"></i>
+        </button>
+        <ul tabindex="0" class="dropdown-content menu glass rounded-2xl shadow-2xl w-64 p-3 mt-2">
+          <li>
+            <a class="rounded-xl text-neutral-700 hover:bg-white/50">
+              <i class="ri-file-add-fill text-primary text-lg"></i>
+              Nueva Factura
+            </a>
+          </li>
+          <li>
+            <a class="rounded-xl text-neutral-700 hover:bg-white/50">
+              <i class="ri-money-dollar-circle-fill text-success text-lg"></i>
+              Registrar Pago
+            </a>
+          </li>
+          <li>
+            <a class="rounded-xl text-neutral-700 hover:bg-white/50">
+              <i class="ri-user-add-fill text-secondary text-lg"></i>
+              Nuevo Residente
+            </a>
+          </li>
+          <li>
+            <a class="rounded-xl text-neutral-700 hover:bg-white/50">
+              <i class="ri-home-4-fill text-info text-lg"></i>
+              Nueva Unidad
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Notifications -->
+      <div class="dropdown dropdown-end">
+        <button 
+          tabindex="0" 
+          (click)="toggleNotifications()"
+          class="btn btn-ghost btn-circle hover:bg-white/50 indicator"
+        >
+          @if (notificationCount() > 0) {
+            <span class="indicator-item badge badge-error badge-sm rounded-full">
+              {{ notificationCount() }}
+            </span>
+          }
+          <i class="ri-notification-3-fill text-xl text-neutral-700"></i>
+        </button>
+        @if (showNotifications()) {
+          <div 
+            tabindex="0" 
+            class="dropdown-content glass rounded-2xl shadow-2xl w-80 sm:w-96 p-4 mt-2"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold text-neutral-800">
+                <i class="ri-notification-3-line text-primary mr-2"></i>
+                Notificaciones
+              </h3>
+              <div class="flex gap-1">
+                <button 
+                  (click)="markAllAsRead()"
+                  class="btn btn-xs btn-ghost rounded-xl"
+                  title="Marcar todas como leídas"
+                >
+                  <i class="ri-check-double-line"></i>
+                </button>
+                <button 
+                  (click)="clearNotifications()"
+                  class="btn btn-xs btn-ghost rounded-xl"
+                  title="Limpiar todas"
+                >
+                  <i class="ri-close-line"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="space-y-2 max-h-96 overflow-y-auto">
+              @if (notifications().length === 0) {
+                <div class="text-center py-8 text-neutral-500">
+                  <i class="ri-notification-off-line text-4xl mb-2 block"></i>
+                  <p>No hay notificaciones</p>
+                </div>
+              } @else {
+                @for (notification of notifications(); track notification.id) {
+                  <div 
+                    [class]="'p-3 rounded-xl hover:bg-white/50 transition-all cursor-pointer ' + 
+                      (notification.unread ? 'bg-primary/5' : '')"
+                  >
+                    <div class="flex gap-3">
+                      <div [class]="'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ' + notification.color + ' bg-opacity-20'">
+                        <i [class]="notification.icon + ' text-xl ' + notification.color"></i>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2">
+                          <p class="font-semibold text-neutral-800 text-sm">{{ notification.title }}</p>
+                          @if (notification.unread) {
+                            <span class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1"></span>
+                          }
+                        </div>
+                        <p class="text-neutral-600 text-xs">{{ notification.message }}</p>
+                        <p class="text-neutral-400 text-xs mt-1">
+                          <i class="ri-time-line"></i>
+                          {{ notification.time }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+            
+            @if (notifications().length > 0) {
+              <div class="mt-3 pt-3 border-t border-neutral-200">
+                <a href="#" class="btn btn-sm btn-ghost w-full rounded-xl text-primary">
+                  Ver todas las notificaciones
+                  <i class="ri-arrow-right-line"></i>
+                </a>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- User Profile -->
+      <div class="dropdown dropdown-end">
+        <button 
+          tabindex="0" 
+          (click)="toggleProfile()"
+          class="btn btn-ghost btn-circle avatar hover:bg-white/50"
+        >
+          <div class="w-10 rounded-2xl ring ring-primary ring-offset-base-100 ring-offset-1">
+            <img 
+              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" 
+              alt="Usuario"
+            />
+          </div>
+        </button>
+        @if (showProfile()) {
+          <ul 
+            tabindex="0" 
+            class="dropdown-content menu glass rounded-2xl shadow-2xl w-64 p-3 mt-2"
+          >
+            <!-- Profile Header -->
+            <li class="menu-title px-3 py-2">
+              <div class="flex items-center gap-3">
+                <div class="avatar">
+                  <div class="w-12 rounded-xl">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" alt="Usuario" />
+                  </div>
+                </div>
+                <div>
+                  <p class="font-bold text-neutral-800">Administrador</p>
+                  <p class="text-xs text-neutral-500">admin@condoadmin.com</p>
+                </div>
+              </div>
+            </li>
+            
+            <div class="divider my-1"></div>
+            
+            <!-- Menu Items -->
+            <li>
+              <a class="rounded-xl text-neutral-700 hover:bg-white/50">
+                <i class="ri-user-fill text-lg"></i>
+                Mi Perfil
+              </a>
+            </li>
+            <li>
+              <a class="rounded-xl text-neutral-700 hover:bg-white/50">
+                <i class="ri-settings-3-fill text-lg"></i>
+                Configuración
+              </a>
+            </li>
+            <li>
+              <a class="rounded-xl text-neutral-700 hover:bg-white/50">
+                <i class="ri-question-line text-lg"></i>
+                Ayuda
+              </a>
+            </li>
+            
+            <div class="divider my-1"></div>
+            
+            <!-- Logout -->
+            <li>
+              <a 
+                routerLink="/login"
+                class="rounded-xl text-error hover:bg-error/10"
+              >
+                <i class="ri-logout-box-line text-lg"></i>
+                Cerrar Sesión
+              </a>
+            </li>
+          </ul>
+        }
+      </div>
+    </div>
+  </div>
+</nav>

@@ -1,0 +1,45 @@
+/* Navbar Specific Styles */
+
+.navbar {
+  transition: all 0.3s ease;
+}
+
+/* Dropdown animation */
+.dropdown-content {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Notification badge pulse */
+.indicator-item {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Smooth scrollbar for notifications */
+.dropdown-content .overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-content .overflow-y-auto::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+
+.dropdown-content .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgba(14, 165, 233, 0.3);
+  border-radius: 10px;
+}
+
+.dropdown-content .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgba(14, 165, 233, 0.5);
+}

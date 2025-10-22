@@ -1,0 +1,356 @@
+<!-- Dashboard - Sistema de Gestión de Condominios con Layout -->
+<div class="min-h-screen bg-gradient-to-br from-sky-50 via-purple-50 to-pink-50">
+  
+  <!-- Layout with Drawer -->
+  <div class="drawer lg:drawer-open">
+    <input 
+      id="main-drawer" 
+      type="checkbox" 
+      class="drawer-toggle"
+      [checked]="sidebarOpen()"
+    />
+    
+    <!-- Main Content -->
+    <div class="drawer-content flex flex-col">
+      
+      <!-- Navbar -->
+      <app-navbar 
+        (toggleSidebar)="toggleSidebar()" 
+        (condoChanged)="onCondoSelected($event)"
+      />
+
+      <!-- Dashboard Content -->
+      <main class="flex-1 p-4 lg:p-8">
+        
+        <!-- Welcome Section -->
+        <div class="mb-8">
+          <!-- Overview Mode Banner -->
+          @if (isOverviewMode()) {
+            <div class="alert alert-info rounded-2xl mb-6 shadow-lg">
+              <i class="ri-information-line text-2xl"></i>
+              <div>
+                <h3 class="font-bold">Vista General Activada</h3>
+                <div class="text-sm">Estás viendo estadísticas consolidadas de todos tus condominios</div>
+              </div>
+            </div>
+          }
+          
+          <div class="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h1 class="text-3xl lg:text-4xl font-bold text-neutral-800 mb-2">
+                ¡Hola, {{ userName() }}! 👋
+              </h1>
+              <p class="text-neutral-600 text-lg">
+                @if (isOverviewMode()) {
+                  <i class="ri-dashboard-3-fill text-primary mr-1"></i>
+                  Vista General - Todos los Condominios
+                } @else {
+                  <i class="ri-building-4-fill text-primary mr-1"></i>
+                  {{ getCondoName() }}
+                }
+              </p>
+            </div>
+            <div class="flex gap-3">
+              @if (isOverviewMode()) {
+                <button class="btn btn-secondary rounded-2xl shadow-lg">
+                  <i class="ri-building-fill text-xl"></i>
+                  <span class="hidden sm:inline">Gestionar Condominios</span>
+                </button>
+              }
+              <button class="btn btn-primary rounded-2xl shadow-lg">
+                <i class="ri-add-fill text-xl"></i>
+                <span class="hidden sm:inline">Nueva Operación</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overview Cards - Only in Overview Mode -->
+        @if (isOverviewMode()) {
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold text-neutral-800 mb-6 flex items-center gap-2">
+              <i class="ri-building-line text-primary"></i>
+              Resumen por Condominio
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              @for (condo of [
+                { id: '1', name: 'Torres del Sol', units: 248, collection: 94, pending: 42, color: 'from-primary to-sky-400' },
+                { id: '2', name: 'Residencial Las Palmas', units: 186, collection: 96, pending: 18, color: 'from-success to-green-400' },
+                { id: '3', name: 'Conjunto Villa Verde', units: 124, collection: 90, pending: 12, color: 'from-secondary to-purple-400' },
+                { id: '4', name: 'Edificio Mirador', units: 96, collection: 92, pending: 8, color: 'from-warning to-yellow-400' },
+                { id: '5', name: 'Terrazas del Parque', units: 142, collection: 95, pending: 7, color: 'from-info to-cyan-400' }
+              ]; track condo.id) {
+                <div class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                  <div class="flex items-start justify-between mb-4">
+                    <div [class]="'w-14 h-14 rounded-2xl bg-gradient-to-br ' + condo.color + ' flex items-center justify-center text-white'">
+                      <i class="ri-building-4-fill text-2xl"></i>
+                    </div>
+                    <div class="text-right">
+                      <div [class]="'text-2xl font-bold bg-gradient-to-r ' + condo.color + ' bg-clip-text text-transparent'">
+                        {{ condo.collection }}%
+                      </div>
+                      <p class="text-xs text-neutral-500">Cobranza</p>
+                    </div>
+                  </div>
+                  <h3 class="text-lg font-bold text-neutral-800 mb-3">{{ condo.name }}</h3>
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between text-sm">
+                      <span class="text-neutral-600">
+                        <i class="ri-home-4-line mr-1"></i>
+                        Unidades
+                      </span>
+                      <span class="font-bold text-neutral-800">{{ condo.units }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                      <span class="text-neutral-600">
+                        <i class="ri-bill-line mr-1"></i>
+                        Pendientes
+                      </span>
+                      <span class="font-bold text-warning">{{ condo.pending }}</span>
+                    </div>
+                  </div>
+                  <div class="mt-4">
+                    <progress [class]="'progress w-full h-2 ' + (condo.collection >= 95 ? 'progress-success' : condo.collection >= 90 ? 'progress-primary' : 'progress-warning')" 
+                              [value]="condo.collection" 
+                              max="100">
+                    </progress>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          @for (stat of stats(); track stat.label) {
+            <div class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+              <div class="flex items-start justify-between mb-4">
+                <div [class]="'w-14 h-14 rounded-2xl bg-gradient-to-br ' + stat.bgColor + ' flex items-center justify-center'">
+                  <i [class]="stat.icon + ' text-3xl ' + stat.color"></i>
+                </div>
+              </div>
+              <p class="text-neutral-600 text-sm font-medium mb-1">{{ stat.label }}</p>
+              <p class="text-3xl font-bold text-neutral-800 mb-2">{{ stat.value }}</p>
+              <div class="flex items-center gap-1 text-sm">
+                <span [class]="stat.color + ' font-semibold'">{{ stat.change }}</span>
+                <span class="text-neutral-500">{{ stat.changeLabel }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          
+          <!-- Recent Activity -->
+          <div class="lg:col-span-2 glass rounded-2xl p-6 shadow-xl">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-2xl font-bold text-neutral-800 flex items-center gap-2">
+                <i class="ri-time-fill text-primary"></i>
+                Actividad Reciente
+              </h2>
+              <button class="btn btn-sm btn-ghost rounded-xl">
+                Ver todo
+                <i class="ri-arrow-right-line"></i>
+              </button>
+            </div>
+            
+            <div class="space-y-3">
+              @for (activity of recentActivity(); track activity.title) {
+                <div class="flex items-start gap-4 p-4 rounded-xl hover:bg-white/50 transition-all">
+                  <div [class]="'w-12 h-12 rounded-xl flex items-center justify-center text-white flex-shrink-0 ' + activity.color">
+                    <i [class]="activity.icon + ' text-xl'"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="flex-1">
+                        <p class="text-neutral-800 font-semibold">{{ activity.title }}</p>
+                        <p class="text-neutral-600 text-sm">{{ activity.description }}</p>
+                      </div>
+                      @if (activity.amount) {
+                        <span class="badge badge-success rounded-xl font-bold">{{ activity.amount }}</span>
+                      }
+                    </div>
+                    <p class="text-neutral-500 text-xs mt-1">
+                      <i class="ri-time-line"></i>
+                      {{ activity.time }}
+                    </p>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="glass rounded-2xl p-6 shadow-xl">
+            <h2 class="text-2xl font-bold text-neutral-800 mb-6 flex items-center gap-2">
+              <i class="ri-pie-chart-fill text-primary"></i>
+              Resumen
+            </h2>
+            
+            <div class="space-y-6">
+              <!-- Efficiency Score -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-neutral-700 font-medium">Eficiencia de Cobro</span>
+                  <span class="text-2xl font-bold text-primary">94%</span>
+                </div>
+                <progress class="progress progress-primary w-full" value="94" max="100"></progress>
+              </div>
+
+              <!-- Collection Rate -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-neutral-700 font-medium">Tasa de Morosidad</span>
+                  <span class="text-2xl font-bold text-warning">6%</span>
+                </div>
+                <progress class="progress progress-warning w-full" value="6" max="100"></progress>
+              </div>
+
+              <!-- Occupancy -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-neutral-700 font-medium">Ocupación</span>
+                  <span class="text-2xl font-bold text-success">98%</span>
+                </div>
+                <progress class="progress progress-success w-full" value="98" max="100"></progress>
+              </div>
+
+              <div class="divider"></div>
+
+              <!-- Quick Info -->
+              <div class="space-y-3">
+                <div class="flex items-center justify-between p-3 bg-primary/10 rounded-xl">
+                  <span class="text-neutral-700 font-medium">
+                    <i class="ri-calendar-fill text-primary mr-2"></i>
+                    Mes Actual
+                  </span>
+                  <span class="font-bold text-neutral-800">Octubre 2025</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-secondary/10 rounded-xl">
+                  <span class="text-neutral-700 font-medium">
+                    <i class="ri-building-fill text-secondary mr-2"></i>
+                    Torres
+                  </span>
+                  <span class="font-bold text-neutral-800">3 Torres</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending Payments Table -->
+        <div class="glass rounded-2xl p-6 shadow-xl mb-8">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-neutral-800 flex items-center gap-2">
+              <i class="ri-alarm-warning-fill text-warning"></i>
+              Pagos Pendientes
+            </h2>
+            <div class="flex gap-2">
+              <button class="btn btn-sm btn-ghost rounded-xl">
+                <i class="ri-filter-fill"></i>
+                Filtrar
+              </button>
+              <button class="btn btn-sm btn-primary rounded-xl">
+                <i class="ri-mail-send-fill"></i>
+                Enviar Recordatorios
+              </button>
+            </div>
+          </div>
+          
+          <div class="overflow-x-auto">
+            <table class="table">
+              <thead>
+                <tr class="text-neutral-700">
+                  <th>Unidad</th>
+                  <th>Torre</th>
+                  <th>Propietario</th>
+                  <th>Monto</th>
+                  <th>Días Vencido</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (payment of pendingPayments(); track payment.id) {
+                  <tr class="hover">
+                    <td class="font-bold text-primary">{{ payment.id }}</td>
+                    <td>
+                      <div class="badge badge-neutral rounded-xl">Torre {{ payment.tower }}</div>
+                    </td>
+                    <td>
+                      <div class="flex items-center gap-3">
+                        <div class="avatar placeholder">
+                          <div class="bg-neutral-200 text-neutral-700 rounded-xl w-10 h-10 flex items-center justify-center">
+                            <i class="ri-user-fill"></i>
+                          </div>
+                        </div>
+                        <span class="font-medium">{{ payment.owner }}</span>
+                      </div>
+                    </td>
+                    <td class="font-bold">{{ payment.amount }}</td>
+                    <td>
+                      <span class="text-error font-semibold">{{ payment.days }} días</span>
+                    </td>
+                    <td>
+                      <span [class]="'badge rounded-xl ' + 
+                        (payment.status === 'warning' ? 'badge-warning' : 'badge-error')">
+                        {{ payment.days > 15 ? 'Crítico' : 'Pendiente' }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="flex gap-2">
+                        <button class="btn btn-ghost btn-xs rounded-xl" title="Ver detalle">
+                          <i class="ri-eye-fill"></i>
+                        </button>
+                        <button class="btn btn-ghost btn-xs rounded-xl" title="Enviar recordatorio">
+                          <i class="ri-mail-send-fill"></i>
+                        </button>
+                        <button class="btn btn-ghost btn-xs rounded-xl text-success" title="Registrar pago">
+                          <i class="ri-check-fill"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          @for (action of quickActions(); track action.title) {
+            <div 
+              class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
+              (click)="navigateTo(action.route)"
+            >
+              <div [class]="'w-14 h-14 rounded-2xl bg-gradient-to-br ' + action.color + ' flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform'">
+                <i [class]="action.icon + ' text-2xl'"></i>
+              </div>
+              <h3 class="text-xl font-bold text-neutral-800 mb-2">{{ action.title }}</h3>
+              <p class="text-neutral-600">{{ action.description }}</p>
+            </div>
+          }
+        </div>
+      </main>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="drawer-side z-50">
+      <label 
+        for="main-drawer" 
+        aria-label="close sidebar" 
+        class="drawer-overlay"
+        (click)="toggleSidebar()"
+      ></label>
+      <div class="w-80 min-h-screen">
+        <app-side-menu 
+          [isOpen]="sidebarOpen()" 
+          [selectedCondo]="selectedCondo()"
+        />
+      </div>
+    </div>
+  </div>
+</div>

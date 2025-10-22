@@ -1,0 +1,74 @@
+/* Side Menu Specific Styles */
+
+aside {
+  transition: all 0.3s ease;
+}
+
+/* Active menu item styling */
+.menu li a.active {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(139, 92, 246, 0.2));
+  color: white;
+  font-weight: 600;
+  border-left: 3px solid;
+  border-image: linear-gradient(to bottom, #0ea5e9, #8b5cf6) 1;
+}
+
+.menu li a.active i {
+  color: #0ea5e9;
+}
+
+/* Hover effect for menu items */
+.menu li a {
+  position: relative;
+  overflow: hidden;
+}
+
+.menu li a::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background: linear-gradient(to bottom, #0ea5e9, #8b5cf6);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
+.menu li a:hover::before {
+  transform: scaleY(1);
+}
+
+/* Custom scrollbar for menu */
+nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+nav::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Badge animation */
+.badge {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Profile section hover */
+.cursor-pointer:hover {
+  transform: translateX(4px);
+}
+
+/* Smooth transitions */
+* {
+  transition: all 0.2s ease;
+}
