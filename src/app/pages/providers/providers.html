@@ -777,4 +777,104 @@
       <div class="modal-backdrop" (click)="closeModal()"></div>
     </div>
   }
+
+  <!-- Confirm Action Modal (Deactivate/Activate) -->
+  @if (showConfirmModal()) {
+    <div class="modal modal-open">
+      <div class="modal-box glass max-w-md">
+        <div class="flex items-center gap-3 mb-4">
+          <div [class]="confirmAction() === 'deactivate' ? 'p-3 bg-error/10 rounded-full' : 'p-3 bg-success/10 rounded-full'">
+            <i [class]="confirmAction() === 'deactivate' ? 'ri-close-circle-line text-3xl text-error' : 'ri-checkbox-circle-line text-3xl text-success'"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-xl text-neutral-800">
+              {{ confirmAction() === 'deactivate' ? 'Desactivar Proveedor' : 'Activar Proveedor' }}
+            </h3>
+          </div>
+        </div>
+
+        @if (providerToConfirm()) {
+          <div class="mb-6">
+            <p class="text-neutral-700 mb-4">
+              {{ confirmAction() === 'deactivate' 
+                ? '¿Está seguro que desea desactivar este proveedor?' 
+                : '¿Está seguro que desea activar este proveedor?' }}
+            </p>
+            <div class="bg-neutral-100 rounded-xl p-4 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-neutral-600">Razón Social:</span>
+                <span class="font-bold text-neutral-800">{{ providerToConfirm()!.businessName }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-neutral-600">RUC:</span>
+                <span class="font-mono font-semibold text-neutral-700">{{ providerToConfirm()!.ruc }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-neutral-600">Contacto:</span>
+                <span class="font-semibold text-neutral-700">{{ providerToConfirm()!.contactName }}</span>
+              </div>
+            </div>
+            @if (confirmAction() === 'deactivate') {
+              <div class="alert alert-warning mt-4">
+                <i class="ri-alert-line"></i>
+                <span class="text-sm">El proveedor dejará de estar disponible para nuevos contratos</span>
+              </div>
+            }
+          </div>
+        }
+
+        <div class="modal-action">
+          <button 
+            type="button" 
+            class="btn btn-ghost" 
+            (click)="closeConfirmModal()"
+            [disabled]="isConfirming()"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="button" 
+            [class]="confirmAction() === 'deactivate' ? 'btn btn-error gap-2' : 'btn btn-success gap-2'"
+            (click)="confirmActionExecute()"
+            [disabled]="isConfirming()"
+          >
+            @if (isConfirming()) {
+              <span class="loading loading-spinner loading-sm"></span>
+              {{ confirmAction() === 'deactivate' ? 'Desactivando...' : 'Activando...' }}
+            } @else {
+              <i [class]="confirmAction() === 'deactivate' ? 'ri-close-circle-line' : 'ri-checkbox-circle-line'"></i>
+              {{ confirmAction() === 'deactivate' ? 'Desactivar' : 'Activar' }}
+            }
+          </button>
+        </div>
+      </div>
+      <div class="modal-backdrop" (click)="closeConfirmModal()"></div>
+    </div>
+  }
+
+  <!-- Toast Notification -->
+  @if (showToast()) {
+    <div class="toast toast-top toast-end z-50">
+      <div 
+        class="alert shadow-xl glass"
+        [ngClass]="{
+          'alert-success': toastType() === 'success',
+          'alert-error': toastType() === 'error',
+          'alert-info': toastType() === 'info'
+        }"
+      >
+        @if (toastType() === 'success') {
+          <i class="ri-checkbox-circle-fill text-xl"></i>
+        } @else if (toastType() === 'error') {
+          <i class="ri-error-warning-fill text-xl"></i>
+        } @else {
+          <i class="ri-information-fill text-xl"></i>
+        }
+        <span class="font-medium">{{ toastMessage() }}</span>
+        <button class="btn btn-sm btn-ghost btn-circle" (click)="showToast.set(false)">
+          <i class="ri-close-line"></i>
+        </button>
+      </div>
+    </div>
+  }
 </div>

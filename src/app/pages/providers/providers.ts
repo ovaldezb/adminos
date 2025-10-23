@@ -32,6 +32,17 @@ export class ProvidersComponent {
   protected readonly modalMode = signal<ModalMode>('view');
   protected readonly selectedProvider = signal<ProviderDetails | null>(null);
 
+  // Toast notifications
+  protected readonly showToast = signal(false);
+  protected readonly toastMessage = signal('');
+  protected readonly toastType = signal<'success' | 'error' | 'info'>('success');
+
+  // Delete/Deactivate confirmation modal
+  protected readonly showConfirmModal = signal(false);
+  protected readonly providerToConfirm = signal<ProviderDetails | null>(null);
+  protected readonly confirmAction = signal<'deactivate' | 'activate'>('deactivate');
+  protected readonly isConfirming = signal(false);
+
   // Filters
   protected readonly searchTerm = signal<string>('');
   protected readonly filterCategory = signal<string>('all');
@@ -168,13 +179,16 @@ export class ProvidersComponent {
     this.providerService.createProvider(this.formData() as CreateProviderDto).subscribe({
       next: (response) => {
         if (response.success) {
+          this.showToastMessage('Proveedor creado exitosamente', 'success');
           this.loadProviders();
           this.closeModal();
+        } else {
+          this.showToastMessage(response.error?.message || 'Error al crear proveedor', 'error');
         }
         this.isLoading.set(false);
       },
       error: (err) => {
-        this.error.set('Error al crear proveedor');
+        this.showToastMessage('Error al crear proveedor', 'error');
         this.isLoading.set(false);
         console.error('Error creating provider:', err);
       },
@@ -191,55 +205,110 @@ export class ProvidersComponent {
     this.providerService.updateProvider(id, this.formData() as UpdateProviderDto).subscribe({
       next: (response) => {
         if (response.success) {
+          this.showToastMessage('Proveedor actualizado exitosamente', 'success');
           this.loadProviders();
           this.closeModal();
+        } else {
+          this.showToastMessage(response.error?.message || 'Error al actualizar proveedor', 'error');
         }
         this.isLoading.set(false);
       },
       error: (err) => {
-        this.error.set('Error al actualizar proveedor');
+        this.showToastMessage('Error al actualizar proveedor', 'error');
         this.isLoading.set(false);
         console.error('Error updating provider:', err);
       },
     });
   }
 
-  deactivateProvider(id: string): void {
-    if (!confirm('¿Está seguro de desactivar este proveedor?')) {
-      return;
-    }
+  openDeactivateModal(provider: ProviderDetails): void {
+    this.providerToConfirm.set(provider);
+    this.confirmAction.set('deactivate');
+    this.showConfirmModal.set(true);
+  }
 
-    this.isLoading.set(true);
-    this.providerService.deactivateProvider(id).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.loadProviders();
-        }
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        this.error.set('Error al desactivar proveedor');
-        this.isLoading.set(false);
-        console.error('Error deactivating provider:', err);
-      },
-    });
+  openActivateModal(provider: ProviderDetails): void {
+    this.providerToConfirm.set(provider);
+    this.confirmAction.set('activate');
+    this.showConfirmModal.set(true);
+  }
+
+  closeConfirmModal(): void {
+    this.showConfirmModal.set(false);
+    this.providerToConfirm.set(null);
+    this.isConfirming.set(false);
+  }
+
+  confirmActionExecute(): void {
+    const provider = this.providerToConfirm();
+    if (!provider) return;
+
+    this.isConfirming.set(true);
+
+    if (this.confirmAction() === 'deactivate') {
+      this.providerService.deactivateProvider(provider.id).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.showToastMessage('Proveedor desactivado exitosamente', 'success');
+            this.loadProviders();
+            this.closeConfirmModal();
+          } else {
+            this.showToastMessage(response.error?.message || 'Error al desactivar proveedor', 'error');
+            this.isConfirming.set(false);
+          }
+        },
+        error: (err) => {
+          this.showToastMessage('Error al desactivar proveedor', 'error');
+          this.isConfirming.set(false);
+          console.error('Error deactivating provider:', err);
+        },
+      });
+    } else {
+      this.providerService.activateProvider(provider.id).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.showToastMessage('Proveedor activado exitosamente', 'success');
+            this.loadProviders();
+            this.closeConfirmModal();
+          } else {
+            this.showToastMessage(response.error?.message || 'Error al activar proveedor', 'error');
+            this.isConfirming.set(false);
+          }
+        },
+        error: (err) => {
+          this.showToastMessage('Error al activar proveedor', 'error');
+          this.isConfirming.set(false);
+          console.error('Error activating provider:', err);
+        },
+      });
+    }
+  }
+
+  private showToastMessage(message: string, type: 'success' | 'error' | 'info'): void {
+    this.toastMessage.set(message);
+    this.toastType.set(type);
+    this.showToast.set(true);
+    
+    // Auto hide after 3 seconds
+    setTimeout(() => {
+      this.showToast.set(false);
+    }, 3000);
+  }
+
+  deactivateProvider(id: string): void {
+    // Legacy method - now redirects to modal
+    const provider = this.providers().find(p => p.id === id);
+    if (provider) {
+      this.openDeactivateModal(provider);
+    }
   }
 
   activateProvider(id: string): void {
-    this.isLoading.set(true);
-    this.providerService.activateProvider(id).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.loadProviders();
-        }
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        this.error.set('Error al activar proveedor');
-        this.isLoading.set(false);
-        console.error('Error activating provider:', err);
-      },
-    });
+    // Legacy method - now redirects to modal
+    const provider = this.providers().find(p => p.id === id);
+    if (provider) {
+      this.openActivateModal(provider);
+    }
   }
 
   // ===============================

@@ -52,6 +52,16 @@ export class UnitsComponent {
   protected readonly modalMode = signal<'create' | 'edit' | 'view'>('create');
   protected readonly selectedUnit = signal<UnitDetails | null>(null);
   
+  // Toast notifications
+  protected readonly showToast = signal(false);
+  protected readonly toastMessage = signal('');
+  protected readonly toastType = signal<'success' | 'error' | 'info'>('success');
+  
+  // Delete confirmation modal
+  protected readonly showDeleteModal = signal(false);
+  protected readonly unitToDelete = signal<UnitDetails | null>(null);
+  protected readonly isDeleting = signal(false);
+  
   // Form data
   protected readonly formData = signal<Partial<CreateUnitDto>>({
     condominiumId: '',
@@ -243,17 +253,17 @@ export class UnitsComponent {
       this.unitService.createUnit(data as CreateUnitDto).subscribe({
         next: (response) => {
           if (response.success) {
-            console.log('Unidad creada:', response.message);
+            this.showToastMessage('Unidad creada exitosamente', 'success');
             this.closeModal();
             this.loadUnits();
           } else {
-            this.error.set(response.error?.message || 'Error al crear la unidad');
+            this.showToastMessage(response.error?.message || 'Error al crear la unidad', 'error');
           }
           this.loading.set(false);
         },
         error: (err) => {
           console.error('Error creating unit:', err);
-          this.error.set('Error al crear la unidad');
+          this.showToastMessage('Error al crear la unidad', 'error');
           this.loading.set(false);
         }
       });
@@ -264,46 +274,68 @@ export class UnitsComponent {
       this.unitService.updateUnit(unitId, data as UpdateUnitDto).subscribe({
         next: (response) => {
           if (response.success) {
-            console.log('Unidad actualizada:', response.message);
+            this.showToastMessage('Unidad actualizada exitosamente', 'success');
             this.closeModal();
             this.loadUnits();
           } else {
-            this.error.set(response.error?.message || 'Error al actualizar la unidad');
+            this.showToastMessage(response.error?.message || 'Error al actualizar la unidad', 'error');
           }
           this.loading.set(false);
         },
         error: (err) => {
           console.error('Error updating unit:', err);
-          this.error.set('Error al actualizar la unidad');
+          this.showToastMessage('Error al actualizar la unidad', 'error');
           this.loading.set(false);
         }
       });
     }
   }
 
-  deleteUnit(unit: UnitDetails): void {
-    if (!confirm(`¿Está seguro de eliminar la unidad ${unit.unitNumber}?`)) {
-      return;
-    }
+  openDeleteModal(unit: UnitDetails): void {
+    this.unitToDelete.set(unit);
+    this.showDeleteModal.set(true);
+  }
 
-    this.loading.set(true);
+  closeDeleteModal(): void {
+    this.showDeleteModal.set(false);
+    this.unitToDelete.set(null);
+    this.isDeleting.set(false);
+  }
+
+  confirmDelete(): void {
+    const unit = this.unitToDelete();
+    if (!unit) return;
+
+    this.isDeleting.set(true);
 
     this.unitService.deleteUnit(unit.id).subscribe({
       next: (response) => {
         if (response.success) {
-          console.log('Unidad eliminada:', response.message);
+          this.showToastMessage('Unidad eliminada exitosamente', 'success');
+          this.closeDeleteModal();
           this.loadUnits();
         } else {
-          this.error.set(response.error?.message || 'Error al eliminar la unidad');
+          this.showToastMessage(response.error?.message || 'Error al eliminar la unidad', 'error');
+          this.isDeleting.set(false);
         }
-        this.loading.set(false);
       },
       error: (err) => {
         console.error('Error deleting unit:', err);
-        this.error.set('Error al eliminar la unidad');
-        this.loading.set(false);
+        this.showToastMessage('Error al eliminar la unidad', 'error');
+        this.isDeleting.set(false);
       }
     });
+  }
+
+  private showToastMessage(message: string, type: 'success' | 'error' | 'info'): void {
+    this.toastMessage.set(message);
+    this.toastType.set(type);
+    this.showToast.set(true);
+    
+    // Auto hide after 3 seconds
+    setTimeout(() => {
+      this.showToast.set(false);
+    }, 3000);
   }
 
   private validateForm(data: Partial<CreateUnitDto>): boolean {

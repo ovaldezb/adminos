@@ -52,6 +52,16 @@ export class ResidentsComponent {
   protected readonly modalMode = signal<'create' | 'edit' | 'view'>('create');
   protected readonly selectedResident = signal<ResidentDetails | null>(null);
   
+  // Toast notifications
+  protected readonly showToast = signal(false);
+  protected readonly toastMessage = signal('');
+  protected readonly toastType = signal<'success' | 'error' | 'info'>('success');
+  
+  // Deactivate confirmation modal
+  protected readonly showDeactivateModal = signal(false);
+  protected readonly residentToDeactivate = signal<ResidentDetails | null>(null);
+  protected readonly isDeactivating = signal(false);
+  
   // Form data
   protected readonly formData = signal<Partial<CreateResidentDto>>({
     firstName: '',
@@ -234,17 +244,17 @@ export class ResidentsComponent {
       this.residentService.createResident(data as CreateResidentDto).subscribe({
         next: (response: ApiResponse<any>) => {
           if (response.success) {
-            console.log('Residente creado:', response.message);
+            this.showToastMessage('Residente creado exitosamente', 'success');
             this.closeModal();
             this.loadResidents();
           } else {
-            this.error.set(response.error?.message || 'Error al crear el residente');
+            this.showToastMessage(response.error?.message || 'Error al crear el residente', 'error');
           }
           this.loading.set(false);
         },
         error: (err: any) => {
           console.error('Error creating resident:', err);
-          this.error.set('Error al crear el residente');
+          this.showToastMessage('Error al crear el residente', 'error');
           this.loading.set(false);
         }
       });
@@ -255,46 +265,73 @@ export class ResidentsComponent {
       this.residentService.updateResident(residentId, data as UpdateResidentDto).subscribe({
         next: (response: ApiResponse<any>) => {
           if (response.success) {
-            console.log('Residente actualizado:', response.message);
+            this.showToastMessage('Residente actualizado exitosamente', 'success');
             this.closeModal();
             this.loadResidents();
           } else {
-            this.error.set(response.error?.message || 'Error al actualizar el residente');
+            this.showToastMessage(response.error?.message || 'Error al actualizar el residente', 'error');
           }
           this.loading.set(false);
         },
         error: (err: any) => {
           console.error('Error updating resident:', err);
-          this.error.set('Error al actualizar el residente');
+          this.showToastMessage('Error al actualizar el residente', 'error');
           this.loading.set(false);
         }
       });
     }
   }
 
-  deactivateResident(resident: ResidentDetails): void {
-    if (!confirm(`¿Está seguro de desactivar a ${resident.firstName} ${resident.lastName}?`)) {
-      return;
-    }
+  openDeactivateModal(resident: ResidentDetails): void {
+    this.residentToDeactivate.set(resident);
+    this.showDeactivateModal.set(true);
+  }
 
-    this.loading.set(true);
+  closeDeactivateModal(): void {
+    this.showDeactivateModal.set(false);
+    this.residentToDeactivate.set(null);
+    this.isDeactivating.set(false);
+  }
+
+  confirmDeactivate(): void {
+    const resident = this.residentToDeactivate();
+    if (!resident) return;
+
+    this.isDeactivating.set(true);
 
     this.residentService.deactivateResident(resident.id).subscribe({
       next: (response: ApiResponse<any>) => {
         if (response.success) {
-          console.log('Residente desactivado:', response.message);
+          this.showToastMessage('Residente desactivado exitosamente', 'success');
+          this.closeDeactivateModal();
           this.loadResidents();
         } else {
-          this.error.set(response.error?.message || 'Error al desactivar el residente');
+          this.showToastMessage(response.error?.message || 'Error al desactivar el residente', 'error');
+          this.isDeactivating.set(false);
         }
-        this.loading.set(false);
       },
       error: (err: any) => {
         console.error('Error deactivating resident:', err);
-        this.error.set('Error al desactivar el residente');
-        this.loading.set(false);
+        this.showToastMessage('Error al desactivar el residente', 'error');
+        this.isDeactivating.set(false);
       }
     });
+  }
+
+  private showToastMessage(message: string, type: 'success' | 'error' | 'info'): void {
+    this.toastMessage.set(message);
+    this.toastType.set(type);
+    this.showToast.set(true);
+    
+    // Auto hide after 3 seconds
+    setTimeout(() => {
+      this.showToast.set(false);
+    }, 3000);
+  }
+
+  deactivateResident(resident: ResidentDetails): void {
+    // Now redirects to modal
+    this.openDeactivateModal(resident);
   }
 
   private validateForm(data: Partial<CreateResidentDto>): boolean {

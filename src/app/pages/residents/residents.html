@@ -573,4 +573,102 @@
       <div class="modal-backdrop" (click)="closeModal()"></div>
     </div>
   }
+
+  <!-- Deactivate Confirmation Modal -->
+  @if (showDeactivateModal()) {
+    <div class="modal modal-open">
+      <div class="modal-box glass max-w-md">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="p-3 bg-error/10 rounded-full">
+            <i class="ri-user-unfollow-line text-3xl text-error"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-xl text-neutral-800">Desactivar Residente</h3>
+          </div>
+        </div>
+
+        @if (residentToDeactivate()) {
+          <div class="mb-6">
+            <p class="text-neutral-700 mb-4">
+              ¿Está seguro que desea desactivar a este residente?
+            </p>
+            <div class="bg-neutral-100 rounded-xl p-4 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-neutral-600">Nombre:</span>
+                <span class="font-bold text-neutral-800">
+                  {{ residentToDeactivate()!.firstName }} {{ residentToDeactivate()!.lastName }}
+                </span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-neutral-600">Documento:</span>
+                <span class="font-mono font-semibold text-neutral-700">{{ residentToDeactivate()!.documentNumber }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-neutral-600">Tipo:</span>
+                <span [class]="'badge badge-sm ' + getTypeBadgeClass(residentToDeactivate()!.type)">
+                  {{ getTypeLabel(residentToDeactivate()!.type) }}
+                </span>
+              </div>
+            </div>
+            <div class="alert alert-warning mt-4">
+              <i class="ri-alert-line"></i>
+              <span class="text-sm">El residente dejará de tener acceso al sistema</span>
+            </div>
+          </div>
+        }
+
+        <div class="modal-action">
+          <button 
+            type="button" 
+            class="btn btn-ghost" 
+            (click)="closeDeactivateModal()"
+            [disabled]="isDeactivating()"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-error gap-2" 
+            (click)="confirmDeactivate()"
+            [disabled]="isDeactivating()"
+          >
+            @if (isDeactivating()) {
+              <span class="loading loading-spinner loading-sm"></span>
+              Desactivando...
+            } @else {
+              <i class="ri-user-unfollow-line"></i>
+              Desactivar
+            }
+          </button>
+        </div>
+      </div>
+      <div class="modal-backdrop" (click)="closeDeactivateModal()"></div>
+    </div>
+  }
+
+  <!-- Toast Notification -->
+  @if (showToast()) {
+    <div class="toast toast-top toast-end z-50">
+      <div 
+        class="alert shadow-xl glass"
+        [ngClass]="{
+          'alert-success': toastType() === 'success',
+          'alert-error': toastType() === 'error',
+          'alert-info': toastType() === 'info'
+        }"
+      >
+        @if (toastType() === 'success') {
+          <i class="ri-checkbox-circle-fill text-xl"></i>
+        } @else if (toastType() === 'error') {
+          <i class="ri-error-warning-fill text-xl"></i>
+        } @else {
+          <i class="ri-information-fill text-xl"></i>
+        }
+        <span class="font-medium">{{ toastMessage() }}</span>
+        <button class="btn btn-sm btn-ghost btn-circle" (click)="showToast.set(false)">
+          <i class="ri-close-line"></i>
+        </button>
+      </div>
+    </div>
+  }
 </div>

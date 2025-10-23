@@ -39,19 +39,19 @@
       }
 
       <!-- Filters & Actions -->
-      <div class="glass rounded-2xl p-6 shadow-xl mb-6">
-        <div class="flex flex-col lg:flex-row gap-4 items-center justify-between mb-4">
-          <div class="flex flex-col sm:flex-row gap-4 flex-1 w-full">
+      <div class="glass rounded-2xl p-4 lg:p-6 shadow-xl mb-6">
+        <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-4">
+          <div class="flex flex-col sm:flex-row gap-3 flex-1 w-full">
             <!-- Search -->
-            <div class="form-control flex-1">
+            <div class="form-control flex-1 min-w-0">
               <div class="input-group">
                 <span class="bg-base-200">
                   <i class="ri-search-line"></i>
                 </span>
                 <input
                   type="text"
-                  placeholder="Buscar por número, torre, propietario..."
-                  class="input input-bordered w-full"
+                  placeholder="Buscar unidad..."
+                  class="input input-bordered w-full text-sm"
                   [value]="searchTerm()"
                   (input)="onSearchChange($event)"
                 />
@@ -60,7 +60,7 @@
 
             <!-- Status Filter -->
             <select
-              class="select select-bordered w-full sm:w-48"
+              class="select select-bordered w-full sm:w-auto text-sm"
               [value]="statusFilter()"
               (change)="onStatusFilterChange($event)"
             >
@@ -74,7 +74,7 @@
 
             <!-- Property Type Filter -->
             <select
-              class="select select-bordered w-full sm:w-48"
+              class="select select-bordered w-full sm:w-auto text-sm"
               [value]="propertyTypeFilter()"
               (change)="onPropertyTypeFilterChange($event)"
             >
@@ -88,35 +88,35 @@
             </select>
           </div>
 
-          <div class="flex gap-2">
-            <button class="btn btn-ghost btn-sm" (click)="clearFilters()">
+          <div class="flex gap-2 w-full sm:w-auto">
+            <button class="btn btn-ghost btn-sm flex-1 sm:flex-none" (click)="clearFilters()">
               <i class="ri-filter-off-line"></i>
-              Limpiar
+              <span class="hidden sm:inline">Limpiar</span>
             </button>
-            <button class="btn btn-primary btn-sm gap-2" (click)="openCreateModal()">
+            <button class="btn btn-primary btn-sm gap-2 flex-1 sm:flex-none" (click)="openCreateModal()">
               <i class="ri-add-line"></i>
-              Nueva Unidad
+              <span class="hidden sm:inline">Nueva</span> Unidad
             </button>
           </div>
         </div>
 
         <!-- Stats -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="stat bg-base-100 rounded-xl p-4">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          <div class="stat bg-base-100 rounded-xl p-3 lg:p-4">
             <div class="stat-title text-xs">Total</div>
-            <div class="stat-value text-2xl text-primary">{{ totalItems() }}</div>
+            <div class="stat-value text-xl lg:text-2xl text-primary">{{ totalItems() }}</div>
           </div>
-          <div class="stat bg-base-100 rounded-xl p-4">
+          <div class="stat bg-base-100 rounded-xl p-3 lg:p-4">
             <div class="stat-title text-xs">Ocupadas</div>
-            <div class="stat-value text-2xl text-success">{{ totalOccupied() }}</div>
+            <div class="stat-value text-xl lg:text-2xl text-success">{{ totalOccupied() }}</div>
           </div>
-          <div class="stat bg-base-100 rounded-xl p-4">
+          <div class="stat bg-base-100 rounded-xl p-3 lg:p-4">
             <div class="stat-title text-xs">Vacantes</div>
-            <div class="stat-value text-2xl text-warning">{{ totalVacant() }}</div>
+            <div class="stat-value text-xl lg:text-2xl text-warning">{{ totalVacant() }}</div>
           </div>
-          <div class="stat bg-base-100 rounded-xl p-4">
+          <div class="stat bg-base-100 rounded-xl p-3 lg:p-4">
             <div class="stat-title text-xs">Con Deuda</div>
-            <div class="stat-value text-2xl text-error">{{ totalWithDebt() }}</div>
+            <div class="stat-value text-xl lg:text-2xl text-error">{{ totalWithDebt() }}</div>
           </div>
         </div>
       </div>
@@ -124,8 +124,9 @@
       <!-- Units Table -->
       <div class="glass rounded-2xl shadow-xl overflow-hidden">
         @if (loading()) {
-          <div class="flex items-center justify-center p-12">
+          <div class="flex flex-col items-center justify-center p-12 gap-4">
             <span class="loading loading-spinner loading-lg text-primary"></span>
+            <p class="text-neutral-600 font-medium">Cargando unidades...</p>
           </div>
         } @else if (filteredUnits().length === 0) {
           <div class="text-center p-12">
@@ -133,35 +134,36 @@
             <p class="text-neutral-500">No se encontraron unidades</p>
           </div>
         } @else {
-          <div class="overflow-x-auto">
-            <table class="table table-zebra">
-              <thead class="bg-base-200">
+          <!-- Desktop Table -->
+          <div class="hidden lg:block overflow-x-auto">
+            <table class="table">
+              <thead class="bg-neutral-800 text-neutral-100">
                 <tr>
-                  <th>Unidad</th>
-                  <th>Torre</th>
-                  <th>Tipo</th>
-                  <th>Área</th>
-                  <th>Habitaciones</th>
-                  <th>Estado</th>
-                  <th>Propietario</th>
-                  <th>Cuota Mensual</th>
-                  <th>Acciones</th>
+                  <th class="text-neutral-100">Unidad</th>
+                  <th class="text-neutral-100">Torre</th>
+                  <th class="text-neutral-100">Tipo</th>
+                  <th class="text-neutral-100">Área</th>
+                  <th class="text-neutral-100">Habitaciones</th>
+                  <th class="text-neutral-100">Estado</th>
+                  <th class="text-neutral-100">Propietario</th>
+                  <th class="text-neutral-100">Cuota Mensual</th>
+                  <th class="text-neutral-100">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody class="bg-white">
                 @for (unit of filteredUnits(); track unit.id) {
-                  <tr class="hover">
-                    <td>
+                  <tr class="hover:bg-sky-50 transition-colors border-b border-neutral-200">
+                    <td class="text-neutral-800">
                       <div class="font-semibold">{{ unit.unitNumber }}</div>
                       <div class="text-xs text-neutral-500">Piso {{ unit.floor }}</div>
                     </td>
-                    <td>{{ unit.tower }}</td>
-                    <td>
+                    <td class="text-neutral-700">{{ unit.tower }}</td>
+                    <td class="text-neutral-700">
                       <span class="text-sm">{{ getPropertyTypeLabel(unit.propertyType) }}</span>
                     </td>
-                    <td>{{ unit.area }} m²</td>
+                    <td class="text-neutral-700">{{ unit.area }} m²</td>
                     <td>
-                      <div class="flex items-center gap-2 text-sm">
+                      <div class="flex items-center gap-2 text-sm text-neutral-700">
                         <span><i class="ri-hotel-bed-line"></i> {{ unit.bedrooms }}</span>
                         <span><i class="ri-drop-line"></i> {{ unit.bathrooms }}</span>
                       </div>
@@ -174,7 +176,7 @@
                         <span class="badge badge-error badge-sm ml-1">Deuda</span>
                       }
                     </td>
-                    <td>
+                    <td class="text-neutral-700">
                       @if (unit.ownerName) {
                         <div class="font-medium">{{ unit.ownerName }}</div>
                         @if (unit.ownerPhone) {
@@ -184,26 +186,26 @@
                         <span class="text-neutral-400 text-sm">Sin propietario</span>
                       }
                     </td>
-                    <td class="font-semibold">{{ formatCurrency(unit.monthlyFee) }}</td>
+                    <td class="font-semibold text-neutral-800">{{ formatCurrency(unit.monthlyFee) }}</td>
                     <td>
                       <div class="flex gap-1">
                         <button
-                          class="btn btn-ghost btn-xs"
+                          class="btn btn-ghost btn-xs hover:bg-sky-100"
                           (click)="openViewModal(unit)"
                           title="Ver detalles"
                         >
                           <i class="ri-eye-line"></i>
                         </button>
                         <button
-                          class="btn btn-ghost btn-xs text-primary"
+                          class="btn btn-ghost btn-xs text-primary hover:bg-sky-100"
                           (click)="openEditModal(unit)"
                           title="Editar"
                         >
                           <i class="ri-edit-line"></i>
                         </button>
                         <button
-                          class="btn btn-ghost btn-xs text-error"
-                          (click)="deleteUnit(unit)"
+                          class="btn btn-ghost btn-xs text-error hover:bg-red-50"
+                          (click)="openDeleteModal(unit)"
                           title="Eliminar"
                         >
                           <i class="ri-delete-bin-line"></i>
@@ -216,9 +218,79 @@
             </table>
           </div>
 
+          <!-- Mobile Cards -->
+          <div class="lg:hidden divide-y divide-neutral-200">
+            @for (unit of filteredUnits(); track unit.id) {
+              <div class="p-4 bg-white hover:bg-sky-50 transition-colors">
+                <div class="flex items-start justify-between mb-3">
+                  <div>
+                    <div class="font-bold text-lg text-neutral-800">{{ unit.unitNumber }}</div>
+                    <div class="text-sm text-neutral-600">Torre {{ unit.tower }} - Piso {{ unit.floor }}</div>
+                  </div>
+                  <span class="badge badge-sm" [ngClass]="getStatusBadgeClass(unit.status)">
+                    {{ getStatusLabel(unit.status) }}
+                  </span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+                  <div>
+                    <span class="text-neutral-500">Tipo:</span>
+                    <span class="text-neutral-700 ml-1">{{ getPropertyTypeLabel(unit.propertyType) }}</span>
+                  </div>
+                  <div>
+                    <span class="text-neutral-500">Área:</span>
+                    <span class="text-neutral-700 ml-1">{{ unit.area }} m²</span>
+                  </div>
+                  <div>
+                    <span class="text-neutral-500"><i class="ri-hotel-bed-line"></i></span>
+                    <span class="text-neutral-700 ml-1">{{ unit.bedrooms }} hab</span>
+                  </div>
+                  <div>
+                    <span class="text-neutral-500"><i class="ri-drop-line"></i></span>
+                    <span class="text-neutral-700 ml-1">{{ unit.bathrooms }} baños</span>
+                  </div>
+                </div>
+
+                @if (unit.ownerName) {
+                  <div class="text-sm mb-3">
+                    <div class="text-neutral-500">Propietario:</div>
+                    <div class="font-medium text-neutral-800">{{ unit.ownerName }}</div>
+                  </div>
+                }
+
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-xs text-neutral-500">Cuota mensual</div>
+                    <div class="font-bold text-lg text-primary">{{ formatCurrency(unit.monthlyFee) }}</div>
+                  </div>
+                  <div class="flex gap-1">
+                    <button
+                      class="btn btn-sm btn-ghost"
+                      (click)="openViewModal(unit)"
+                    >
+                      <i class="ri-eye-line"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-ghost text-primary"
+                      (click)="openEditModal(unit)"
+                    >
+                      <i class="ri-edit-line"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-ghost text-error"
+                      (click)="openDeleteModal(unit)"
+                    >
+                      <i class="ri-delete-bin-line"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
           <!-- Pagination -->
-          <div class="flex items-center justify-between p-4 bg-base-200">
-            <div class="text-sm text-neutral-600">
+          <div class="flex flex-col sm:flex-row items-center justify-between p-4 bg-neutral-50 gap-3">
+            <div class="text-sm text-neutral-600 text-center sm:text-left">
               Mostrando {{ (currentPage() - 1) * pageSize() + 1 }} - 
               {{ Math.min(currentPage() * pageSize(), totalItems()) }} de {{ totalItems() }}
             </div>
@@ -634,6 +706,102 @@
         }
       </div>
       <div class="modal-backdrop" (click)="closeModal()"></div>
+    </div>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteModal()) {
+    <div class="modal modal-open">
+      <div class="modal-box glass max-w-md">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="p-3 bg-error/10 rounded-full">
+            <i class="ri-error-warning-line text-3xl text-error"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-xl text-neutral-800">Confirmar Eliminación</h3>
+          </div>
+        </div>
+
+        @if (unitToDelete()) {
+          <div class="mb-6">
+            <p class="text-neutral-700 mb-4">
+              ¿Está seguro que desea eliminar la siguiente unidad?
+            </p>
+            <div class="bg-neutral-100 rounded-xl p-4 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-neutral-600">Unidad:</span>
+                <span class="font-bold text-neutral-800">{{ unitToDelete()!.unitNumber }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-neutral-600">Torre:</span>
+                <span class="font-semibold text-neutral-700">{{ unitToDelete()!.tower }}</span>
+              </div>
+              @if (unitToDelete()!.ownerName) {
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-neutral-600">Propietario:</span>
+                  <span class="font-semibold text-neutral-700">{{ unitToDelete()!.ownerName }}</span>
+                </div>
+              }
+            </div>
+            <div class="alert alert-warning mt-4">
+              <i class="ri-alert-line"></i>
+              <span class="text-sm">Esta acción no se puede deshacer</span>
+            </div>
+          </div>
+        }
+
+        <div class="modal-action">
+          <button 
+            type="button" 
+            class="btn btn-ghost" 
+            (click)="closeDeleteModal()"
+            [disabled]="isDeleting()"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-error gap-2" 
+            (click)="confirmDelete()"
+            [disabled]="isDeleting()"
+          >
+            @if (isDeleting()) {
+              <span class="loading loading-spinner loading-sm"></span>
+              Eliminando...
+            } @else {
+              <i class="ri-delete-bin-line"></i>
+              Eliminar
+            }
+          </button>
+        </div>
+      </div>
+      <div class="modal-backdrop" (click)="closeDeleteModal()"></div>
+    </div>
+  }
+
+  <!-- Toast Notification -->
+  @if (showToast()) {
+    <div class="toast toast-top toast-end z-50">
+      <div 
+        class="alert shadow-xl glass"
+        [ngClass]="{
+          'alert-success': toastType() === 'success',
+          'alert-error': toastType() === 'error',
+          'alert-info': toastType() === 'info'
+        }"
+      >
+        @if (toastType() === 'success') {
+          <i class="ri-checkbox-circle-fill text-xl"></i>
+        } @else if (toastType() === 'error') {
+          <i class="ri-error-warning-fill text-xl"></i>
+        } @else {
+          <i class="ri-information-fill text-xl"></i>
+        }
+        <span class="font-medium">{{ toastMessage() }}</span>
+        <button class="btn btn-sm btn-ghost btn-circle" (click)="showToast.set(false)">
+          <i class="ri-close-line"></i>
+        </button>
+      </div>
     </div>
   }
 </div>

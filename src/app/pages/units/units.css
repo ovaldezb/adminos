@@ -12,8 +12,28 @@
   }
 }
 
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .glass {
   animation: fadeIn 0.4s ease-out;
+}
+
+/* Toast animation */
+.toast {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.toast .alert {
+  animation: fadeIn 0.3s ease-out;
 }
 
 /* Table hover effects */
@@ -22,17 +42,55 @@
 }
 
 .table tbody tr:hover {
-  transform: scale(1.01);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: scale(1.005);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 /* Badge animations */
 .badge {
   transition: all 0.2s ease;
+  font-weight: 600;
 }
 
 .badge:hover {
   transform: scale(1.05);
+}
+
+/* Better badge colors */
+.badge-success {
+  background-color: #36d399;
+  color: #065f46;
+  border-color: #36d399;
+}
+
+.badge-warning {
+  background-color: #fbbd23;
+  color: #78350f;
+  border-color: #fbbd23;
+}
+
+.badge-error {
+  background-color: #f87272;
+  color: #7f1d1d;
+  border-color: #f87272;
+}
+
+.badge-info {
+  background-color: #3abff8;
+  color: #164e63;
+  border-color: #3abff8;
+}
+
+.badge-primary {
+  background-color: #0ea5e9;
+  color: #ffffff;
+  border-color: #0ea5e9;
+}
+
+.badge-secondary {
+  background-color: #8b5cf6;
+  color: #ffffff;
+  border-color: #8b5cf6;
 }
 
 /* Modal backdrop */
@@ -41,15 +99,57 @@
   backdrop-filter: blur(4px);
 }
 
-/* Responsive table */
-@media (max-width: 768px) {
+/* Delete modal shake animation */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.modal-box:has(.ri-error-warning-line) {
+  animation: fadeIn 0.3s ease-out, shake 0.5s ease-in-out 0.2s;
+}
+
+/* Error icon pulse */
+.ri-error-warning-line {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Loading spinner container */
+.loading-spinner {
+  filter: drop-shadow(0 0 8px rgba(14, 165, 233, 0.4));
+}
+
+/* Responsive table improvements */
+@media (max-width: 1024px) {
+  /* Hide desktop table on mobile */
   .table {
     font-size: 0.875rem;
   }
   
   .table th,
   .table td {
-    padding: 0.5rem;
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+/* Mobile card hover effect */
+@media (max-width: 1024px) {
+  .lg\:hidden > div {
+    transition: all 0.2s ease;
+  }
+  
+  .lg\:hidden > div:active {
+    transform: scale(0.98);
   }
 }
 
@@ -70,4 +170,63 @@
 
 .overflow-x-auto::-webkit-scrollbar-thumb:hover {
   background: rgba(14, 165, 233, 0.5);
+}
+
+/* Button hover improvements */
+.btn-ghost:hover {
+  background-color: rgba(14, 165, 233, 0.1);
+}
+
+/* Input focus improvements */
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: 2px solid #0ea5e9;
+  outline-offset: 2px;
+  border-color: #0ea5e9;
+}
+
+/* Form control improvements */
+.form-control {
+  width: 100%;
+}
+
+/* Stat cards hover effect */
+.stat {
+  transition: all 0.2s ease;
+}
+
+.stat:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Modal responsive improvements */
+@media (max-width: 768px) {
+  .modal-box {
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .modal-box .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Alert close button */
+.alert button {
+  transition: all 0.2s ease;
+}
+
+.alert button:hover {
+  transform: rotate(90deg);
+}
+
+/* Smooth transitions for all interactive elements */
+button,
+input,
+select,
+textarea {
+  transition: all 0.2s ease;
 }
