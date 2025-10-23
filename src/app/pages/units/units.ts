@@ -445,10 +445,19 @@ export class UnitsComponent {
   }
 
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('es-PE', {
+    return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: 'PEN',
+      currency: 'MXN',
       minimumFractionDigits: 0
     }).format(amount);
+  }
+
+  formatDate(date: Date | undefined): string {
+    if (!date) return '-';
+    return new Intl.DateTimeFormat('es-MX', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }).format(new Date(date));
   }
 }

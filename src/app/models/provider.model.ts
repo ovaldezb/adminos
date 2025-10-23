@@ -3,7 +3,7 @@ export interface Provider {
   id: string;
   businessName: string;
   tradeName?: string;
-  ruc: string;
+  rfc: string; // Registro Federal de Contribuyentes (México)
   category: ProviderCategory;
   address: string;
   city: string;
@@ -15,6 +15,7 @@ export interface Provider {
   website?: string;
   bankName?: string;
   bankAccount?: string;
+  clabe?: string; // Clave Bancaria Estandarizada (18 dígitos)
   isActive: boolean;
   rating?: number; // 1-5
   notes?: string;
@@ -51,7 +52,7 @@ export interface ProviderDetails extends Provider {
 export interface CreateProviderDto {
   businessName: string;
   tradeName?: string;
-  ruc: string;
+  rfc: string; // Registro Federal de Contribuyentes
   category: ProviderCategory;
   address: string;
   city: string;
@@ -63,6 +64,7 @@ export interface CreateProviderDto {
   website?: string;
   bankName?: string;
   bankAccount?: string;
+  clabe?: string;
   rating?: number;
   notes?: string;
 }

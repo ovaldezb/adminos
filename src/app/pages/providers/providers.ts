@@ -76,11 +76,11 @@ export class ProvidersComponent {
   protected readonly formData = signal<Partial<CreateProviderDto>>({
     businessName: '',
     tradeName: '',
-    ruc: '',
+    rfc: '',
     category: ProviderCategory.OTHER,
     address: '',
-    city: 'Lima',
-    country: 'Perú',
+    city: 'Ciudad de México',
+    country: 'México',
     contactName: '',
     email: '',
     phone: '',
@@ -88,6 +88,7 @@ export class ProvidersComponent {
     website: '',
     bankName: '',
     bankAccount: '',
+    clabe: '',
     rating: 0,
     notes: '',
   });
@@ -425,8 +426,8 @@ export class ProvidersComponent {
       this.error.set('La razón social es requerida');
       return false;
     }
-    if (!data.ruc?.trim() || data.ruc.length !== 11) {
-      this.error.set('El RUC debe tener 11 dígitos');
+    if (!data.rfc?.trim() || (data.rfc.length !== 12 && data.rfc.length !== 13)) {
+      this.error.set('El RFC debe tener 12 o 13 caracteres');
       return false;
     }
     if (!data.contactName?.trim()) {
@@ -470,14 +471,14 @@ export class ProvidersComponent {
   }
 
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('es-PE', {
+    return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: 'PEN',
+      currency: 'MXN',
     }).format(amount);
   }
 
   formatDate(date: Date): string {
-    return new Date(date).toLocaleDateString('es-PE', {
+    return new Date(date).toLocaleDateString('es-MX', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',

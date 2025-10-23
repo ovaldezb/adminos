@@ -73,7 +73,7 @@ export class ResidentsComponent {
     lastName: '',
     email: '',
     phone: '',
-    documentType: DocumentType.DNI,
+    documentType: DocumentType.CURP,
     documentNumber: '',
     type: ResidentType.OWNER,
     condominiumId: '',
@@ -193,7 +193,7 @@ export class ResidentsComponent {
       lastName: '',
       email: '',
       phone: '',
-      documentType: DocumentType.DNI,
+      documentType: DocumentType.CURP,
       documentNumber: '',
       type: ResidentType.OWNER,
       condominiumId: this.selectedCondo()?.id === 'all' ? '' : this.selectedCondo()?.id || '',
@@ -476,25 +476,26 @@ export class ResidentsComponent {
 
   getDocumentTypeLabel(type: DocumentType): string {
     const labels: Record<DocumentType, string> = {
-      [DocumentType.DNI]: 'DNI',
+      [DocumentType.CURP]: 'CURP',
+      [DocumentType.RFC]: 'RFC',
+      [DocumentType.INE]: 'INE',
       [DocumentType.PASSPORT]: 'Pasaporte',
-      [DocumentType.RUC]: 'RUC',
-      [DocumentType.CE]: 'Carné de Extranjería'
+      [DocumentType.FM3]: 'FM3'
     };
     return labels[type] || type;
   }
 
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('es-PE', {
+    return new Intl.NumberFormat('es-MX', {
       style: 'currency',
-      currency: 'PEN',
+      currency: 'MXN',
       minimumFractionDigits: 0
     }).format(amount);
   }
 
   formatDate(date: Date | undefined): string {
     if (!date) return '-';
-    return new Intl.DateTimeFormat('es-PE', {
+    return new Intl.DateTimeFormat('es-MX', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'

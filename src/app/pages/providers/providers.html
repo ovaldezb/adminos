@@ -98,7 +98,7 @@
                 </span>
                 <input
                   type="text"
-                  placeholder="Buscar por razón social, RUC, contacto..."
+                  placeholder="Buscar por razón social, RFC, contacto..."
                   class="input input-bordered flex-1"
                   [value]="searchTerm()"
                   (input)="onSearchChange($any($event.target).value)"
@@ -165,7 +165,7 @@
                   <tr>
                     <th class="text-neutral-100">Razón Social</th>
                     <th class="text-neutral-100">Nombre Comercial</th>
-                    <th class="text-neutral-100">RUC</th>
+                    <th class="text-neutral-100">RFC</th>
                     <th class="text-neutral-100">Categoría</th>
                     <th class="text-neutral-100">Contacto</th>
                     <th class="text-neutral-100">Teléfono</th>
@@ -195,7 +195,7 @@
                         <span class="text-sm">{{ provider.tradeName || '-' }}</span>
                       </td>
                       <td class="text-neutral-700">
-                        <span class="font-mono text-sm">{{ provider.ruc }}</span>
+                        <span class="font-mono text-sm">{{ provider.rfc }}</span>
                       </td>
                       <td>
                         <span [class]="'badge ' + getCategoryBadgeClass(provider.category)">
@@ -313,8 +313,8 @@
                   
                   <div class="grid grid-cols-2 gap-2 text-sm mb-3">
                     <div>
-                      <span class="text-neutral-500">RUC:</span>
-                      <span class="text-neutral-700 ml-1 font-mono">{{ provider.ruc }}</span>
+                      <span class="text-neutral-500">RFC:</span>
+                      <span class="text-neutral-700 ml-1 font-mono">{{ provider.rfc }}</span>
                     </div>
                     <div>
                       <span class="text-neutral-500">Categoría:</span>
@@ -448,8 +448,8 @@
                     <p class="font-medium">{{ selectedProvider()!.tradeName || '-' }}</p>
                   </div>
                   <div>
-                    <label class="text-sm text-base-content/60">RUC</label>
-                    <p class="font-mono font-medium">{{ selectedProvider()!.ruc }}</p>
+                    <label class="text-sm text-base-content/60">RFC</label>
+                    <p class="font-mono font-medium">{{ selectedProvider()!.rfc }}</p>
                   </div>
                   <div>
                     <label class="text-sm text-base-content/60">Categoría</label>
@@ -537,8 +537,8 @@
                     <p class="font-medium">{{ selectedProvider()!.bankName || '-' }}</p>
                   </div>
                   <div>
-                    <label class="text-sm text-base-content/60">Cuenta Bancaria</label>
-                    <p class="font-mono font-medium">{{ selectedProvider()!.bankAccount || '-' }}</p>
+                    <label class="text-sm text-base-content/60">CLABE</label>
+                    <p class="font-mono font-medium">{{ selectedProvider()!.clabe || '-' }}</p>
                   </div>
                 </div>
               </div>
@@ -627,14 +627,14 @@
                   </div>
                   <div class="form-control">
                     <label class="label">
-                      <span class="label-text">RUC <span class="text-error">*</span></span>
+                      <span class="label-text">RFC <span class="text-error">*</span></span>
                     </label>
                     <input
                       type="text"
                       class="input input-bordered font-mono"
-                      [value]="formData().ruc"
-                      (input)="onFormFieldChange('ruc', $any($event.target).value)"
-                      maxlength="11"
+                      [value]="formData().rfc"
+                      (input)="onFormFieldChange('rfc', $any($event.target).value)"
+                      maxlength="13"
                       required
                     />
                   </div>
@@ -800,6 +800,19 @@
                       (input)="onFormFieldChange('bankAccount', $any($event.target).value)"
                     />
                   </div>
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">CLABE Interbancaria</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="input input-bordered font-mono"
+                      [value]="formData().clabe"
+                      (input)="onFormFieldChange('clabe', $any($event.target).value)"
+                      maxlength="18"
+                      placeholder="18 dígitos"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -899,8 +912,8 @@
                 <span class="font-bold text-neutral-800">{{ providerToConfirm()!.businessName }}</span>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-sm text-neutral-600">RUC:</span>
-                <span class="font-mono font-semibold text-neutral-700">{{ providerToConfirm()!.ruc }}</span>
+                <span class="text-sm text-neutral-600">RFC:</span>
+                <span class="font-mono font-semibold text-neutral-700">{{ providerToConfirm()!.rfc }}</span>
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-sm text-neutral-600">Contacto:</span>

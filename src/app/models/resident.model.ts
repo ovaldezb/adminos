@@ -26,10 +26,11 @@ export enum ResidentType {
 }
 
 export enum DocumentType {
-  DNI = 'dni',
+  CURP = 'curp', // Clave Única de Registro de Población
+  RFC = 'rfc', // Registro Federal de Contribuyentes
+  INE = 'ine', // Credencial para Votar
   PASSPORT = 'passport',
-  RUC = 'ruc',
-  CE = 'ce' // Carné de Extranjería
+  FM3 = 'fm3' // Forma Migratoria para extranjeros
 }
 
 export interface ResidentDetails extends Resident {
