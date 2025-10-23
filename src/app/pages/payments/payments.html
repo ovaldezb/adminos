@@ -115,9 +115,9 @@
 
       <!-- Filters Section -->
       <div class="glass rounded-2xl p-6 shadow-xl mb-8">
-        <div class="flex flex-wrap gap-4">
+        <div class="flex flex-col gap-4">
           <!-- Search -->
-          <div class="flex-1 min-w-[250px]">
+          <div class="w-full">
             <label class="label">
               <span class="label-text font-medium">
                 <i class="ri-search-line mr-2"></i>
@@ -133,59 +133,62 @@
             />
           </div>
 
-          <!-- Status Filter -->
-          <div class="w-full md:w-48">
-            <label class="label">
-              <span class="label-text font-medium">
-                <i class="ri-filter-line mr-2"></i>
-                Estado
-              </span>
-            </label>
-            <select
-              [value]="statusFilter()"
-              (change)="onStatusFilterChange($event)"
-              class="select select-bordered w-full rounded-2xl"
-            >
-              <option value="">Todos</option>
-              <option [value]="PaymentStatus.PENDING">Pendiente</option>
-              <option [value]="PaymentStatus.CONFIRMED">Confirmado</option>
-              <option [value]="PaymentStatus.REJECTED">Rechazado</option>
-              <option [value]="PaymentStatus.REFUNDED">Reembolsado</option>
-            </select>
-          </div>
-
-          <!-- Method Filter -->
-          <div class="w-full md:w-48">
-            <label class="label">
-              <span class="label-text font-medium">
-                <i class="ri-bank-card-line mr-2"></i>
-                Método
-              </span>
-            </label>
-            <select
-              [value]="methodFilter()"
-              (change)="onMethodFilterChange($event)"
-              class="select select-bordered w-full rounded-2xl"
-            >
-              <option value="">Todos</option>
-              <option
-                *ngFor="let method of paymentMethods"
-                [value]="method.value"
+          <!-- Filters Row -->
+          <div class="flex flex-col sm:flex-row gap-4">
+            <!-- Status Filter -->
+            <div class="flex-1">
+              <label class="label">
+                <span class="label-text font-medium">
+                  <i class="ri-filter-line mr-2"></i>
+                  Estado
+                </span>
+              </label>
+              <select
+                [value]="statusFilter()"
+                (change)="onStatusFilterChange($event)"
+                class="select select-bordered w-full rounded-2xl"
               >
-                {{ method.label }}
-              </option>
-            </select>
-          </div>
+                <option value="">Todos</option>
+                <option [value]="PaymentStatus.PENDING">Pendiente</option>
+                <option [value]="PaymentStatus.CONFIRMED">Confirmado</option>
+                <option [value]="PaymentStatus.REJECTED">Rechazado</option>
+                <option [value]="PaymentStatus.REFUNDED">Reembolsado</option>
+              </select>
+            </div>
 
-          <!-- Clear Filters Button -->
-          <div class="flex items-end">
-            <button
-              class="btn btn-outline rounded-2xl"
-              (click)="clearFilters()"
-            >
-              <i class="ri-close-circle-line text-lg"></i>
-              Limpiar
-            </button>
+            <!-- Method Filter -->
+            <div class="flex-1">
+              <label class="label">
+                <span class="label-text font-medium">
+                  <i class="ri-bank-card-line mr-2"></i>
+                  Método
+                </span>
+              </label>
+              <select
+                [value]="methodFilter()"
+                (change)="onMethodFilterChange($event)"
+                class="select select-bordered w-full rounded-2xl"
+              >
+                <option value="">Todos</option>
+                <option
+                  *ngFor="let method of paymentMethods"
+                  [value]="method.value"
+                >
+                  {{ method.label }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Clear Filters Button -->
+            <div class="flex items-end">
+              <button
+                class="btn btn-outline rounded-2xl w-full sm:w-auto"
+                (click)="clearFilters()"
+              >
+                <i class="ri-close-circle-line text-lg"></i>
+                Limpiar
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -193,29 +196,39 @@
       <!-- Payments Table -->
       <div class="glass rounded-2xl shadow-xl overflow-hidden">
         @if (loading()) {
-        <div class="flex justify-center items-center p-16">
-          <span class="loading loading-spinner loading-lg text-primary"></span>
+        <div class="flex flex-col justify-center items-center p-16 bg-gradient-to-br from-sky-50 to-blue-50">
+          <div class="relative">
+            <span class="loading loading-spinner loading-lg text-primary"></span>
+            <div class="absolute inset-0 loading loading-spinner loading-lg text-primary opacity-30 blur-sm"></div>
+          </div>
+          <p class="text-neutral-600 font-medium mt-6">Cargando pagos...</p>
         </div>
         } @else if (error()) {
-        <div class="alert alert-error rounded-2xl m-6">
+        <div class="alert alert-error rounded-2xl m-6 shadow-lg">
           <i class="ri-error-warning-line text-2xl"></i>
-          <span>{{ error() }}</span>
+          <div>
+            <h3 class="font-bold">Error al cargar</h3>
+            <span>{{ error() }}</span>
+          </div>
         </div>
         } @else if (filteredPayments().length === 0) {
-        <div class="text-center p-16">
-          <i class="ri-file-list-3-line text-6xl text-neutral-300 mb-4"></i>
-          <p class="text-neutral-500 text-lg">No hay pagos registrados</p>
+        <div class="text-center p-16 bg-gradient-to-br from-neutral-50 to-neutral-100">
+          <div class="inline-block p-6 bg-white rounded-3xl shadow-lg mb-4">
+            <i class="ri-file-list-3-line text-6xl text-neutral-300"></i>
+          </div>
+          <p class="text-neutral-600 text-lg font-medium">No hay pagos registrados</p>
+          <p class="text-neutral-500 text-sm mt-2">Registra tu primer pago usando el botón superior</p>
         </div>
         } @else {
         <div class="overflow-x-auto">
-          <table class="table table-zebra">
+          <table class="table table-zebra w-full">
             <thead>
               <tr class="bg-base-200/50">
-                <th>Folio</th>
-                <th>Fecha</th>
+                <th class="hidden md:table-cell">Folio</th>
+                <th class="hidden lg:table-cell">Fecha</th>
                 <th>Residente</th>
-                <th>Factura</th>
-                <th>Método</th>
+                <th class="hidden sm:table-cell">Factura</th>
+                <th class="hidden md:table-cell">Método</th>
                 <th>Monto</th>
                 <th>Estado</th>
                 <th>Acciones</th>
@@ -224,8 +237,8 @@
             <tbody>
               @for (payment of filteredPayments(); track payment.id) {
               <tr class="hover">
-                <td class="font-mono text-sm">{{ payment.paymentNumber }}</td>
-                <td>{{ formatDate(payment.paymentDate) }}</td>
+                <td class="font-mono text-sm hidden md:table-cell">{{ payment.paymentNumber }}</td>
+                <td class="hidden lg:table-cell text-sm">{{ formatDate(payment.paymentDate) }}</td>
                 <td>
                   <div class="flex items-center gap-3">
                     <div class="avatar placeholder">
@@ -238,17 +251,17 @@
                       </div>
                     </div>
                     <div>
-                      <div class="font-semibold">
+                      <div class="font-semibold text-sm">
                         {{ payment.residentName }}
                       </div>
-                      <div class="text-sm text-neutral-500">
+                      <div class="text-xs text-neutral-500">
                         Unidad {{ payment.unitNumber }}
                       </div>
                     </div>
                   </div>
                 </td>
-                <td class="font-mono text-sm">{{ payment.invoiceNumber }}</td>
-                <td>
+                <td class="font-mono text-xs hidden sm:table-cell">{{ payment.invoiceNumber }}</td>
+                <td class="hidden md:table-cell">
                   <div class="flex items-center gap-2">
                     @if (payment.paymentMethod === PaymentMethod.CASH) {
                     <i class="ri-wallet-3-line text-lg text-success"></i>
@@ -262,17 +275,17 @@
                     } @else {
                     <i class="ri-money-dollar-circle-line text-lg text-neutral-500"></i>
                     }
-                    <span class="text-sm">{{
+                    <span class="text-xs">{{
                       getMethodLabel(payment.paymentMethod)
                     }}</span>
                   </div>
                 </td>
-                <td class="font-semibold text-success">
+                <td class="font-bold text-success text-sm">
                   {{ formatCurrency(payment.amount) }}
                 </td>
                 <td>
                   <span
-                    class="badge rounded-xl"
+                    class="badge rounded-xl text-xs"
                     [ngClass]="getStatusBadgeClass(payment.status)"
                   >
                     {{ getStatusLabel(payment.status) }}
