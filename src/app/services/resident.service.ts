@@ -397,6 +397,34 @@ export class ResidentService {
   }
 
   /**
+   * Simulates AWS Lambda DELETE request to permanently delete resident
+   * Lambda: deleteResident
+   */
+  deleteResident(id: string): Observable<ApiResponse<void>> {
+    const residentIndex = this.mockResidents.findIndex((r) => r.id === id);
+
+    if (residentIndex === -1) {
+      return of({
+        success: false,
+        error: {
+          code: 'RESIDENT_NOT_FOUND',
+          message: 'Residente no encontrado',
+        },
+        timestamp: new Date(),
+      }).pipe(delay(200));
+    }
+
+    // Permanently remove from mock data
+    this.mockResidents.splice(residentIndex, 1);
+
+    return of({
+      success: true,
+      message: 'Residente eliminado exitosamente',
+      timestamp: new Date(),
+    }).pipe(delay(Math.random() * 500 + 300));
+  }
+
+  /**
    * Simulates AWS Lambda GET request to fetch residents with debt
    * Lambda: getResidentsWithDebt
    */

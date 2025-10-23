@@ -62,6 +62,11 @@ export class ResidentsComponent {
   protected readonly residentToDeactivate = signal<ResidentDetails | null>(null);
   protected readonly isDeactivating = signal(false);
   
+  // Delete confirmation modal
+  protected readonly showDeleteModal = signal(false);
+  protected readonly residentToDelete = signal<ResidentDetails | null>(null);
+  protected readonly isDeleting = signal(false);
+  
   // Form data
   protected readonly formData = signal<Partial<CreateResidentDto>>({
     firstName: '',
@@ -332,6 +337,42 @@ export class ResidentsComponent {
   deactivateResident(resident: ResidentDetails): void {
     // Now redirects to modal
     this.openDeactivateModal(resident);
+  }
+
+  openDeleteModal(resident: ResidentDetails): void {
+    this.residentToDelete.set(resident);
+    this.showDeleteModal.set(true);
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal.set(false);
+    this.residentToDelete.set(null);
+    this.isDeleting.set(false);
+  }
+
+  confirmDelete(): void {
+    const resident = this.residentToDelete();
+    if (!resident) return;
+
+    this.isDeleting.set(true);
+
+    this.residentService.deleteResident(resident.id).subscribe({
+      next: (response: ApiResponse<any>) => {
+        if (response.success) {
+          this.showToastMessage('Residente eliminado exitosamente', 'success');
+          this.closeDeleteModal();
+          this.loadResidents();
+        } else {
+          this.showToastMessage(response.error?.message || 'Error al eliminar el residente', 'error');
+          this.isDeleting.set(false);
+        }
+      },
+      error: (err: any) => {
+        console.error('Error deleting resident:', err);
+        this.showToastMessage('Error al eliminar el residente', 'error');
+        this.isDeleting.set(false);
+      }
+    });
   }
 
   private validateForm(data: Partial<CreateResidentDto>): boolean {

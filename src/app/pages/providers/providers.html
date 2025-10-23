@@ -147,168 +147,261 @@
       <!-- Providers Table -->
       <div class="card glass shadow-xl">
         <div class="card-body p-0">
-          <div class="overflow-x-auto">
-            <table class="table table-zebra">
-              <thead>
-                <tr class="bg-base-300">
-                  <th>Razón Social</th>
-                  <th>Nombre Comercial</th>
-                  <th>RUC</th>
-                  <th>Categoría</th>
-                  <th>Contacto</th>
-                  <th>Teléfono</th>
-                  <th>Calificación</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                @if (isLoading()) {
+          @if (isLoading()) {
+            <div class="flex flex-col items-center justify-center p-12 gap-4">
+              <span class="loading loading-spinner loading-lg text-primary"></span>
+              <p class="text-base-content/60 font-medium">Cargando proveedores...</p>
+            </div>
+          } @else if (filteredProviders().length === 0) {
+            <div class="text-center p-12">
+              <i class="ri-inbox-line text-6xl text-base-content/20"></i>
+              <p class="mt-4 text-base-content/60">No se encontraron proveedores</p>
+            </div>
+          } @else {
+            <!-- Desktop Table -->
+            <div class="hidden lg:block overflow-x-auto">
+              <table class="table">
+                <thead class="bg-neutral-800 text-neutral-100">
                   <tr>
-                    <td colspan="9" class="text-center py-12">
-                      <span class="loading loading-spinner loading-lg text-primary"></span>
-                      <p class="mt-4 text-base-content/60">Cargando proveedores...</p>
-                    </td>
+                    <th class="text-neutral-100">Razón Social</th>
+                    <th class="text-neutral-100">Nombre Comercial</th>
+                    <th class="text-neutral-100">RUC</th>
+                    <th class="text-neutral-100">Categoría</th>
+                    <th class="text-neutral-100">Contacto</th>
+                    <th class="text-neutral-100">Teléfono</th>
+                    <th class="text-neutral-100">Calificación</th>
+                    <th class="text-neutral-100">Estado</th>
+                    <th class="text-neutral-100">Acciones</th>
                   </tr>
-                }
-
-                @if (!isLoading() && filteredProviders().length === 0) {
-                  <tr>
-                    <td colspan="9" class="text-center py-12">
-                      <i class="ri-inbox-line text-6xl text-base-content/20"></i>
-                      <p class="mt-4 text-base-content/60">No se encontraron proveedores</p>
-                    </td>
-                  </tr>
-                }
-
-                @for (provider of filteredProviders(); track provider.id) {
-                  <tr class="hover">
-                    <td>
-                      <div class="flex items-center gap-3">
-                        <div class="avatar placeholder">
-                          <div class="w-10 h-10 rounded-xl bg-primary/10">
-                            <span class="text-primary font-bold">
-                              {{ provider.businessName.charAt(0) }}
-                            </span>
+                </thead>
+                <tbody class="bg-white">
+                  @for (provider of filteredProviders(); track provider.id) {
+                    <tr class="hover:bg-sky-50 transition-colors border-b border-neutral-200">
+                      <td class="text-neutral-800">
+                        <div class="flex items-center gap-3">
+                          <div class="avatar placeholder">
+                            <div class="w-10 h-10 rounded-xl bg-primary/10">
+                              <span class="text-primary font-bold">
+                                {{ provider.businessName.charAt(0) }}
+                              </span>
+                            </div>
+                          </div>
+                          <div>
+                            <div class="font-semibold">{{ provider.businessName }}</div>
                           </div>
                         </div>
-                        <div>
-                          <div class="font-semibold">{{ provider.businessName }}</div>
+                      </td>
+                      <td class="text-neutral-700">
+                        <span class="text-sm">{{ provider.tradeName || '-' }}</span>
+                      </td>
+                      <td class="text-neutral-700">
+                        <span class="font-mono text-sm">{{ provider.ruc }}</span>
+                      </td>
+                      <td>
+                        <span [class]="'badge ' + getCategoryBadgeClass(provider.category)">
+                          {{ getCategoryLabel(provider.category) }}
+                        </span>
+                      </td>
+                      <td class="text-neutral-700">
+                        <div class="text-sm">
+                          <div class="font-medium">{{ provider.contactName }}</div>
+                          <div class="text-neutral-500">{{ provider.email }}</div>
+                        </div>
+                      </td>
+                      <td class="text-neutral-700">
+                        <div class="text-sm">
+                          <div>{{ provider.phone }}</div>
+                          @if (provider.mobile) {
+                            <div class="text-neutral-500">{{ provider.mobile }}</div>
+                          }
+                        </div>
+                      </td>
+                      <td>
+                        <div class="flex items-center gap-1">
+                          @for (star of getStars(provider.rating || 0); track $index) {
+                            <i [class]="star === 1 ? 'ri-star-fill text-warning' : 'ri-star-line text-base-content/20'"></i>
+                          }
+                          <span class="ml-1 text-sm font-medium text-neutral-700">{{ (provider.rating || 0).toFixed(1) }}</span>
+                        </div>
+                      </td>
+                      <td>
+                        @if (provider.isActive) {
+                          <span class="badge badge-success gap-2">
+                            <i class="ri-checkbox-circle-fill"></i>
+                            Activo
+                          </span>
+                        } @else {
+                          <span class="badge badge-error gap-2">
+                            <i class="ri-close-circle-fill"></i>
+                            Inactivo
+                          </span>
+                        }
+                      </td>
+                      <td>
+                        <div class="flex gap-2">
+                          <button
+                            class="btn btn-sm btn-ghost text-info hover:bg-sky-100"
+                            (click)="openViewModal(provider)"
+                            title="Ver detalles"
+                          >
+                            <i class="ri-eye-line"></i>
+                          </button>
+                          <button
+                            class="btn btn-sm btn-ghost text-primary hover:bg-sky-100"
+                            (click)="openEditModal(provider)"
+                            title="Editar"
+                          >
+                            <i class="ri-edit-line"></i>
+                          </button>
+                          @if (provider.isActive) {
+                            <button
+                              class="btn btn-sm btn-ghost text-error hover:bg-red-50"
+                              (click)="deactivateProvider(provider.id)"
+                              title="Desactivar"
+                            >
+                              <i class="ri-close-circle-line"></i>
+                            </button>
+                          } @else {
+                            <button
+                              class="btn btn-sm btn-ghost text-success hover:bg-green-50"
+                              (click)="activateProvider(provider.id)"
+                              title="Activar"
+                            >
+                              <i class="ri-checkbox-circle-line"></i>
+                            </button>
+                          }
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Mobile Cards -->
+            <div class="lg:hidden divide-y divide-neutral-200">
+              @for (provider of filteredProviders(); track provider.id) {
+                <div class="p-4 bg-white hover:bg-sky-50 transition-colors">
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                      <div class="avatar placeholder">
+                        <div class="w-12 h-12 rounded-xl bg-primary/10">
+                          <span class="text-primary font-bold text-lg">
+                            {{ provider.businessName.charAt(0) }}
+                          </span>
                         </div>
                       </div>
-                    </td>
-                    <td>
-                      <span class="text-sm">{{ provider.tradeName || '-' }}</span>
-                    </td>
-                    <td>
-                      <span class="font-mono text-sm">{{ provider.ruc }}</span>
-                    </td>
-                    <td>
-                      <span [class]="'badge ' + getCategoryBadgeClass(provider.category)">
+                      <div>
+                        <div class="font-bold text-base text-neutral-800">{{ provider.businessName }}</div>
+                        @if (provider.tradeName) {
+                          <div class="text-xs text-neutral-500">{{ provider.tradeName }}</div>
+                        }
+                      </div>
+                    </div>
+                    @if (provider.isActive) {
+                      <span class="badge badge-success badge-sm gap-1">
+                        <i class="ri-checkbox-circle-fill"></i>
+                        Activo
+                      </span>
+                    } @else {
+                      <span class="badge badge-error badge-sm gap-1">
+                        <i class="ri-close-circle-fill"></i>
+                        Inactivo
+                      </span>
+                    }
+                  </div>
+                  
+                  <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+                    <div>
+                      <span class="text-neutral-500">RUC:</span>
+                      <span class="text-neutral-700 ml-1 font-mono">{{ provider.ruc }}</span>
+                    </div>
+                    <div>
+                      <span class="text-neutral-500">Categoría:</span>
+                      <span [class]="'badge badge-xs ml-1 ' + getCategoryBadgeClass(provider.category)">
                         {{ getCategoryLabel(provider.category) }}
                       </span>
-                    </td>
-                    <td>
-                      <div class="text-sm">
-                        <div class="font-medium">{{ provider.contactName }}</div>
-                        <div class="text-base-content/60">{{ provider.email }}</div>
-                      </div>
-                    </td>
-                    <td>
-                      <div class="text-sm">
-                        <div>{{ provider.phone }}</div>
-                        @if (provider.mobile) {
-                          <div class="text-base-content/60">{{ provider.mobile }}</div>
-                        }
-                      </div>
-                    </td>
-                    <td>
-                      <div class="flex items-center gap-1">
-                        @for (star of getStars(provider.rating || 0); track $index) {
-                          <i [class]="star === 1 ? 'ri-star-fill text-warning' : 'ri-star-line text-base-content/20'"></i>
-                        }
-                        <span class="ml-1 text-sm font-medium">{{ (provider.rating || 0).toFixed(1) }}</span>
-                      </div>
-                    </td>
-                    <td>
-                      @if (provider.isActive) {
-                        <span class="badge badge-success gap-2">
-                          <i class="ri-checkbox-circle-fill"></i>
-                          Activo
-                        </span>
-                      } @else {
-                        <span class="badge badge-error gap-2">
-                          <i class="ri-close-circle-fill"></i>
-                          Inactivo
-                        </span>
-                      }
-                    </td>
-                    <td>
-                      <div class="flex gap-2">
-                        <button
-                          class="btn btn-sm btn-ghost text-info"
-                          (click)="openViewModal(provider)"
-                          title="Ver detalles"
-                        >
-                          <i class="ri-eye-line"></i>
-                        </button>
-                        <button
-                          class="btn btn-sm btn-ghost text-primary"
-                          (click)="openEditModal(provider)"
-                          title="Editar"
-                        >
-                          <i class="ri-edit-line"></i>
-                        </button>
-                        @if (provider.isActive) {
-                          <button
-                            class="btn btn-sm btn-ghost text-error"
-                            (click)="deactivateProvider(provider.id)"
-                            title="Desactivar"
-                          >
-                            <i class="ri-close-circle-line"></i>
-                          </button>
-                        } @else {
-                          <button
-                            class="btn btn-sm btn-ghost text-success"
-                            (click)="activateProvider(provider.id)"
-                            title="Activar"
-                          >
-                            <i class="ri-checkbox-circle-line"></i>
-                          </button>
-                        }
-                      </div>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                    <div class="col-span-2">
+                      <span class="text-neutral-500"><i class="ri-user-line"></i></span>
+                      <span class="text-neutral-700 ml-1">{{ provider.contactName }}</span>
+                    </div>
+                    <div class="col-span-2">
+                      <span class="text-neutral-500"><i class="ri-mail-line"></i></span>
+                      <span class="text-neutral-700 ml-1 text-xs">{{ provider.email }}</span>
+                    </div>
+                    <div>
+                      <span class="text-neutral-500"><i class="ri-phone-line"></i></span>
+                      <span class="text-neutral-700 ml-1 text-xs">{{ provider.phone }}</span>
+                    </div>
+                    <div>
+                      <span class="text-neutral-500">Rating:</span>
+                      <span class="ml-1">
+                        <i class="ri-star-fill text-warning text-xs"></i>
+                        <span class="text-neutral-700 text-xs font-semibold">{{ (provider.rating || 0).toFixed(1) }}</span>
+                      </span>
+                    </div>
+                  </div>
 
-          <!-- Pagination -->
-          <div class="flex justify-between items-center p-6 border-t border-base-300">
-            <div class="text-sm text-base-content/60">
-              Mostrando {{ filteredProviders().length }} de {{ totalProviders() }} proveedores
+                  <div class="flex items-center justify-end gap-1 pt-2 border-t border-neutral-100">
+                    <button
+                      class="btn btn-sm btn-ghost"
+                      (click)="openViewModal(provider)"
+                    >
+                      <i class="ri-eye-line"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-ghost text-primary"
+                      (click)="openEditModal(provider)"
+                    >
+                      <i class="ri-edit-line"></i>
+                    </button>
+                    @if (provider.isActive) {
+                      <button
+                        class="btn btn-sm btn-ghost text-error"
+                        (click)="deactivateProvider(provider.id)"
+                      >
+                        <i class="ri-close-circle-line"></i>
+                      </button>
+                    } @else {
+                      <button
+                        class="btn btn-sm btn-ghost text-success"
+                        (click)="activateProvider(provider.id)"
+                      >
+                        <i class="ri-checkbox-circle-line"></i>
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
             </div>
-            <div class="join">
-              <button
-                class="join-item btn btn-sm"
-                (click)="previousPage()"
-                [disabled]="currentPage() === 1"
-              >
-                <i class="ri-arrow-left-s-line"></i>
-              </button>
-              <button class="join-item btn btn-sm">
-                Página {{ currentPage() }} de {{ totalPages() }}
-              </button>
-              <button
-                class="join-item btn btn-sm"
-                (click)="nextPage()"
-                [disabled]="currentPage() === totalPages()"
-              >
-                <i class="ri-arrow-right-s-line"></i>
-              </button>
+
+            <!-- Pagination -->
+            <div class="flex flex-col sm:flex-row justify-between items-center p-6 border-t border-base-300 gap-3">
+              <div class="text-sm text-base-content/60">
+                Mostrando {{ filteredProviders().length }} de {{ totalProviders() }} proveedores
+              </div>
+              <div class="join">
+                <button
+                  class="join-item btn btn-sm"
+                  (click)="previousPage()"
+                  [disabled]="currentPage() === 1"
+                >
+                  <i class="ri-arrow-left-s-line"></i>
+                </button>
+                <button class="join-item btn btn-sm">
+                  Página {{ currentPage() }} de {{ totalPages() }}
+                </button>
+                <button
+                  class="join-item btn btn-sm"
+                  (click)="nextPage()"
+                  [disabled]="currentPage() === totalPages()"
+                >
+                  <i class="ri-arrow-right-s-line"></i>
+                </button>
+              </div>
             </div>
-          </div>
+          }
         </div>
       </div>
     </main>

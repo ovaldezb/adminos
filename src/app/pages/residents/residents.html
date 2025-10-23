@@ -39,19 +39,19 @@
       }
 
       <!-- Filters & Actions -->
-      <div class="glass rounded-2xl p-6 shadow-xl mb-6">
-        <div class="flex flex-col lg:flex-row gap-4 items-center justify-between mb-4">
-          <div class="flex flex-col sm:flex-row gap-4 flex-1 w-full">
+      <div class="glass rounded-2xl p-4 lg:p-6 shadow-xl mb-6">
+        <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-4">
+          <div class="flex flex-col sm:flex-row gap-3 flex-1 w-full">
             <!-- Search -->
-            <div class="form-control flex-1">
+            <div class="form-control flex-1 min-w-0">
               <div class="input-group">
                 <span class="bg-base-200">
                   <i class="ri-search-line"></i>
                 </span>
                 <input
                   type="text"
-                  placeholder="Buscar por nombre, email, documento..."
-                  class="input input-bordered w-full"
+                  placeholder="Buscar residente..."
+                  class="input input-bordered w-full text-sm"
                   [value]="searchTerm()"
                   (input)="onSearchChange($event)"
                 />
@@ -60,7 +60,7 @@
 
             <!-- Type Filter -->
             <select
-              class="select select-bordered w-full sm:w-48"
+              class="select select-bordered w-full sm:w-auto text-sm"
               [value]="typeFilter()"
               (change)="onTypeFilterChange($event)"
             >
@@ -72,7 +72,7 @@
 
             <!-- Status Filter -->
             <select
-              class="select select-bordered w-full sm:w-48"
+              class="select select-bordered w-full sm:w-auto text-sm"
               [value]="statusFilter()"
               (change)="onStatusFilterChange($event)"
             >
@@ -82,35 +82,35 @@
             </select>
           </div>
 
-          <div class="flex gap-2">
-            <button class="btn btn-ghost btn-sm" (click)="clearFilters()">
+          <div class="flex gap-2 w-full sm:w-auto">
+            <button class="btn btn-ghost btn-sm flex-1 sm:flex-none" (click)="clearFilters()">
               <i class="ri-filter-off-line"></i>
-              Limpiar
+              <span class="hidden sm:inline">Limpiar</span>
             </button>
-            <button class="btn btn-primary btn-sm gap-2" (click)="openCreateModal()">
+            <button class="btn btn-primary btn-sm gap-2 flex-1 sm:flex-none" (click)="openCreateModal()">
               <i class="ri-add-line"></i>
-              Nuevo Residente
+              <span class="hidden sm:inline">Nuevo</span> Residente
             </button>
           </div>
         </div>
 
         <!-- Stats -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="stat bg-base-100 rounded-xl p-4">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          <div class="stat bg-base-100 rounded-xl p-3 lg:p-4">
             <div class="stat-title text-xs">Total</div>
-            <div class="stat-value text-2xl text-primary">{{ totalItems() }}</div>
+            <div class="stat-value text-xl lg:text-2xl text-primary">{{ totalItems() }}</div>
           </div>
-          <div class="stat bg-base-100 rounded-xl p-4">
+          <div class="stat bg-base-100 rounded-xl p-3 lg:p-4">
             <div class="stat-title text-xs">Propietarios</div>
-            <div class="stat-value text-2xl text-info">{{ totalOwners() }}</div>
+            <div class="stat-value text-xl lg:text-2xl text-info">{{ totalOwners() }}</div>
           </div>
-          <div class="stat bg-base-100 rounded-xl p-4">
+          <div class="stat bg-base-100 rounded-xl p-3 lg:p-4">
             <div class="stat-title text-xs">Activos</div>
-            <div class="stat-value text-2xl text-success">{{ totalActive() }}</div>
+            <div class="stat-value text-xl lg:text-2xl text-success">{{ totalActive() }}</div>
           </div>
-          <div class="stat bg-base-100 rounded-xl p-4">
+          <div class="stat bg-base-100 rounded-xl p-3 lg:p-4">
             <div class="stat-title text-xs">Con Deuda</div>
-            <div class="stat-value text-2xl text-error">{{ totalWithDebt() }}</div>
+            <div class="stat-value text-xl lg:text-2xl text-error">{{ totalWithDebt() }}</div>
           </div>
         </div>
       </div>
@@ -118,8 +118,9 @@
       <!-- Residents Table -->
       <div class="glass rounded-2xl shadow-xl overflow-hidden">
         @if (loading()) {
-          <div class="flex items-center justify-center p-12">
+          <div class="flex flex-col items-center justify-center p-12 gap-4">
             <span class="loading loading-spinner loading-lg text-primary"></span>
+            <p class="text-neutral-600 font-medium">Cargando residentes...</p>
           </div>
         } @else if (filteredResidents().length === 0) {
           <div class="text-center p-12">
@@ -127,24 +128,25 @@
             <p class="text-neutral-500">No se encontraron residentes</p>
           </div>
         } @else {
-          <div class="overflow-x-auto">
-            <table class="table table-zebra">
-              <thead class="bg-base-200">
+          <!-- Desktop Table -->
+          <div class="hidden lg:block overflow-x-auto">
+            <table class="table">
+              <thead class="bg-neutral-800 text-neutral-100">
                 <tr>
-                  <th>Nombre</th>
-                  <th>Documento</th>
-                  <th>Tipo</th>
-                  <th>Contacto</th>
-                  <th>Unidad(es)</th>
-                  <th>Estado</th>
-                  <th>Deuda</th>
-                  <th>Acciones</th>
+                  <th class="text-neutral-100">Nombre</th>
+                  <th class="text-neutral-100">Documento</th>
+                  <th class="text-neutral-100">Tipo</th>
+                  <th class="text-neutral-100">Contacto</th>
+                  <th class="text-neutral-100">Unidad(es)</th>
+                  <th class="text-neutral-100">Estado</th>
+                  <th class="text-neutral-100">Deuda</th>
+                  <th class="text-neutral-100">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody class="bg-white">
                 @for (resident of filteredResidents(); track resident.id) {
-                  <tr class="hover">
-                    <td>
+                  <tr class="hover:bg-sky-50 transition-colors border-b border-neutral-200">
+                    <td class="text-neutral-800">
                       <div class="flex items-center gap-3">
                         <div class="avatar placeholder">
                           <div class="bg-primary/20 text-primary rounded-full w-10">
@@ -159,7 +161,7 @@
                         </div>
                       </div>
                     </td>
-                    <td>
+                    <td class="text-neutral-700">
                       <div class="text-sm">
                         <div class="font-medium">{{ resident.documentNumber }}</div>
                         <div class="text-xs text-neutral-500">{{ getDocumentTypeLabel(resident.documentType) }}</div>
@@ -170,7 +172,7 @@
                         {{ getTypeLabel(resident.type) }}
                       </span>
                     </td>
-                    <td>
+                    <td class="text-neutral-700">
                       <div class="text-sm">
                         <div class="flex items-center gap-1">
                           <i class="ri-mail-line text-xs"></i>
@@ -196,7 +198,7 @@
                         <span class="badge badge-ghost">Inactivo</span>
                       }
                     </td>
-                    <td>
+                    <td class="text-neutral-700">
                       @if (resident.totalDebt > 0) {
                         <span class="font-semibold text-error">{{ formatCurrency(resident.totalDebt) }}</span>
                       } @else {
@@ -206,14 +208,14 @@
                     <td>
                       <div class="flex gap-1">
                         <button
-                          class="btn btn-ghost btn-xs"
+                          class="btn btn-ghost btn-xs hover:bg-sky-100"
                           (click)="openViewModal(resident)"
                           title="Ver detalles"
                         >
                           <i class="ri-eye-line"></i>
                         </button>
                         <button
-                          class="btn btn-ghost btn-xs text-primary"
+                          class="btn btn-ghost btn-xs text-primary hover:bg-sky-100"
                           (click)="openEditModal(resident)"
                           title="Editar"
                         >
@@ -221,13 +223,20 @@
                         </button>
                         @if (resident.isActive) {
                           <button
-                            class="btn btn-ghost btn-xs text-error"
+                            class="btn btn-ghost btn-xs text-warning hover:bg-yellow-50"
                             (click)="deactivateResident(resident)"
                             title="Desactivar"
                           >
                             <i class="ri-user-unfollow-line"></i>
                           </button>
                         }
+                        <button
+                          class="btn btn-ghost btn-xs text-error hover:bg-red-50"
+                          (click)="openDeleteModal(resident)"
+                          title="Eliminar permanentemente"
+                        >
+                          <i class="ri-delete-bin-line"></i>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -236,9 +245,101 @@
             </table>
           </div>
 
+          <!-- Mobile Cards -->
+          <div class="lg:hidden divide-y divide-neutral-200">
+            @for (resident of filteredResidents(); track resident.id) {
+              <div class="p-4 bg-white hover:bg-sky-50 transition-colors">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="avatar placeholder">
+                      <div class="bg-primary/20 text-primary rounded-full w-12">
+                        <span class="text-sm font-semibold">
+                          {{ resident.firstName.charAt(0) }}{{ resident.lastName.charAt(0) }}
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="font-bold text-base text-neutral-800">{{ getFullName(resident) }}</div>
+                      <div class="text-xs text-neutral-500">{{ getDocumentTypeLabel(resident.documentType) }}: {{ resident.documentNumber }}</div>
+                    </div>
+                  </div>
+                  <span class="badge badge-sm" [ngClass]="getTypeBadgeClass(resident.type)">
+                    {{ getTypeLabel(resident.type) }}
+                  </span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+                  <div>
+                    <span class="text-neutral-500"><i class="ri-mail-line"></i></span>
+                    <span class="text-neutral-700 ml-1 text-xs">{{ resident.email }}</span>
+                  </div>
+                  <div>
+                    <span class="text-neutral-500"><i class="ri-phone-line"></i></span>
+                    <span class="text-neutral-700 ml-1 text-xs">{{ resident.phone }}</span>
+                  </div>
+                  <div>
+                    <span class="text-neutral-500">Unidad:</span>
+                    <span class="text-neutral-700 ml-1">
+                      @for (unitNumber of resident.unitNumbers || resident.units; track unitNumber; let isLast = $last) {
+                        <span>{{ unitNumber }}@if (!isLast) {, }</span>
+                      }
+                    </span>
+                  </div>
+                  <div>
+                    <span class="text-neutral-500">Estado:</span>
+                    @if (resident.isActive) {
+                      <span class="badge badge-success badge-xs ml-1">Activo</span>
+                    } @else {
+                      <span class="badge badge-ghost badge-xs ml-1">Inactivo</span>
+                    }
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-xs text-neutral-500">Deuda</div>
+                    @if (resident.totalDebt > 0) {
+                      <div class="font-bold text-base text-error">{{ formatCurrency(resident.totalDebt) }}</div>
+                    } @else {
+                      <div class="font-semibold text-sm text-success">Sin deuda</div>
+                    }
+                  </div>
+                  <div class="flex gap-1">
+                    <button
+                      class="btn btn-sm btn-ghost"
+                      (click)="openViewModal(resident)"
+                    >
+                      <i class="ri-eye-line"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-ghost text-primary"
+                      (click)="openEditModal(resident)"
+                    >
+                      <i class="ri-edit-line"></i>
+                    </button>
+                    @if (resident.isActive) {
+                      <button
+                        class="btn btn-sm btn-ghost text-warning"
+                        (click)="deactivateResident(resident)"
+                      >
+                        <i class="ri-user-unfollow-line"></i>
+                      </button>
+                    }
+                    <button
+                      class="btn btn-sm btn-ghost text-error"
+                      (click)="openDeleteModal(resident)"
+                    >
+                      <i class="ri-delete-bin-line"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
           <!-- Pagination -->
-          <div class="flex items-center justify-between p-4 bg-base-200">
-            <div class="text-sm text-neutral-600">
+          <div class="flex flex-col sm:flex-row items-center justify-between p-4 bg-neutral-50 gap-3">
+            <div class="text-sm text-neutral-600 text-center sm:text-left">
               Mostrando {{ (currentPage() - 1) * pageSize() + 1 }} - 
               {{ Math.min(currentPage() * pageSize(), totalItems()) }} de {{ totalItems() }}
             </div>
@@ -643,6 +744,76 @@
         </div>
       </div>
       <div class="modal-backdrop" (click)="closeDeactivateModal()"></div>
+    </div>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteModal()) {
+    <div class="modal modal-open">
+      <div class="modal-box glass max-w-md">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="p-3 bg-error/10 rounded-full">
+            <i class="ri-error-warning-line text-3xl text-error"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-xl text-neutral-800">Eliminar Residente</h3>
+          </div>
+        </div>
+
+        @if (residentToDelete()) {
+          <div class="mb-6">
+            <p class="text-neutral-700 mb-4">
+              ¿Está seguro que desea <strong class="text-error">eliminar permanentemente</strong> a este residente?
+            </p>
+            <div class="bg-neutral-100 rounded-xl p-4 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-neutral-600">Nombre:</span>
+                <span class="font-bold text-neutral-800">
+                  {{ residentToDelete()!.firstName }} {{ residentToDelete()!.lastName }}
+                </span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-neutral-600">Email:</span>
+                <span class="font-semibold text-neutral-700">{{ residentToDelete()!.email }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-neutral-600">Documento:</span>
+                <span class="font-mono font-semibold text-neutral-700">{{ residentToDelete()!.documentNumber }}</span>
+              </div>
+            </div>
+            <div class="alert alert-error mt-4">
+              <i class="ri-alert-line"></i>
+              <span class="text-sm font-semibold">⚠️ Esta acción NO se puede deshacer. Todos los datos del residente serán eliminados permanentemente.</span>
+            </div>
+          </div>
+        }
+
+        <div class="modal-action">
+          <button 
+            type="button" 
+            class="btn btn-ghost" 
+            (click)="closeDeleteModal()"
+            [disabled]="isDeleting()"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-error gap-2" 
+            (click)="confirmDelete()"
+            [disabled]="isDeleting()"
+          >
+            @if (isDeleting()) {
+              <span class="loading loading-spinner loading-sm"></span>
+              Eliminando...
+            } @else {
+              <i class="ri-delete-bin-line"></i>
+              Eliminar Permanentemente
+            }
+          </button>
+        </div>
+      </div>
+      <div class="modal-backdrop" (click)="closeDeleteModal()"></div>
     </div>
   }
 
