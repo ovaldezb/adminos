@@ -104,7 +104,7 @@ export class ProvidersComponent {
         (p) =>
           p.businessName.toLowerCase().includes(search) ||
           p.tradeName?.toLowerCase().includes(search) ||
-          p.ruc.includes(search) ||
+          p.rfc.includes(search) ||
           p.contactName.toLowerCase().includes(search) ||
           p.email.toLowerCase().includes(search)
       );
@@ -322,11 +322,11 @@ export class ProvidersComponent {
     this.formData.set({
       businessName: '',
       tradeName: '',
-      ruc: '',
+      rfc: '',
       category: ProviderCategory.OTHER,
       address: '',
-      city: 'Lima',
-      country: 'Perú',
+      city: 'Ciudad de México',
+      country: 'México',
       contactName: '',
       email: '',
       phone: '',
@@ -334,6 +334,7 @@ export class ProvidersComponent {
       website: '',
       bankName: '',
       bankAccount: '',
+      clabe: '',
       rating: 0,
       notes: '',
     });
@@ -346,7 +347,7 @@ export class ProvidersComponent {
     this.formData.set({
       businessName: provider.businessName,
       tradeName: provider.tradeName,
-      ruc: provider.ruc,
+      rfc: provider.rfc,
       category: provider.category,
       address: provider.address,
       city: provider.city,
@@ -358,6 +359,7 @@ export class ProvidersComponent {
       website: provider.website,
       bankName: provider.bankName,
       bankAccount: provider.bankAccount,
+      clabe: provider.clabe,
       rating: provider.rating,
       notes: provider.notes,
     });
