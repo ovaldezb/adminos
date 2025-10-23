@@ -1,0 +1,780 @@
+<div class="min-h-screen bg-base-200">
+  <app-navbar (condoChanged)="loadProviders()"></app-navbar>
+
+  <div class="flex">
+    <app-side-menu></app-side-menu>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-8">
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-4xl font-bold text-base-content mb-2">Gestión de Proveedores</h1>
+        <p class="text-base-content/70">Administra los proveedores de servicios del condominio</p>
+      </div>
+
+      <!-- Statistics Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Providers -->
+        <div class="card glass shadow-xl animate-fade-in">
+          <div class="card-body">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-base-content/60 text-sm font-medium">Total Proveedores</p>
+                <h3 class="text-3xl font-bold text-primary mt-1">{{ totalProviders() }}</h3>
+              </div>
+              <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <i class="ri-building-line text-2xl text-primary"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Providers -->
+        <div class="card glass shadow-xl animate-fade-in" style="animation-delay: 0.1s">
+          <div class="card-body">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-base-content/60 text-sm font-medium">Activos</p>
+                <h3 class="text-3xl font-bold text-success mt-1">{{ totalActive() }}</h3>
+              </div>
+              <div class="w-14 h-14 rounded-2xl bg-success/10 flex items-center justify-center">
+                <i class="ri-checkbox-circle-line text-2xl text-success"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inactive Providers -->
+        <div class="card glass shadow-xl animate-fade-in" style="animation-delay: 0.2s">
+          <div class="card-body">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-base-content/60 text-sm font-medium">Inactivos</p>
+                <h3 class="text-3xl font-bold text-error mt-1">{{ totalInactive() }}</h3>
+              </div>
+              <div class="w-14 h-14 rounded-2xl bg-error/10 flex items-center justify-center">
+                <i class="ri-close-circle-line text-2xl text-error"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Average Rating -->
+        <div class="card glass shadow-xl animate-fade-in" style="animation-delay: 0.3s">
+          <div class="card-body">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-base-content/60 text-sm font-medium">Calificación Promedio</p>
+                <h3 class="text-3xl font-bold text-warning mt-1">{{ averageRating().toFixed(1) }}</h3>
+              </div>
+              <div class="w-14 h-14 rounded-2xl bg-warning/10 flex items-center justify-center">
+                <i class="ri-star-line text-2xl text-warning"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Alert -->
+      @if (error()) {
+        <div class="alert alert-error mb-6 shadow-xl">
+          <i class="ri-error-warning-line text-xl"></i>
+          <span>{{ error() }}</span>
+          <button class="btn btn-sm btn-ghost" (click)="error.set(null)">
+            <i class="ri-close-line"></i>
+          </button>
+        </div>
+      }
+
+      <!-- Filters & Actions -->
+      <div class="card glass shadow-xl mb-8">
+        <div class="card-body">
+          <div class="flex flex-col lg:flex-row gap-4 items-center">
+            <!-- Search -->
+            <div class="form-control flex-1">
+              <div class="input-group">
+                <span class="bg-base-300">
+                  <i class="ri-search-line text-xl"></i>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Buscar por razón social, RUC, contacto..."
+                  class="input input-bordered flex-1"
+                  [value]="searchTerm()"
+                  (input)="onSearchChange($any($event.target).value)"
+                />
+              </div>
+            </div>
+
+            <!-- Category Filter -->
+            <select
+              class="select select-bordered w-full lg:w-48"
+              [value]="filterCategory()"
+              (change)="onCategoryFilterChange($any($event.target).value)"
+            >
+              <option value="all">Todas las categorías</option>
+              @for (cat of categories; track cat.value) {
+                <option [value]="cat.value">{{ cat.label }}</option>
+              }
+            </select>
+
+            <!-- Status Filter -->
+            <select
+              class="select select-bordered w-full lg:w-48"
+              [value]="filterStatus()"
+              (change)="onStatusFilterChange($any($event.target).value)"
+            >
+              <option value="all">Todos los estados</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
+            </select>
+
+            <!-- Clear Filters -->
+            <button class="btn btn-ghost" (click)="clearFilters()">
+              <i class="ri-close-line mr-2"></i>
+              Limpiar
+            </button>
+
+            <!-- Create Provider Button -->
+            <button class="btn btn-primary" (click)="openCreateModal()">
+              <i class="ri-add-line mr-2"></i>
+              Nuevo Proveedor
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Providers Table -->
+      <div class="card glass shadow-xl">
+        <div class="card-body p-0">
+          <div class="overflow-x-auto">
+            <table class="table table-zebra">
+              <thead>
+                <tr class="bg-base-300">
+                  <th>Razón Social</th>
+                  <th>Nombre Comercial</th>
+                  <th>RUC</th>
+                  <th>Categoría</th>
+                  <th>Contacto</th>
+                  <th>Teléfono</th>
+                  <th>Calificación</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @if (isLoading()) {
+                  <tr>
+                    <td colspan="9" class="text-center py-12">
+                      <span class="loading loading-spinner loading-lg text-primary"></span>
+                      <p class="mt-4 text-base-content/60">Cargando proveedores...</p>
+                    </td>
+                  </tr>
+                }
+
+                @if (!isLoading() && filteredProviders().length === 0) {
+                  <tr>
+                    <td colspan="9" class="text-center py-12">
+                      <i class="ri-inbox-line text-6xl text-base-content/20"></i>
+                      <p class="mt-4 text-base-content/60">No se encontraron proveedores</p>
+                    </td>
+                  </tr>
+                }
+
+                @for (provider of filteredProviders(); track provider.id) {
+                  <tr class="hover">
+                    <td>
+                      <div class="flex items-center gap-3">
+                        <div class="avatar placeholder">
+                          <div class="w-10 h-10 rounded-xl bg-primary/10">
+                            <span class="text-primary font-bold">
+                              {{ provider.businessName.charAt(0) }}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <div class="font-semibold">{{ provider.businessName }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="text-sm">{{ provider.tradeName || '-' }}</span>
+                    </td>
+                    <td>
+                      <span class="font-mono text-sm">{{ provider.ruc }}</span>
+                    </td>
+                    <td>
+                      <span [class]="'badge ' + getCategoryBadgeClass(provider.category)">
+                        {{ getCategoryLabel(provider.category) }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="text-sm">
+                        <div class="font-medium">{{ provider.contactName }}</div>
+                        <div class="text-base-content/60">{{ provider.email }}</div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="text-sm">
+                        <div>{{ provider.phone }}</div>
+                        @if (provider.mobile) {
+                          <div class="text-base-content/60">{{ provider.mobile }}</div>
+                        }
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex items-center gap-1">
+                        @for (star of getStars(provider.rating || 0); track $index) {
+                          <i [class]="star === 1 ? 'ri-star-fill text-warning' : 'ri-star-line text-base-content/20'"></i>
+                        }
+                        <span class="ml-1 text-sm font-medium">{{ (provider.rating || 0).toFixed(1) }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      @if (provider.isActive) {
+                        <span class="badge badge-success gap-2">
+                          <i class="ri-checkbox-circle-fill"></i>
+                          Activo
+                        </span>
+                      } @else {
+                        <span class="badge badge-error gap-2">
+                          <i class="ri-close-circle-fill"></i>
+                          Inactivo
+                        </span>
+                      }
+                    </td>
+                    <td>
+                      <div class="flex gap-2">
+                        <button
+                          class="btn btn-sm btn-ghost text-info"
+                          (click)="openViewModal(provider)"
+                          title="Ver detalles"
+                        >
+                          <i class="ri-eye-line"></i>
+                        </button>
+                        <button
+                          class="btn btn-sm btn-ghost text-primary"
+                          (click)="openEditModal(provider)"
+                          title="Editar"
+                        >
+                          <i class="ri-edit-line"></i>
+                        </button>
+                        @if (provider.isActive) {
+                          <button
+                            class="btn btn-sm btn-ghost text-error"
+                            (click)="deactivateProvider(provider.id)"
+                            title="Desactivar"
+                          >
+                            <i class="ri-close-circle-line"></i>
+                          </button>
+                        } @else {
+                          <button
+                            class="btn btn-sm btn-ghost text-success"
+                            (click)="activateProvider(provider.id)"
+                            title="Activar"
+                          >
+                            <i class="ri-checkbox-circle-line"></i>
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="flex justify-between items-center p-6 border-t border-base-300">
+            <div class="text-sm text-base-content/60">
+              Mostrando {{ filteredProviders().length }} de {{ totalProviders() }} proveedores
+            </div>
+            <div class="join">
+              <button
+                class="join-item btn btn-sm"
+                (click)="previousPage()"
+                [disabled]="currentPage() === 1"
+              >
+                <i class="ri-arrow-left-s-line"></i>
+              </button>
+              <button class="join-item btn btn-sm">
+                Página {{ currentPage() }} de {{ totalPages() }}
+              </button>
+              <button
+                class="join-item btn btn-sm"
+                (click)="nextPage()"
+                [disabled]="currentPage() === totalPages()"
+              >
+                <i class="ri-arrow-right-s-line"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  @if (showModal()) {
+    <div class="modal modal-open">
+      <div class="modal-box max-w-4xl glass">
+        <!-- Modal Header -->
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="font-bold text-2xl">
+            @if (modalMode() === 'create') {
+              <i class="ri-add-circle-line mr-2"></i>Nuevo Proveedor
+            }
+            @if (modalMode() === 'edit') {
+              <i class="ri-edit-line mr-2"></i>Editar Proveedor
+            }
+            @if (modalMode() === 'view') {
+              <i class="ri-eye-line mr-2"></i>Detalles del Proveedor
+            }
+          </h3>
+          <button class="btn btn-sm btn-circle btn-ghost" (click)="closeModal()">
+            <i class="ri-close-line text-xl"></i>
+          </button>
+        </div>
+
+        <!-- View Mode -->
+        @if (modalMode() === 'view' && selectedProvider()) {
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Business Info -->
+            <div class="card bg-base-200 shadow-xl">
+              <div class="card-body">
+                <h4 class="font-bold text-lg mb-4">
+                  <i class="ri-building-line mr-2"></i>Información Empresarial
+                </h4>
+                <div class="space-y-3">
+                  <div>
+                    <label class="text-sm text-base-content/60">Razón Social</label>
+                    <p class="font-medium">{{ selectedProvider()!.businessName }}</p>
+                  </div>
+                  <div>
+                    <label class="text-sm text-base-content/60">Nombre Comercial</label>
+                    <p class="font-medium">{{ selectedProvider()!.tradeName || '-' }}</p>
+                  </div>
+                  <div>
+                    <label class="text-sm text-base-content/60">RUC</label>
+                    <p class="font-mono font-medium">{{ selectedProvider()!.ruc }}</p>
+                  </div>
+                  <div>
+                    <label class="text-sm text-base-content/60">Categoría</label>
+                    <p>
+                      <span [class]="'badge ' + getCategoryBadgeClass(selectedProvider()!.category)">
+                        {{ getCategoryLabel(selectedProvider()!.category) }}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="card bg-base-200 shadow-xl">
+              <div class="card-body">
+                <h4 class="font-bold text-lg mb-4">
+                  <i class="ri-contacts-line mr-2"></i>Información de Contacto
+                </h4>
+                <div class="space-y-3">
+                  <div>
+                    <label class="text-sm text-base-content/60">Contacto</label>
+                    <p class="font-medium">{{ selectedProvider()!.contactName }}</p>
+                  </div>
+                  <div>
+                    <label class="text-sm text-base-content/60">Email</label>
+                    <p class="font-medium">{{ selectedProvider()!.email }}</p>
+                  </div>
+                  <div>
+                    <label class="text-sm text-base-content/60">Teléfono</label>
+                    <p class="font-medium">{{ selectedProvider()!.phone }}</p>
+                  </div>
+                  @if (selectedProvider()!.mobile) {
+                    <div>
+                      <label class="text-sm text-base-content/60">Celular</label>
+                      <p class="font-medium">{{ selectedProvider()!.mobile }}</p>
+                    </div>
+                  }
+                  @if (selectedProvider()!.website) {
+                    <div>
+                      <label class="text-sm text-base-content/60">Sitio Web</label>
+                      <p class="font-medium">
+                        <a [href]="'https://' + selectedProvider()!.website" target="_blank" class="link link-primary">
+                          {{ selectedProvider()!.website }}
+                        </a>
+                      </p>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Address -->
+            <div class="card bg-base-200 shadow-xl">
+              <div class="card-body">
+                <h4 class="font-bold text-lg mb-4">
+                  <i class="ri-map-pin-line mr-2"></i>Dirección
+                </h4>
+                <div class="space-y-3">
+                  <div>
+                    <label class="text-sm text-base-content/60">Dirección</label>
+                    <p class="font-medium">{{ selectedProvider()!.address }}</p>
+                  </div>
+                  <div>
+                    <label class="text-sm text-base-content/60">Ciudad</label>
+                    <p class="font-medium">{{ selectedProvider()!.city }}</p>
+                  </div>
+                  <div>
+                    <label class="text-sm text-base-content/60">País</label>
+                    <p class="font-medium">{{ selectedProvider()!.country }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Banking Info -->
+            <div class="card bg-base-200 shadow-xl">
+              <div class="card-body">
+                <h4 class="font-bold text-lg mb-4">
+                  <i class="ri-bank-line mr-2"></i>Información Bancaria
+                </h4>
+                <div class="space-y-3">
+                  <div>
+                    <label class="text-sm text-base-content/60">Banco</label>
+                    <p class="font-medium">{{ selectedProvider()!.bankName || '-' }}</p>
+                  </div>
+                  <div>
+                    <label class="text-sm text-base-content/60">Cuenta Bancaria</label>
+                    <p class="font-mono font-medium">{{ selectedProvider()!.bankAccount || '-' }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="card bg-base-200 shadow-xl md:col-span-2">
+              <div class="card-body">
+                <h4 class="font-bold text-lg mb-4">
+                  <i class="ri-bar-chart-line mr-2"></i>Estadísticas
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div class="stat bg-base-300 rounded-2xl">
+                    <div class="stat-title">Calificación</div>
+                    <div class="stat-value text-warning">{{ (selectedProvider()!.rating || 0).toFixed(1) }}</div>
+                    <div class="flex gap-1 mt-2">
+                      @for (star of getStars(selectedProvider()!.rating || 0); track $index) {
+                        <i [class]="star === 1 ? 'ri-star-fill text-warning' : 'ri-star-line text-base-content/20'"></i>
+                      }
+                    </div>
+                  </div>
+                  <div class="stat bg-base-300 rounded-2xl">
+                    <div class="stat-title">Condominios</div>
+                    <div class="stat-value text-primary">{{ selectedProvider()!.condominiums.length || 0 }}</div>
+                  </div>
+                  <div class="stat bg-base-300 rounded-2xl">
+                    <div class="stat-title">Contratos</div>
+                    <div class="stat-value text-info">{{ selectedProvider()!.totalContracts || 0 }}</div>
+                  </div>
+                  <div class="stat bg-base-300 rounded-2xl">
+                    <div class="stat-title">Total Facturado</div>
+                    <div class="stat-value text-success text-xl">
+                      {{ formatCurrency(selectedProvider()!.totalInvoiced || 0) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            @if (selectedProvider()!.notes) {
+              <div class="card bg-base-200 shadow-xl md:col-span-2">
+                <div class="card-body">
+                  <h4 class="font-bold text-lg mb-4">
+                    <i class="ri-file-text-line mr-2"></i>Notas
+                  </h4>
+                  <p class="text-base-content/80">{{ selectedProvider()!.notes }}</p>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Create/Edit Mode -->
+        @if (modalMode() === 'create' || modalMode() === 'edit') {
+          <form (submit)="modalMode() === 'create' ? createProvider() : updateProvider()" class="space-y-6">
+            <!-- Business Information -->
+            <div class="card bg-base-200 shadow-xl">
+              <div class="card-body">
+                <h4 class="font-bold text-lg mb-4">
+                  <i class="ri-building-line mr-2"></i>Información Empresarial
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Razón Social <span class="text-error">*</span></span>
+                    </label>
+                    <input
+                      type="text"
+                      class="input input-bordered"
+                      [value]="formData().businessName"
+                      (input)="onFormFieldChange('businessName', $any($event.target).value)"
+                      required
+                    />
+                  </div>
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Nombre Comercial</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="input input-bordered"
+                      [value]="formData().tradeName"
+                      (input)="onFormFieldChange('tradeName', $any($event.target).value)"
+                    />
+                  </div>
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">RUC <span class="text-error">*</span></span>
+                    </label>
+                    <input
+                      type="text"
+                      class="input input-bordered font-mono"
+                      [value]="formData().ruc"
+                      (input)="onFormFieldChange('ruc', $any($event.target).value)"
+                      maxlength="11"
+                      required
+                    />
+                  </div>
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Categoría <span class="text-error">*</span></span>
+                    </label>
+                    <select
+                      class="select select-bordered"
+                      [value]="formData().category"
+                      (change)="onFormFieldChange('category', $any($event.target).value)"
+                      required
+                    >
+                      @for (cat of categories; track cat.value) {
+                        <option [value]="cat.value">{{ cat.label }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="card bg-base-200 shadow-xl">
+              <div class="card-body">
+                <h4 class="font-bold text-lg mb-4">
+                  <i class="ri-contacts-line mr-2"></i>Información de Contacto
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Nombre de Contacto <span class="text-error">*</span></span>
+                    </label>
+                    <input
+                      type="text"
+                      class="input input-bordered"
+                      [value]="formData().contactName"
+                      (input)="onFormFieldChange('contactName', $any($event.target).value)"
+                      required
+                    />
+                  </div>
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Email <span class="text-error">*</span></span>
+                    </label>
+                    <input
+                      type="email"
+                      class="input input-bordered"
+                      [value]="formData().email"
+                      (input)="onFormFieldChange('email', $any($event.target).value)"
+                      required
+                    />
+                  </div>
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Teléfono <span class="text-error">*</span></span>
+                    </label>
+                    <input
+                      type="tel"
+                      class="input input-bordered"
+                      [value]="formData().phone"
+                      (input)="onFormFieldChange('phone', $any($event.target).value)"
+                      required
+                    />
+                  </div>
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Celular</span>
+                    </label>
+                    <input
+                      type="tel"
+                      class="input input-bordered"
+                      [value]="formData().mobile"
+                      (input)="onFormFieldChange('mobile', $any($event.target).value)"
+                    />
+                  </div>
+                  <div class="form-control md:col-span-2">
+                    <label class="label">
+                      <span class="label-text">Sitio Web</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="input input-bordered"
+                      placeholder="www.ejemplo.com"
+                      [value]="formData().website"
+                      (input)="onFormFieldChange('website', $any($event.target).value)"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Address -->
+            <div class="card bg-base-200 shadow-xl">
+              <div class="card-body">
+                <h4 class="font-bold text-lg mb-4">
+                  <i class="ri-map-pin-line mr-2"></i>Dirección
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="form-control md:col-span-2">
+                    <label class="label">
+                      <span class="label-text">Dirección</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="input input-bordered"
+                      [value]="formData().address"
+                      (input)="onFormFieldChange('address', $any($event.target).value)"
+                    />
+                  </div>
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Ciudad</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="input input-bordered"
+                      [value]="formData().city"
+                      (input)="onFormFieldChange('city', $any($event.target).value)"
+                    />
+                  </div>
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">País</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="input input-bordered"
+                      [value]="formData().country"
+                      (input)="onFormFieldChange('country', $any($event.target).value)"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Banking Information -->
+            <div class="card bg-base-200 shadow-xl">
+              <div class="card-body">
+                <h4 class="font-bold text-lg mb-4">
+                  <i class="ri-bank-line mr-2"></i>Información Bancaria
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Banco</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="input input-bordered"
+                      [value]="formData().bankName"
+                      (input)="onFormFieldChange('bankName', $any($event.target).value)"
+                    />
+                  </div>
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Cuenta Bancaria</span>
+                    </label>
+                    <input
+                      type="text"
+                      class="input input-bordered font-mono"
+                      [value]="formData().bankAccount"
+                      (input)="onFormFieldChange('bankAccount', $any($event.target).value)"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Additional Info -->
+            <div class="card bg-base-200 shadow-xl">
+              <div class="card-body">
+                <h4 class="font-bold text-lg mb-4">
+                  <i class="ri-information-line mr-2"></i>Información Adicional
+                </h4>
+                <div class="grid grid-cols-1 gap-4">
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Calificación (0-5)</span>
+                    </label>
+                    <input
+                      type="number"
+                      class="input input-bordered"
+                      min="0"
+                      max="5"
+                      step="0.1"
+                      [value]="formData().rating"
+                      (input)="onFormFieldChange('rating', $any($event.target).value ? parseFloat($any($event.target).value) : 0)"
+                    />
+                  </div>
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Notas</span>
+                    </label>
+                    <textarea
+                      class="textarea textarea-bordered h-24"
+                      [value]="formData().notes"
+                      (input)="onFormFieldChange('notes', $any($event.target).value)"
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="modal-action">
+              <button type="button" class="btn btn-ghost" (click)="closeModal()">Cancelar</button>
+              <button type="submit" class="btn btn-primary" [disabled]="isLoading()">
+                @if (isLoading()) {
+                  <span class="loading loading-spinner"></span>
+                } @else {
+                  @if (modalMode() === 'create') {
+                    <i class="ri-add-line mr-2"></i>Crear Proveedor
+                  } @else {
+                    <i class="ri-save-line mr-2"></i>Guardar Cambios
+                  }
+                }
+              </button>
+            </div>
+          </form>
+        }
+
+        <!-- View Mode Actions -->
+        @if (modalMode() === 'view') {
+          <div class="modal-action">
+            <button class="btn btn-ghost" (click)="closeModal()">Cerrar</button>
+            <button class="btn btn-primary" (click)="openEditModal(selectedProvider()!)">
+              <i class="ri-edit-line mr-2"></i>Editar
+            </button>
+          </div>
+        }
+      </div>
+      <div class="modal-backdrop" (click)="closeModal()"></div>
+    </div>
+  }
+</div>

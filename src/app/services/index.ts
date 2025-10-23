@@ -2,6 +2,7 @@
 export * from './condominium.service';
 export * from './unit.service';
 export * from './resident.service';
+export * from './provider.service';
 export * from './invoice.service';
 export * from './payment.service';
 export * from './activity.service';

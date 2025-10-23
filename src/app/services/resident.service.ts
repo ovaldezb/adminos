@@ -1,6 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, delay } from 'rxjs';
-import { Resident, ResidentDetails, ResidentType } from '../models/resident.model';
+import { 
+  Resident, 
+  ResidentDetails, 
+  ResidentType, 
+  DocumentType,
+  CreateResidentDto,
+  UpdateResidentDto
+} from '../models/resident.model';
 import { ApiResponse, PaginatedResponse, PaginationParams } from '../models/api.model';
 
 @Injectable({
@@ -10,7 +17,7 @@ export class ResidentService {
   // Simulated AWS Lambda endpoint
   private readonly lambdaEndpoint = 'https://api.example.com/residents';
 
-  // Mock data
+  // Mock data - simulating MongoDB collection
   private mockResidents: ResidentDetails[] = [
     {
       id: 'R-001',
@@ -18,12 +25,13 @@ export class ResidentService {
       lastName: 'Pérez',
       email: 'juan.perez@email.com',
       phone: '+51 999 111 222',
-      documentType: 'dni' as any,
+      documentType: DocumentType.DNI,
       documentNumber: '12345678',
       type: ResidentType.OWNER,
       condominiumId: '1',
       unitId: 'U-101',
       units: ['U-101'],
+      unitNumbers: ['101'],
       moveInDate: new Date('2020-03-15'),
       isActive: true,
       emergencyContactName: 'María Pérez',
@@ -40,12 +48,13 @@ export class ResidentService {
       lastName: 'García',
       email: 'maria.garcia@email.com',
       phone: '+51 999 222 333',
-      documentType: 'dni' as any,
+      documentType: DocumentType.DNI,
       documentNumber: '23456789',
       type: ResidentType.OWNER,
       condominiumId: '1',
       unitId: 'U-102',
       units: ['U-102'],
+      unitNumbers: ['102'],
       moveInDate: new Date('2019-06-20'),
       isActive: true,
       emergencyContactName: 'Carlos García',
@@ -62,12 +71,13 @@ export class ResidentService {
       lastName: 'Rodríguez',
       email: 'carlos.rodriguez@email.com',
       phone: '+51 999 333 444',
-      documentType: 'dni' as any,
+      documentType: DocumentType.DNI,
       documentNumber: '34567890',
       type: ResidentType.OWNER,
       condominiumId: '2',
       unitId: 'U-201',
       units: ['U-201', 'U-202'],
+      unitNumbers: ['201', '202'],
       moveInDate: new Date('2021-01-10'),
       isActive: true,
       emergencyContactName: 'Ana Rodríguez',
@@ -84,12 +94,13 @@ export class ResidentService {
       lastName: 'Martínez',
       email: 'ana.martinez@email.com',
       phone: '+51 999 444 555',
-      documentType: 'ce' as any,
+      documentType: DocumentType.CE,
       documentNumber: 'CE-001234567',
       type: ResidentType.TENANT,
       condominiumId: '3',
       unitId: 'U-305',
       units: ['U-305'],
+      unitNumbers: ['305'],
       moveInDate: new Date('2025-10-01'),
       isActive: true,
       emergencyContactName: 'Luis Martínez',
@@ -99,6 +110,99 @@ export class ResidentService {
       averagePaymentDelay: 0,
       createdAt: new Date('2025-10-01'),
       updatedAt: new Date('2025-10-01'),
+    },
+    {
+      id: 'R-005',
+      firstName: 'Luis',
+      lastName: 'Torres',
+      email: 'luis.torres@email.com',
+      phone: '+51 999 555 666',
+      documentType: DocumentType.DNI,
+      documentNumber: '45678901',
+      type: ResidentType.OWNER,
+      condominiumId: '3',
+      unitId: 'U-305',
+      units: ['U-305'],
+      unitNumbers: ['305'],
+      moveInDate: new Date('2022-02-14'),
+      isActive: true,
+      emergencyContactName: 'Carmen Torres',
+      emergencyContactPhone: '+51 999 555 667',
+      totalDebt: 0,
+      paymentHistory: 35,
+      averagePaymentDelay: 1,
+      createdAt: new Date('2022-02-14'),
+      updatedAt: new Date('2025-10-10'),
+    },
+    {
+      id: 'R-006',
+      firstName: 'Roberto',
+      lastName: 'Silva',
+      email: 'roberto.silva@email.com',
+      phone: '+51 999 666 777',
+      documentType: DocumentType.DNI,
+      documentNumber: '56789012',
+      type: ResidentType.BOTH,
+      condominiumId: '1',
+      unitId: 'U-502',
+      units: ['U-502', 'U-103'],
+      unitNumbers: ['502', '103'],
+      moveInDate: new Date('2023-05-10'),
+      isActive: true,
+      emergencyContactName: 'Patricia Silva',
+      emergencyContactPhone: '+51 999 666 778',
+      totalDebt: 0,
+      paymentHistory: 28,
+      averagePaymentDelay: 0,
+      createdAt: new Date('2023-05-10'),
+      updatedAt: new Date('2025-10-18'),
+    },
+    {
+      id: 'R-007',
+      firstName: 'Elena',
+      lastName: 'Vargas',
+      email: 'elena.vargas@email.com',
+      phone: '+51 999 777 888',
+      documentType: DocumentType.PASSPORT,
+      documentNumber: 'P123456789',
+      type: ResidentType.TENANT,
+      condominiumId: '2',
+      unitId: 'U-202',
+      units: ['U-202'],
+      unitNumbers: ['202'],
+      moveInDate: new Date('2024-08-15'),
+      isActive: true,
+      emergencyContactName: 'Miguel Vargas',
+      emergencyContactPhone: '+51 999 777 889',
+      totalDebt: 850,
+      paymentHistory: 14,
+      averagePaymentDelay: 3,
+      createdAt: new Date('2024-08-15'),
+      updatedAt: new Date('2025-10-20'),
+    },
+    {
+      id: 'R-008',
+      firstName: 'Fernando',
+      lastName: 'Campos',
+      email: 'fernando.campos@email.com',
+      phone: '+51 999 888 999',
+      documentType: DocumentType.DNI,
+      documentNumber: '67890123',
+      type: ResidentType.OWNER,
+      condominiumId: '1',
+      unitId: 'U-501',
+      units: ['U-501'],
+      unitNumbers: ['501'],
+      moveInDate: new Date('2020-05-20'),
+      isActive: false,
+      moveOutDate: new Date('2025-09-30'),
+      emergencyContactName: 'Lucia Campos',
+      emergencyContactPhone: '+51 999 888 998',
+      totalDebt: 0,
+      paymentHistory: 60,
+      averagePaymentDelay: 2,
+      createdAt: new Date('2020-05-20'),
+      updatedAt: new Date('2025-09-30'),
     },
   ];
 
@@ -188,26 +292,35 @@ export class ResidentService {
    * Lambda: createResident
    */
   createResident(
-    resident: Partial<Resident>
+    residentData: CreateResidentDto
   ): Observable<ApiResponse<Resident>> {
     const newResident: Resident = {
       id: `R-${String(Date.now()).slice(-6)}`,
-      firstName: resident.firstName!,
-      lastName: resident.lastName!,
-      email: resident.email!,
-      phone: resident.phone!,
-      documentType: resident.documentType!,
-      documentNumber: resident.documentNumber!,
-      type: resident.type || ResidentType.OWNER,
-      condominiumId: resident.condominiumId!,
-      unitId: resident.unitId!,
-      moveInDate: resident.moveInDate || new Date(),
+      firstName: residentData.firstName,
+      lastName: residentData.lastName,
+      email: residentData.email,
+      phone: residentData.phone,
+      documentType: residentData.documentType,
+      documentNumber: residentData.documentNumber,
+      type: residentData.type,
+      condominiumId: residentData.condominiumId,
+      unitId: residentData.unitId,
+      moveInDate: residentData.moveInDate,
       isActive: true,
-      emergencyContactName: resident.emergencyContactName,
-      emergencyContactPhone: resident.emergencyContactPhone,
+      emergencyContactName: residentData.emergencyContactName,
+      emergencyContactPhone: residentData.emergencyContactPhone,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+
+    // Add to mock data
+    this.mockResidents.push({
+      ...newResident,
+      units: [newResident.unitId],
+      totalDebt: 0,
+      paymentHistory: 0,
+      averagePaymentDelay: 0,
+    });
 
     return of({
       success: true,
@@ -223,11 +336,11 @@ export class ResidentService {
    */
   updateResident(
     id: string,
-    updates: Partial<Resident>
-  ): Observable<ApiResponse<Resident>> {
-    const resident = this.mockResidents.find((r) => r.id === id);
+    updates: UpdateResidentDto
+  ): Observable<ApiResponse<ResidentDetails>> {
+    const residentIndex = this.mockResidents.findIndex((r) => r.id === id);
 
-    if (!resident) {
+    if (residentIndex === -1) {
       return of({
         success: false,
         error: {
@@ -238,11 +351,13 @@ export class ResidentService {
       }).pipe(delay(200));
     }
 
-    const updated = {
-      ...resident,
+    const updated: ResidentDetails = {
+      ...this.mockResidents[residentIndex],
       ...updates,
       updatedAt: new Date(),
     };
+
+    this.mockResidents[residentIndex] = updated;
 
     return of({
       success: true,

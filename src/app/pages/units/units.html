@@ -1,0 +1,639 @@
+<div class="min-h-screen bg-gradient-to-br from-neutral-50 via-sky-50 to-purple-50">
+  <!-- Navbar -->
+  <app-navbar
+    (toggleSidebar)="toggleSidebar()"
+    (condoChanged)="onCondoSelected($event)"
+  />
+
+  <div class="flex">
+    <!-- Sidebar -->
+    <app-side-menu
+      [isOpen]="sidebarOpen()"
+      (close)="toggleSidebar()"
+    />
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 lg:p-8 transition-all duration-300" [class.ml-0]="!sidebarOpen()" [class.ml-64]="sidebarOpen()">
+      <!-- Header -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="p-3 glass rounded-2xl">
+            <i class="ri-home-4-fill text-2xl text-primary"></i>
+          </div>
+          <div>
+            <h1 class="text-3xl font-bold text-neutral-800">Gestión de Unidades</h1>
+            <p class="text-neutral-600">{{ getCondoName() }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Alert -->
+      @if (error()) {
+        <div class="alert alert-error mb-6 glass shadow-xl">
+          <i class="ri-error-warning-fill text-xl"></i>
+          <span>{{ error() }}</span>
+          <button class="btn btn-sm btn-ghost" (click)="error.set(null)">
+            <i class="ri-close-line"></i>
+          </button>
+        </div>
+      }
+
+      <!-- Filters & Actions -->
+      <div class="glass rounded-2xl p-6 shadow-xl mb-6">
+        <div class="flex flex-col lg:flex-row gap-4 items-center justify-between mb-4">
+          <div class="flex flex-col sm:flex-row gap-4 flex-1 w-full">
+            <!-- Search -->
+            <div class="form-control flex-1">
+              <div class="input-group">
+                <span class="bg-base-200">
+                  <i class="ri-search-line"></i>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Buscar por número, torre, propietario..."
+                  class="input input-bordered w-full"
+                  [value]="searchTerm()"
+                  (input)="onSearchChange($event)"
+                />
+              </div>
+            </div>
+
+            <!-- Status Filter -->
+            <select
+              class="select select-bordered w-full sm:w-48"
+              [value]="statusFilter()"
+              (change)="onStatusFilterChange($event)"
+            >
+              <option value="">Todos los estados</option>
+              <option [value]="UnitStatus.OCCUPIED">Ocupadas</option>
+              <option [value]="UnitStatus.VACANT">Vacantes</option>
+              <option [value]="UnitStatus.UNDER_MAINTENANCE">En Mantenimiento</option>
+              <option [value]="UnitStatus.FOR_SALE">En Venta</option>
+              <option [value]="UnitStatus.FOR_RENT">En Alquiler</option>
+            </select>
+
+            <!-- Property Type Filter -->
+            <select
+              class="select select-bordered w-full sm:w-48"
+              [value]="propertyTypeFilter()"
+              (change)="onPropertyTypeFilterChange($event)"
+            >
+              <option value="">Todos los tipos</option>
+              <option [value]="PropertyType.APARTMENT">Departamento</option>
+              <option [value]="PropertyType.PENTHOUSE">Penthouse</option>
+              <option [value]="PropertyType.DUPLEX">Dúplex</option>
+              <option [value]="PropertyType.STUDIO">Studio</option>
+              <option [value]="PropertyType.LOFT">Loft</option>
+              <option [value]="PropertyType.TOWNHOUSE">Casa</option>
+            </select>
+          </div>
+
+          <div class="flex gap-2">
+            <button class="btn btn-ghost btn-sm" (click)="clearFilters()">
+              <i class="ri-filter-off-line"></i>
+              Limpiar
+            </button>
+            <button class="btn btn-primary btn-sm gap-2" (click)="openCreateModal()">
+              <i class="ri-add-line"></i>
+              Nueva Unidad
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="stat bg-base-100 rounded-xl p-4">
+            <div class="stat-title text-xs">Total</div>
+            <div class="stat-value text-2xl text-primary">{{ totalItems() }}</div>
+          </div>
+          <div class="stat bg-base-100 rounded-xl p-4">
+            <div class="stat-title text-xs">Ocupadas</div>
+            <div class="stat-value text-2xl text-success">{{ totalOccupied() }}</div>
+          </div>
+          <div class="stat bg-base-100 rounded-xl p-4">
+            <div class="stat-title text-xs">Vacantes</div>
+            <div class="stat-value text-2xl text-warning">{{ totalVacant() }}</div>
+          </div>
+          <div class="stat bg-base-100 rounded-xl p-4">
+            <div class="stat-title text-xs">Con Deuda</div>
+            <div class="stat-value text-2xl text-error">{{ totalWithDebt() }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Units Table -->
+      <div class="glass rounded-2xl shadow-xl overflow-hidden">
+        @if (loading()) {
+          <div class="flex items-center justify-center p-12">
+            <span class="loading loading-spinner loading-lg text-primary"></span>
+          </div>
+        } @else if (filteredUnits().length === 0) {
+          <div class="text-center p-12">
+            <i class="ri-inbox-line text-6xl text-neutral-300 mb-4"></i>
+            <p class="text-neutral-500">No se encontraron unidades</p>
+          </div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="table table-zebra">
+              <thead class="bg-base-200">
+                <tr>
+                  <th>Unidad</th>
+                  <th>Torre</th>
+                  <th>Tipo</th>
+                  <th>Área</th>
+                  <th>Habitaciones</th>
+                  <th>Estado</th>
+                  <th>Propietario</th>
+                  <th>Cuota Mensual</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (unit of filteredUnits(); track unit.id) {
+                  <tr class="hover">
+                    <td>
+                      <div class="font-semibold">{{ unit.unitNumber }}</div>
+                      <div class="text-xs text-neutral-500">Piso {{ unit.floor }}</div>
+                    </td>
+                    <td>{{ unit.tower }}</td>
+                    <td>
+                      <span class="text-sm">{{ getPropertyTypeLabel(unit.propertyType) }}</span>
+                    </td>
+                    <td>{{ unit.area }} m²</td>
+                    <td>
+                      <div class="flex items-center gap-2 text-sm">
+                        <span><i class="ri-hotel-bed-line"></i> {{ unit.bedrooms }}</span>
+                        <span><i class="ri-drop-line"></i> {{ unit.bathrooms }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge" [ngClass]="getStatusBadgeClass(unit.status)">
+                        {{ getStatusLabel(unit.status) }}
+                      </span>
+                      @if (unit.hasDebt) {
+                        <span class="badge badge-error badge-sm ml-1">Deuda</span>
+                      }
+                    </td>
+                    <td>
+                      @if (unit.ownerName) {
+                        <div class="font-medium">{{ unit.ownerName }}</div>
+                        @if (unit.ownerPhone) {
+                          <div class="text-xs text-neutral-500">{{ unit.ownerPhone }}</div>
+                        }
+                      } @else {
+                        <span class="text-neutral-400 text-sm">Sin propietario</span>
+                      }
+                    </td>
+                    <td class="font-semibold">{{ formatCurrency(unit.monthlyFee) }}</td>
+                    <td>
+                      <div class="flex gap-1">
+                        <button
+                          class="btn btn-ghost btn-xs"
+                          (click)="openViewModal(unit)"
+                          title="Ver detalles"
+                        >
+                          <i class="ri-eye-line"></i>
+                        </button>
+                        <button
+                          class="btn btn-ghost btn-xs text-primary"
+                          (click)="openEditModal(unit)"
+                          title="Editar"
+                        >
+                          <i class="ri-edit-line"></i>
+                        </button>
+                        <button
+                          class="btn btn-ghost btn-xs text-error"
+                          (click)="deleteUnit(unit)"
+                          title="Eliminar"
+                        >
+                          <i class="ri-delete-bin-line"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="flex items-center justify-between p-4 bg-base-200">
+            <div class="text-sm text-neutral-600">
+              Mostrando {{ (currentPage() - 1) * pageSize() + 1 }} - 
+              {{ Math.min(currentPage() * pageSize(), totalItems()) }} de {{ totalItems() }}
+            </div>
+            <div class="btn-group">
+              <button
+                class="btn btn-sm"
+                [disabled]="currentPage() === 1"
+                (click)="previousPage()"
+              >
+                <i class="ri-arrow-left-s-line"></i>
+              </button>
+              @for (page of [].constructor(totalPages()); track $index) {
+                <button
+                  class="btn btn-sm"
+                  [class.btn-active]="currentPage() === $index + 1"
+                  (click)="goToPage($index + 1)"
+                >
+                  {{ $index + 1 }}
+                </button>
+              }
+              <button
+                class="btn btn-sm"
+                [disabled]="currentPage() === totalPages()"
+                (click)="nextPage()"
+              >
+                <i class="ri-arrow-right-s-line"></i>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  @if (showModal()) {
+    <div class="modal modal-open">
+      <div class="modal-box max-w-4xl glass">
+        <h3 class="font-bold text-2xl mb-6">
+          @if (modalMode() === 'create') {
+            <i class="ri-add-line text-primary"></i> Nueva Unidad
+          } @else if (modalMode() === 'edit') {
+            <i class="ri-edit-line text-primary"></i> Editar Unidad
+          } @else {
+            <i class="ri-eye-line text-primary"></i> Detalles de Unidad
+          }
+        </h3>
+
+        @if (modalMode() === 'view' && selectedUnit()) {
+          <!-- View Mode -->
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <h4 class="font-semibold mb-2 text-neutral-700">Información Básica</h4>
+              <div class="space-y-2">
+                <div>
+                  <span class="text-sm text-neutral-500">Número:</span>
+                  <p class="font-medium">{{ selectedUnit()!.unitNumber }}</p>
+                </div>
+                <div>
+                  <span class="text-sm text-neutral-500">Torre:</span>
+                  <p class="font-medium">{{ selectedUnit()!.tower }}</p>
+                </div>
+                <div>
+                  <span class="text-sm text-neutral-500">Piso:</span>
+                  <p class="font-medium">{{ selectedUnit()!.floor }}</p>
+                </div>
+                <div>
+                  <span class="text-sm text-neutral-500">Tipo:</span>
+                  <p class="font-medium">{{ getPropertyTypeLabel(selectedUnit()!.propertyType) }}</p>
+                </div>
+                <div>
+                  <span class="text-sm text-neutral-500">Estado:</span>
+                  <p><span class="badge" [ngClass]="getStatusBadgeClass(selectedUnit()!.status)">
+                    {{ getStatusLabel(selectedUnit()!.status) }}
+                  </span></p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 class="font-semibold mb-2 text-neutral-700">Características</h4>
+              <div class="space-y-2">
+                <div>
+                  <span class="text-sm text-neutral-500">Área:</span>
+                  <p class="font-medium">{{ selectedUnit()!.area }} m²</p>
+                </div>
+                <div>
+                  <span class="text-sm text-neutral-500">Habitaciones:</span>
+                  <p class="font-medium">{{ selectedUnit()!.bedrooms }}</p>
+                </div>
+                <div>
+                  <span class="text-sm text-neutral-500">Baños:</span>
+                  <p class="font-medium">{{ selectedUnit()!.bathrooms }}</p>
+                </div>
+                <div>
+                  <span class="text-sm text-neutral-500">Estacionamientos:</span>
+                  <p class="font-medium">{{ selectedUnit()!.parkingSpaces }}</p>
+                </div>
+                <div>
+                  <span class="text-sm text-neutral-500">Depósitos:</span>
+                  <p class="font-medium">{{ selectedUnit()!.storageSpaces || 0 }}</p>
+                </div>
+              </div>
+            </div>
+
+            @if (selectedUnit()!.ownerName) {
+              <div class="col-span-2">
+                <h4 class="font-semibold mb-2 text-neutral-700">Propietario</h4>
+                <div class="space-y-2">
+                  <div>
+                    <span class="text-sm text-neutral-500">Nombre:</span>
+                    <p class="font-medium">{{ selectedUnit()!.ownerName }}</p>
+                  </div>
+                  @if (selectedUnit()!.ownerEmail) {
+                    <div>
+                      <span class="text-sm text-neutral-500">Email:</span>
+                      <p class="font-medium">{{ selectedUnit()!.ownerEmail }}</p>
+                    </div>
+                  }
+                  @if (selectedUnit()!.ownerPhone) {
+                    <div>
+                      <span class="text-sm text-neutral-500">Teléfono:</span>
+                      <p class="font-medium">{{ selectedUnit()!.ownerPhone }}</p>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="col-span-2">
+              <h4 class="font-semibold mb-2 text-neutral-700">Información Financiera</h4>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <span class="text-sm text-neutral-500">Cuota Mensual:</span>
+                  <p class="font-medium text-lg">{{ formatCurrency(selectedUnit()!.monthlyFee) }}</p>
+                </div>
+                @if (selectedUnit()!.hasDebt) {
+                  <div>
+                    <span class="text-sm text-neutral-500">Deuda:</span>
+                    <p class="font-medium text-lg text-error">{{ formatCurrency(selectedUnit()!.debtAmount) }}</p>
+                  </div>
+                }
+              </div>
+            </div>
+
+            @if (selectedUnit()!.description) {
+              <div class="col-span-2">
+                <h4 class="font-semibold mb-2 text-neutral-700">Descripción</h4>
+                <p class="text-sm text-neutral-600">{{ selectedUnit()!.description }}</p>
+              </div>
+            }
+          </div>
+        } @else {
+          <!-- Create/Edit Form -->
+          <form (submit)="$event.preventDefault(); saveUnit()">
+            <div class="grid grid-cols-2 gap-4">
+              <!-- Basic Info -->
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Número de Unidad *</span>
+                </label>
+                <input
+                  type="text"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().unitNumber"
+                  name="unitNumber"
+                  required
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Torre *</span>
+                </label>
+                <input
+                  type="text"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().tower"
+                  name="tower"
+                  required
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Piso *</span>
+                </label>
+                <input
+                  type="number"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().floor"
+                  name="floor"
+                  required
+                  min="1"
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Área (m²) *</span>
+                </label>
+                <input
+                  type="number"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().area"
+                  name="area"
+                  required
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Tipo de Propiedad *</span>
+                </label>
+                <select
+                  class="select select-bordered"
+                  [(ngModel)]="formData().propertyType"
+                  name="propertyType"
+                  required
+                >
+                  <option [value]="PropertyType.APARTMENT">Departamento</option>
+                  <option [value]="PropertyType.PENTHOUSE">Penthouse</option>
+                  <option [value]="PropertyType.DUPLEX">Dúplex</option>
+                  <option [value]="PropertyType.STUDIO">Studio</option>
+                  <option [value]="PropertyType.LOFT">Loft</option>
+                  <option [value]="PropertyType.TOWNHOUSE">Casa</option>
+                </select>
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Estado *</span>
+                </label>
+                <select
+                  class="select select-bordered"
+                  [(ngModel)]="formData().status"
+                  name="status"
+                  required
+                >
+                  <option [value]="UnitStatus.OCCUPIED">Ocupada</option>
+                  <option [value]="UnitStatus.VACANT">Vacante</option>
+                  <option [value]="UnitStatus.UNDER_MAINTENANCE">En Mantenimiento</option>
+                  <option [value]="UnitStatus.FOR_SALE">En Venta</option>
+                  <option [value]="UnitStatus.FOR_RENT">En Alquiler</option>
+                </select>
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Habitaciones *</span>
+                </label>
+                <input
+                  type="number"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().bedrooms"
+                  name="bedrooms"
+                  required
+                  min="0"
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Baños *</span>
+                </label>
+                <input
+                  type="number"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().bathrooms"
+                  name="bathrooms"
+                  required
+                  min="0"
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Estacionamientos *</span>
+                </label>
+                <input
+                  type="number"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().parkingSpaces"
+                  name="parkingSpaces"
+                  required
+                  min="0"
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Depósitos</span>
+                </label>
+                <input
+                  type="number"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().storageSpaces"
+                  name="storageSpaces"
+                  min="0"
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Cuota Mensual *</span>
+                </label>
+                <input
+                  type="number"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().monthlyFee"
+                  name="monthlyFee"
+                  required
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Orientación</span>
+                </label>
+                <select
+                  class="select select-bordered"
+                  [(ngModel)]="formData().orientation"
+                  name="orientation"
+                >
+                  <option value="">Seleccionar...</option>
+                  <option value="Norte">Norte</option>
+                  <option value="Sur">Sur</option>
+                  <option value="Este">Este</option>
+                  <option value="Oeste">Oeste</option>
+                  <option value="Noreste">Noreste</option>
+                  <option value="Noroeste">Noroeste</option>
+                  <option value="Sureste">Sureste</option>
+                  <option value="Suroeste">Suroeste</option>
+                </select>
+              </div>
+
+              <!-- Checkboxes -->
+              <div class="col-span-2 flex gap-4">
+                <div class="form-control">
+                  <label class="label cursor-pointer gap-2">
+                    <input
+                      type="checkbox"
+                      class="checkbox checkbox-primary"
+                      [(ngModel)]="formData().hasBalcony"
+                      name="hasBalcony"
+                    />
+                    <span class="label-text">Tiene Balcón</span>
+                  </label>
+                </div>
+
+                <div class="form-control">
+                  <label class="label cursor-pointer gap-2">
+                    <input
+                      type="checkbox"
+                      class="checkbox checkbox-primary"
+                      [(ngModel)]="formData().hasGarden"
+                      name="hasGarden"
+                    />
+                    <span class="label-text">Tiene Jardín</span>
+                  </label>
+                </div>
+
+                <div class="form-control">
+                  <label class="label cursor-pointer gap-2">
+                    <input
+                      type="checkbox"
+                      class="checkbox checkbox-primary"
+                      [(ngModel)]="formData().isFurnished"
+                      name="isFurnished"
+                    />
+                    <span class="label-text">Amoblado</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Description -->
+              <div class="form-control col-span-2">
+                <label class="label">
+                  <span class="label-text font-semibold">Descripción</span>
+                </label>
+                <textarea
+                  class="textarea textarea-bordered h-24"
+                  [(ngModel)]="formData().description"
+                  name="description"
+                  placeholder="Descripción opcional de la unidad..."
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Modal Actions -->
+            <div class="modal-action">
+              <button type="button" class="btn btn-ghost" (click)="closeModal()">
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-primary" [disabled]="loading()">
+                @if (loading()) {
+                  <span class="loading loading-spinner"></span>
+                }
+                {{ modalMode() === 'create' ? 'Crear' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        }
+
+        @if (modalMode() === 'view') {
+          <div class="modal-action">
+            <button class="btn btn-ghost" (click)="closeModal()">Cerrar</button>
+          </div>
+        }
+      </div>
+      <div class="modal-backdrop" (click)="closeModal()"></div>
+    </div>
+  }
+</div>

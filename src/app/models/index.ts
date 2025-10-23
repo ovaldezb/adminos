@@ -2,6 +2,7 @@
 export * from './condominium.model';
 export * from './unit.model';
 export * from './resident.model';
+export * from './provider.model';
 export * from './invoice.model';
 export * from './payment.model';
 export * from './activity.model';

@@ -1,0 +1,576 @@
+<div class="min-h-screen bg-gradient-to-br from-neutral-50 via-sky-50 to-purple-50">
+  <!-- Navbar -->
+  <app-navbar
+    (toggleSidebar)="toggleSidebar()"
+    (condoChanged)="onCondoSelected($event)"
+  />
+
+  <div class="flex">
+    <!-- Sidebar -->
+    <app-side-menu
+      [isOpen]="sidebarOpen()"
+      (close)="toggleSidebar()"
+    />
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 lg:p-8 transition-all duration-300" [class.ml-0]="!sidebarOpen()" [class.ml-64]="sidebarOpen()">
+      <!-- Header -->
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="p-3 glass rounded-2xl">
+            <i class="ri-user-follow-fill text-2xl text-primary"></i>
+          </div>
+          <div>
+            <h1 class="text-3xl font-bold text-neutral-800">Gestión de Residentes</h1>
+            <p class="text-neutral-600">{{ getCondoName() }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Alert -->
+      @if (error()) {
+        <div class="alert alert-error mb-6 glass shadow-xl">
+          <i class="ri-error-warning-fill text-xl"></i>
+          <span>{{ error() }}</span>
+          <button class="btn btn-sm btn-ghost" (click)="error.set(null)">
+            <i class="ri-close-line"></i>
+          </button>
+        </div>
+      }
+
+      <!-- Filters & Actions -->
+      <div class="glass rounded-2xl p-6 shadow-xl mb-6">
+        <div class="flex flex-col lg:flex-row gap-4 items-center justify-between mb-4">
+          <div class="flex flex-col sm:flex-row gap-4 flex-1 w-full">
+            <!-- Search -->
+            <div class="form-control flex-1">
+              <div class="input-group">
+                <span class="bg-base-200">
+                  <i class="ri-search-line"></i>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, email, documento..."
+                  class="input input-bordered w-full"
+                  [value]="searchTerm()"
+                  (input)="onSearchChange($event)"
+                />
+              </div>
+            </div>
+
+            <!-- Type Filter -->
+            <select
+              class="select select-bordered w-full sm:w-48"
+              [value]="typeFilter()"
+              (change)="onTypeFilterChange($event)"
+            >
+              <option value="">Todos los tipos</option>
+              <option [value]="ResidentType.OWNER">Propietarios</option>
+              <option [value]="ResidentType.TENANT">Inquilinos</option>
+              <option [value]="ResidentType.BOTH">Propietario/Residente</option>
+            </select>
+
+            <!-- Status Filter -->
+            <select
+              class="select select-bordered w-full sm:w-48"
+              [value]="statusFilter()"
+              (change)="onStatusFilterChange($event)"
+            >
+              <option value="">Todos los estados</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
+            </select>
+          </div>
+
+          <div class="flex gap-2">
+            <button class="btn btn-ghost btn-sm" (click)="clearFilters()">
+              <i class="ri-filter-off-line"></i>
+              Limpiar
+            </button>
+            <button class="btn btn-primary btn-sm gap-2" (click)="openCreateModal()">
+              <i class="ri-add-line"></i>
+              Nuevo Residente
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="stat bg-base-100 rounded-xl p-4">
+            <div class="stat-title text-xs">Total</div>
+            <div class="stat-value text-2xl text-primary">{{ totalItems() }}</div>
+          </div>
+          <div class="stat bg-base-100 rounded-xl p-4">
+            <div class="stat-title text-xs">Propietarios</div>
+            <div class="stat-value text-2xl text-info">{{ totalOwners() }}</div>
+          </div>
+          <div class="stat bg-base-100 rounded-xl p-4">
+            <div class="stat-title text-xs">Activos</div>
+            <div class="stat-value text-2xl text-success">{{ totalActive() }}</div>
+          </div>
+          <div class="stat bg-base-100 rounded-xl p-4">
+            <div class="stat-title text-xs">Con Deuda</div>
+            <div class="stat-value text-2xl text-error">{{ totalWithDebt() }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Residents Table -->
+      <div class="glass rounded-2xl shadow-xl overflow-hidden">
+        @if (loading()) {
+          <div class="flex items-center justify-center p-12">
+            <span class="loading loading-spinner loading-lg text-primary"></span>
+          </div>
+        } @else if (filteredResidents().length === 0) {
+          <div class="text-center p-12">
+            <i class="ri-inbox-line text-6xl text-neutral-300 mb-4"></i>
+            <p class="text-neutral-500">No se encontraron residentes</p>
+          </div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="table table-zebra">
+              <thead class="bg-base-200">
+                <tr>
+                  <th>Nombre</th>
+                  <th>Documento</th>
+                  <th>Tipo</th>
+                  <th>Contacto</th>
+                  <th>Unidad(es)</th>
+                  <th>Estado</th>
+                  <th>Deuda</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (resident of filteredResidents(); track resident.id) {
+                  <tr class="hover">
+                    <td>
+                      <div class="flex items-center gap-3">
+                        <div class="avatar placeholder">
+                          <div class="bg-primary/20 text-primary rounded-full w-10">
+                            <span class="text-sm font-semibold">
+                              {{ resident.firstName.charAt(0) }}{{ resident.lastName.charAt(0) }}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <div class="font-semibold">{{ getFullName(resident) }}</div>
+                          <div class="text-xs text-neutral-500">Desde {{ formatDate(resident.moveInDate) }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="text-sm">
+                        <div class="font-medium">{{ resident.documentNumber }}</div>
+                        <div class="text-xs text-neutral-500">{{ getDocumentTypeLabel(resident.documentType) }}</div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge" [ngClass]="getTypeBadgeClass(resident.type)">
+                        {{ getTypeLabel(resident.type) }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="text-sm">
+                        <div class="flex items-center gap-1">
+                          <i class="ri-mail-line text-xs"></i>
+                          <span>{{ resident.email }}</span>
+                        </div>
+                        <div class="flex items-center gap-1 text-neutral-500">
+                          <i class="ri-phone-line text-xs"></i>
+                          <span>{{ resident.phone }}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="flex flex-wrap gap-1">
+                        @for (unitNumber of resident.unitNumbers || resident.units; track unitNumber) {
+                          <span class="badge badge-sm badge-outline">{{ unitNumber }}</span>
+                        }
+                      </div>
+                    </td>
+                    <td>
+                      @if (resident.isActive) {
+                        <span class="badge badge-success">Activo</span>
+                      } @else {
+                        <span class="badge badge-ghost">Inactivo</span>
+                      }
+                    </td>
+                    <td>
+                      @if (resident.totalDebt > 0) {
+                        <span class="font-semibold text-error">{{ formatCurrency(resident.totalDebt) }}</span>
+                      } @else {
+                        <span class="text-success">Sin deuda</span>
+                      }
+                    </td>
+                    <td>
+                      <div class="flex gap-1">
+                        <button
+                          class="btn btn-ghost btn-xs"
+                          (click)="openViewModal(resident)"
+                          title="Ver detalles"
+                        >
+                          <i class="ri-eye-line"></i>
+                        </button>
+                        <button
+                          class="btn btn-ghost btn-xs text-primary"
+                          (click)="openEditModal(resident)"
+                          title="Editar"
+                        >
+                          <i class="ri-edit-line"></i>
+                        </button>
+                        @if (resident.isActive) {
+                          <button
+                            class="btn btn-ghost btn-xs text-error"
+                            (click)="deactivateResident(resident)"
+                            title="Desactivar"
+                          >
+                            <i class="ri-user-unfollow-line"></i>
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="flex items-center justify-between p-4 bg-base-200">
+            <div class="text-sm text-neutral-600">
+              Mostrando {{ (currentPage() - 1) * pageSize() + 1 }} - 
+              {{ Math.min(currentPage() * pageSize(), totalItems()) }} de {{ totalItems() }}
+            </div>
+            <div class="btn-group">
+              <button
+                class="btn btn-sm"
+                [disabled]="currentPage() === 1"
+                (click)="previousPage()"
+              >
+                <i class="ri-arrow-left-s-line"></i>
+              </button>
+              @for (page of [].constructor(totalPages()); track $index) {
+                <button
+                  class="btn btn-sm"
+                  [class.btn-active]="currentPage() === $index + 1"
+                  (click)="goToPage($index + 1)"
+                >
+                  {{ $index + 1 }}
+                </button>
+              }
+              <button
+                class="btn btn-sm"
+                [disabled]="currentPage() === totalPages()"
+                (click)="nextPage()"
+              >
+                <i class="ri-arrow-right-s-line"></i>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  @if (showModal()) {
+    <div class="modal modal-open">
+      <div class="modal-box max-w-4xl glass">
+        <h3 class="font-bold text-2xl mb-6">
+          @if (modalMode() === 'create') {
+            <i class="ri-add-line text-primary"></i> Nuevo Residente
+          } @else if (modalMode() === 'edit') {
+            <i class="ri-edit-line text-primary"></i> Editar Residente
+          } @else {
+            <i class="ri-eye-line text-primary"></i> Detalles de Residente
+          }
+        </h3>
+
+        @if (modalMode() === 'view' && selectedResident()) {
+          <!-- View Mode -->
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <h4 class="font-semibold mb-2 text-neutral-700">Información Personal</h4>
+              <div class="space-y-2">
+                <div>
+                  <span class="text-sm text-neutral-500">Nombre Completo:</span>
+                  <p class="font-medium">{{ getFullName(selectedResident()!) }}</p>
+                </div>
+                <div>
+                  <span class="text-sm text-neutral-500">Documento:</span>
+                  <p class="font-medium">{{ selectedResident()!.documentNumber }} ({{ getDocumentTypeLabel(selectedResident()!.documentType) }})</p>
+                </div>
+                <div>
+                  <span class="text-sm text-neutral-500">Tipo:</span>
+                  <p><span class="badge" [ngClass]="getTypeBadgeClass(selectedResident()!.type)">
+                    {{ getTypeLabel(selectedResident()!.type) }}
+                  </span></p>
+                </div>
+                <div>
+                  <span class="text-sm text-neutral-500">Estado:</span>
+                  <p>
+                    @if (selectedResident()!.isActive) {
+                      <span class="badge badge-success">Activo</span>
+                    } @else {
+                      <span class="badge badge-ghost">Inactivo</span>
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h4 class="font-semibold mb-2 text-neutral-700">Contacto</h4>
+              <div class="space-y-2">
+                <div>
+                  <span class="text-sm text-neutral-500">Email:</span>
+                  <p class="font-medium">{{ selectedResident()!.email }}</p>
+                </div>
+                <div>
+                  <span class="text-sm text-neutral-500">Teléfono:</span>
+                  <p class="font-medium">{{ selectedResident()!.phone }}</p>
+                </div>
+                @if (selectedResident()!.emergencyContactName) {
+                  <div>
+                    <span class="text-sm text-neutral-500">Contacto de Emergencia:</span>
+                    <p class="font-medium">{{ selectedResident()!.emergencyContactName }}</p>
+                    <p class="text-sm text-neutral-600">{{ selectedResident()!.emergencyContactPhone }}</p>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="col-span-2">
+              <h4 class="font-semibold mb-2 text-neutral-700">Unidades</h4>
+              <div class="flex flex-wrap gap-2">
+                @for (unitNumber of selectedResident()!.unitNumbers || selectedResident()!.units; track unitNumber) {
+                  <span class="badge badge-lg badge-primary">{{ unitNumber }}</span>
+                }
+              </div>
+            </div>
+
+            <div class="col-span-2">
+              <h4 class="font-semibold mb-2 text-neutral-700">Información Financiera</h4>
+              <div class="grid grid-cols-3 gap-4">
+                <div>
+                  <span class="text-sm text-neutral-500">Deuda Total:</span>
+                  @if (selectedResident()!.totalDebt > 0) {
+                    <p class="font-medium text-lg text-error">{{ formatCurrency(selectedResident()!.totalDebt) }}</p>
+                  } @else {
+                    <p class="font-medium text-lg text-success">Sin deuda</p>
+                  }
+                </div>
+                <div>
+                  <span class="text-sm text-neutral-500">Historial de Pagos:</span>
+                  <p class="font-medium text-lg">{{ selectedResident()!.paymentHistory }}</p>
+                </div>
+                <div>
+                  <span class="text-sm text-neutral-500">Retraso Promedio:</span>
+                  <p class="font-medium text-lg">{{ selectedResident()!.averagePaymentDelay }} días</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-span-2">
+              <h4 class="font-semibold mb-2 text-neutral-700">Fechas</h4>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <span class="text-sm text-neutral-500">Fecha de Ingreso:</span>
+                  <p class="font-medium">{{ formatDate(selectedResident()!.moveInDate) }}</p>
+                </div>
+                @if (selectedResident()!.moveOutDate) {
+                  <div>
+                    <span class="text-sm text-neutral-500">Fecha de Salida:</span>
+                    <p class="font-medium">{{ formatDate(selectedResident()!.moveOutDate) }}</p>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        } @else {
+          <!-- Create/Edit Form -->
+          <form (submit)="$event.preventDefault(); saveResident()">
+            <div class="grid grid-cols-2 gap-4">
+              <!-- Personal Info -->
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Nombres *</span>
+                </label>
+                <input
+                  type="text"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().firstName"
+                  name="firstName"
+                  required
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Apellidos *</span>
+                </label>
+                <input
+                  type="text"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().lastName"
+                  name="lastName"
+                  required
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Email *</span>
+                </label>
+                <input
+                  type="email"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().email"
+                  name="email"
+                  required
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Teléfono *</span>
+                </label>
+                <input
+                  type="tel"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().phone"
+                  name="phone"
+                  required
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Tipo de Documento *</span>
+                </label>
+                <select
+                  class="select select-bordered"
+                  [(ngModel)]="formData().documentType"
+                  name="documentType"
+                  required
+                >
+                  <option [value]="DocumentType.DNI">DNI</option>
+                  <option [value]="DocumentType.PASSPORT">Pasaporte</option>
+                  <option [value]="DocumentType.RUC">RUC</option>
+                  <option [value]="DocumentType.CE">Carné de Extranjería</option>
+                </select>
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Número de Documento *</span>
+                </label>
+                <input
+                  type="text"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().documentNumber"
+                  name="documentNumber"
+                  required
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Tipo de Residente *</span>
+                </label>
+                <select
+                  class="select select-bordered"
+                  [(ngModel)]="formData().type"
+                  name="type"
+                  required
+                >
+                  <option [value]="ResidentType.OWNER">Propietario</option>
+                  <option [value]="ResidentType.TENANT">Inquilino</option>
+                  <option [value]="ResidentType.BOTH">Propietario/Residente</option>
+                </select>
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">ID de Unidad *</span>
+                </label>
+                <input
+                  type="text"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().unitId"
+                  name="unitId"
+                  placeholder="Ej: U-101"
+                  required
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Fecha de Ingreso *</span>
+                </label>
+                <input
+                  type="date"
+                  class="input input-bordered"
+                  [value]="formatDateForInput(formData().moveInDate)"
+                  (change)="onDateChange('moveInDate', $any($event.target).value)"
+                  name="moveInDate"
+                  required
+                />
+              </div>
+
+              <!-- Emergency Contact -->
+              <div class="col-span-2">
+                <h4 class="font-semibold mb-2">Contacto de Emergencia (Opcional)</h4>
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Nombre</span>
+                </label>
+                <input
+                  type="text"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().emergencyContactName"
+                  name="emergencyContactName"
+                />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Teléfono</span>
+                </label>
+                <input
+                  type="tel"
+                  class="input input-bordered"
+                  [(ngModel)]="formData().emergencyContactPhone"
+                  name="emergencyContactPhone"
+                />
+              </div>
+            </div>
+
+            <!-- Modal Actions -->
+            <div class="modal-action">
+              <button type="button" class="btn btn-ghost" (click)="closeModal()">
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-primary" [disabled]="loading()">
+                @if (loading()) {
+                  <span class="loading loading-spinner"></span>
+                }
+                {{ modalMode() === 'create' ? 'Crear' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        }
+
+        @if (modalMode() === 'view') {
+          <div class="modal-action">
+            <button class="btn btn-ghost" (click)="closeModal()">Cerrar</button>
+          </div>
+        }
+      </div>
+      <div class="modal-backdrop" (click)="closeModal()"></div>
+    </div>
+  }
+</div>

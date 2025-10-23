@@ -34,7 +34,29 @@ export enum DocumentType {
 
 export interface ResidentDetails extends Resident {
   units: string[]; // If owns multiple units
+  unitNumbers?: string[]; // Unit numbers for display
   totalDebt: number;
   paymentHistory: number; // Number of payments
   averagePaymentDelay: number; // Days
+}
+
+// DTOs for creating/updating residents
+export interface CreateResidentDto {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  documentType: DocumentType;
+  documentNumber: string;
+  type: ResidentType;
+  condominiumId: string;
+  unitId: string;
+  moveInDate: Date;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+}
+
+export interface UpdateResidentDto extends Partial<CreateResidentDto> {
+  moveOutDate?: Date;
+  isActive?: boolean;
 }

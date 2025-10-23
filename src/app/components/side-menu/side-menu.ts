@@ -52,6 +52,11 @@ export class SideMenuComponent {
       route: '/residentes'
     },
     { 
+      icon: 'ri-truck-fill', 
+      label: 'Proveedores', 
+      route: '/proveedores'
+    },
+    { 
       icon: 'ri-bar-chart-box-fill', 
       label: 'Reportes', 
       route: '/reportes'
