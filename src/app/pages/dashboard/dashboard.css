@@ -213,17 +213,17 @@ aside::-webkit-scrollbar-thumb:hover {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  background: linear-gradient(135deg, #0284c7, #0369a1);
   border: none;
   color: white;
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #0284c7, #0369a1);
+  background: linear-gradient(135deg, #0369a1, #075985);
 }
 
 .btn-secondary {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
   border: none;
   color: white;
 }
@@ -236,8 +236,8 @@ aside::-webkit-scrollbar-thumb:hover {
 }
 
 .alert-info {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
-  border-color: rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(29, 78, 216, 0.1));
+  border-color: rgba(37, 99, 235, 0.3);
 }
 
 /* Table enhancements */
@@ -247,12 +247,12 @@ aside::-webkit-scrollbar-thumb:hover {
 }
 
 .table thead th {
-  background: rgba(14, 165, 233, 0.05);
+  background: rgba(250, 250, 250, 0.8);
   font-weight: 700;
   text-transform: uppercase;
   font-size: 0.75rem;
   letter-spacing: 0.05em;
-  color: rgb(14, 165, 233);
+  color: #171717;
   padding: 1rem;
   border: none;
 }
@@ -264,13 +264,14 @@ aside::-webkit-scrollbar-thumb:hover {
 }
 
 .table tbody tr:hover {
-  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.15);
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.12);
   transform: translateY(-1px);
 }
 
 .table tbody td {
   padding: 1rem;
   border: none;
+  color: #171717;
 }
 
 .table tbody tr td:first-child {
