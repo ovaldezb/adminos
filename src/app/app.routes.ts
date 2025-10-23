@@ -27,6 +27,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/providers/providers').then(m => m.ProvidersComponent)
   },
   {
+    path: 'pagos',
+    loadComponent: () => import('./pages/payments/payments').then(m => m.PaymentsComponent)
+  },
+  {
     path: '**',
     redirectTo: '/login'
   }

@@ -29,15 +29,15 @@ export class SideMenuComponent {
     },
     { 
       icon: 'ri-money-dollar-circle-fill', 
-      label: 'Cobranza', 
-      route: '/cobranza',
+      label: 'Pagos', 
+      route: '/pagos',
       badge: '12',
       badgeColor: 'badge-warning'
     },
     { 
       icon: 'ri-bill-fill', 
-      label: 'Facturación', 
-      route: '/facturacion'
+      label: 'Facturas', 
+      route: '/facturas'
     },
     { 
       icon: 'ri-home-4-fill', 

@@ -1,0 +1,603 @@
+<div class="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-100">
+  <!-- Navbar -->
+  <app-navbar
+    (toggleSidebar)="toggleSidebar()"
+    (condoChanged)="onCondoSelected($event)"
+  />
+
+  <div class="flex">
+    <!-- Sidebar -->
+    <app-side-menu [isOpen]="sidebarOpen()" />
+
+    <!-- Main Content -->
+    <main
+      class="flex-1 p-8 transition-all duration-300"
+      [class.ml-64]="sidebarOpen()"
+    >
+      <!-- Header -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-4xl font-bold text-neutral-800 mb-2">
+              <i class="ri-money-dollar-circle-line mr-3"></i>
+              Pagos y Cobranza
+            </h1>
+            <p class="text-neutral-600">{{ getCondoName() }}</p>
+          </div>
+          <button
+            class="btn btn-primary rounded-2xl shadow-lg hover:shadow-xl transition-all"
+            (click)="openRegisterModal()"
+          >
+            <i class="ri-add-circle-line text-xl"></i>
+            Registrar Pago
+          </button>
+        </div>
+      </div>
+
+      <!-- Statistics Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Payments -->
+        <div
+          class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-neutral-600 text-sm font-medium mb-1">
+                Total Pagos
+              </p>
+              <p class="text-3xl font-bold text-neutral-800">
+                {{ totalPayments() }}
+              </p>
+            </div>
+            <div class="bg-blue-500/20 p-4 rounded-2xl">
+              <i class="ri-file-list-3-line text-3xl text-blue-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Amount -->
+        <div
+          class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-neutral-600 text-sm font-medium mb-1">
+                Monto Total
+              </p>
+              <p class="text-3xl font-bold text-green-600">
+                {{ formatCurrency(totalAmount()) }}
+              </p>
+            </div>
+            <div class="bg-green-500/20 p-4 rounded-2xl">
+              <i class="ri-money-dollar-circle-line text-3xl text-green-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending Payments -->
+        <div
+          class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-neutral-600 text-sm font-medium mb-1">
+                Pendientes
+              </p>
+              <p class="text-3xl font-bold text-yellow-600">
+                {{ totalPending() }}
+              </p>
+            </div>
+            <div class="bg-yellow-500/20 p-4 rounded-2xl">
+              <i class="ri-time-line text-3xl text-yellow-600"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Confirmed Payments -->
+        <div
+          class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-neutral-600 text-sm font-medium mb-1">
+                Confirmados
+              </p>
+              <p class="text-3xl font-bold text-blue-600">
+                {{ totalConfirmed() }}
+              </p>
+            </div>
+            <div class="bg-blue-500/20 p-4 rounded-2xl">
+              <i class="ri-checkbox-circle-line text-3xl text-blue-600"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters Section -->
+      <div class="glass rounded-2xl p-6 shadow-xl mb-8">
+        <div class="flex flex-wrap gap-4">
+          <!-- Search -->
+          <div class="flex-1 min-w-[250px]">
+            <label class="label">
+              <span class="label-text font-medium">
+                <i class="ri-search-line mr-2"></i>
+                Buscar
+              </span>
+            </label>
+            <input
+              type="text"
+              [value]="searchTerm()"
+              (input)="onSearchChange($event)"
+              placeholder="Buscar por residente, folio, referencia..."
+              class="input input-bordered w-full rounded-2xl"
+            />
+          </div>
+
+          <!-- Status Filter -->
+          <div class="w-full md:w-48">
+            <label class="label">
+              <span class="label-text font-medium">
+                <i class="ri-filter-line mr-2"></i>
+                Estado
+              </span>
+            </label>
+            <select
+              [value]="statusFilter()"
+              (change)="onStatusFilterChange($event)"
+              class="select select-bordered w-full rounded-2xl"
+            >
+              <option value="">Todos</option>
+              <option [value]="PaymentStatus.PENDING">Pendiente</option>
+              <option [value]="PaymentStatus.CONFIRMED">Confirmado</option>
+              <option [value]="PaymentStatus.REJECTED">Rechazado</option>
+              <option [value]="PaymentStatus.REFUNDED">Reembolsado</option>
+            </select>
+          </div>
+
+          <!-- Method Filter -->
+          <div class="w-full md:w-48">
+            <label class="label">
+              <span class="label-text font-medium">
+                <i class="ri-bank-card-line mr-2"></i>
+                Método
+              </span>
+            </label>
+            <select
+              [value]="methodFilter()"
+              (change)="onMethodFilterChange($event)"
+              class="select select-bordered w-full rounded-2xl"
+            >
+              <option value="">Todos</option>
+              <option
+                *ngFor="let method of paymentMethods"
+                [value]="method.value"
+              >
+                {{ method.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Clear Filters Button -->
+          <div class="flex items-end">
+            <button
+              class="btn btn-outline rounded-2xl"
+              (click)="clearFilters()"
+            >
+              <i class="ri-close-circle-line text-lg"></i>
+              Limpiar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payments Table -->
+      <div class="glass rounded-2xl shadow-xl overflow-hidden">
+        @if (loading()) {
+        <div class="flex justify-center items-center p-16">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+        </div>
+        } @else if (error()) {
+        <div class="alert alert-error rounded-2xl m-6">
+          <i class="ri-error-warning-line text-2xl"></i>
+          <span>{{ error() }}</span>
+        </div>
+        } @else if (filteredPayments().length === 0) {
+        <div class="text-center p-16">
+          <i class="ri-file-list-3-line text-6xl text-neutral-300 mb-4"></i>
+          <p class="text-neutral-500 text-lg">No hay pagos registrados</p>
+        </div>
+        } @else {
+        <div class="overflow-x-auto">
+          <table class="table table-zebra">
+            <thead>
+              <tr class="bg-base-200/50">
+                <th>Folio</th>
+                <th>Fecha</th>
+                <th>Residente</th>
+                <th>Factura</th>
+                <th>Método</th>
+                <th>Monto</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (payment of filteredPayments(); track payment.id) {
+              <tr class="hover">
+                <td class="font-mono text-sm">{{ payment.paymentNumber }}</td>
+                <td>{{ formatDate(payment.paymentDate) }}</td>
+                <td>
+                  <div class="flex items-center gap-3">
+                    <div class="avatar placeholder">
+                      <div
+                        class="bg-primary text-primary-content w-10 rounded-full"
+                      >
+                        <span class="text-xs">{{
+                          payment.residentName.charAt(0)
+                        }}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="font-semibold">
+                        {{ payment.residentName }}
+                      </div>
+                      <div class="text-sm text-neutral-500">
+                        Unidad {{ payment.unitNumber }}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td class="font-mono text-sm">{{ payment.invoiceNumber }}</td>
+                <td>
+                  <div class="flex items-center gap-2">
+                    @if (payment.paymentMethod === PaymentMethod.CASH) {
+                    <i class="ri-wallet-3-line text-lg text-success"></i>
+                    } @else if (payment.paymentMethod ===
+                    PaymentMethod.BANK_TRANSFER) {
+                    <i class="ri-bank-line text-lg text-primary"></i>
+                    } @else if (payment.paymentMethod ===
+                    PaymentMethod.CREDIT_CARD || payment.paymentMethod ===
+                    PaymentMethod.DEBIT_CARD) {
+                    <i class="ri-bank-card-line text-lg text-info"></i>
+                    } @else {
+                    <i class="ri-money-dollar-circle-line text-lg text-neutral-500"></i>
+                    }
+                    <span class="text-sm">{{
+                      getMethodLabel(payment.paymentMethod)
+                    }}</span>
+                  </div>
+                </td>
+                <td class="font-semibold text-success">
+                  {{ formatCurrency(payment.amount) }}
+                </td>
+                <td>
+                  <span
+                    class="badge rounded-xl"
+                    [ngClass]="getStatusBadgeClass(payment.status)"
+                  >
+                    {{ getStatusLabel(payment.status) }}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    class="btn btn-sm btn-ghost rounded-xl"
+                    (click)="openViewModal(payment)"
+                    title="Ver detalles"
+                  >
+                    <i class="ri-eye-line text-lg"></i>
+                  </button>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex justify-between items-center p-6 bg-base-200/30">
+          <div class="text-sm text-neutral-600">
+            Mostrando {{ Math.min((currentPage() - 1) * pageSize() + 1,
+            totalItems()) }} - {{ Math.min(currentPage() * pageSize(),
+            totalItems()) }} de {{ totalItems() }} pagos
+          </div>
+          <div class="join">
+            <button
+              class="join-item btn btn-sm rounded-l-xl"
+              (click)="previousPage()"
+              [disabled]="currentPage() === 1"
+            >
+              <i class="ri-arrow-left-s-line"></i>
+            </button>
+            @for (page of [].constructor(totalPages()); track $index; let i =
+            $index) { @if (i + 1 === currentPage() || i + 1 === 1 || i + 1 ===
+            totalPages() || (i + 1 >= currentPage() - 1 && i + 1 <=
+            currentPage() + 1)) {
+            <button
+              class="join-item btn btn-sm"
+              [class.btn-active]="currentPage() === i + 1"
+              (click)="goToPage(i + 1)"
+            >
+              {{ i + 1 }}
+            </button>
+            } @else if (i + 1 === currentPage() - 2 || i + 1 === currentPage()
+            + 2) {
+            <button class="join-item btn btn-sm btn-disabled">...</button>
+            } }
+            <button
+              class="join-item btn btn-sm rounded-r-xl"
+              (click)="nextPage()"
+              [disabled]="currentPage() === totalPages()"
+            >
+              <i class="ri-arrow-right-s-line"></i>
+            </button>
+          </div>
+        </div>
+        }
+      </div>
+    </main>
+  </div>
+
+  <!-- Register/View Payment Modal -->
+  @if (showModal()) {
+  <div class="modal modal-open">
+    <div class="modal-box max-w-2xl rounded-2xl glass">
+      <button
+        class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4"
+        (click)="closeModal()"
+      >
+        ✕
+      </button>
+
+      <h3 class="font-bold text-2xl mb-6">
+        @if (modalMode() === 'register') {
+        <i class="ri-add-circle-line mr-2"></i>
+        Registrar Nuevo Pago } @else {
+        <i class="ri-file-list-3-line mr-2"></i>
+        Detalles del Pago }
+      </h3>
+
+      @if (modalMode() === 'register') {
+      <!-- Register Form -->
+      <form (ngSubmit)="registerPayment()">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Invoice Selection -->
+          <div class="col-span-2">
+            <label class="label">
+              <span class="label-text font-medium">
+                <i class="ri-file-list-line mr-2"></i>
+                Factura a Pagar *
+              </span>
+            </label>
+            <select
+              [value]="formData().invoiceId"
+              (change)="onInvoiceChange($event)"
+              class="select select-bordered w-full rounded-2xl"
+              required
+            >
+              <option value="">Seleccione una factura...</option>
+              @for (invoice of pendingInvoices(); track invoice.id) {
+              <option [value]="invoice.id">
+                {{ invoice.invoiceNumber }} - {{ invoice.residentName }} -
+                {{ formatCurrency(invoice.totalAmount) }}
+              </option>
+              }
+            </select>
+          </div>
+
+          <!-- Payment Date -->
+          <div>
+            <label class="label">
+              <span class="label-text font-medium">
+                <i class="ri-calendar-line mr-2"></i>
+                Fecha de Pago *
+              </span>
+            </label>
+            <input
+              type="date"
+              [value]="formatDateForInput(formData().paymentDate)"
+              (change)="onDateChange($any($event.target).value)"
+              class="input input-bordered w-full rounded-2xl"
+              required
+            />
+          </div>
+
+          <!-- Amount -->
+          <div>
+            <label class="label">
+              <span class="label-text font-medium">
+                <i class="ri-money-dollar-circle-line mr-2"></i>
+                Monto (MXN) *
+              </span>
+            </label>
+            <input
+              type="number"
+              [value]="formData().amount"
+              (input)="onFormFieldChange('amount', +$any($event.target).value)"
+              class="input input-bordered w-full rounded-2xl"
+              min="0"
+              step="0.01"
+              required
+            />
+          </div>
+
+          <!-- Payment Method -->
+          <div>
+            <label class="label">
+              <span class="label-text font-medium">
+                <i class="ri-bank-card-line mr-2"></i>
+                Método de Pago *
+              </span>
+            </label>
+            <select
+              [value]="formData().paymentMethod"
+              (change)="onFormFieldChange('paymentMethod', $any($event.target).value)"
+              class="select select-bordered w-full rounded-2xl"
+              required
+            >
+              @for (method of paymentMethods; track method.value) {
+              <option [value]="method.value">{{ method.label }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Reference -->
+          <div>
+            <label class="label">
+              <span class="label-text font-medium">
+                <i class="ri-hashtag mr-2"></i>
+                Referencia
+              </span>
+            </label>
+            <input
+              type="text"
+              [value]="formData().reference || ''"
+              (input)="onFormFieldChange('reference', $any($event.target).value)"
+              class="input input-bordered w-full rounded-2xl"
+              placeholder="Ej: SPEI-20250903-001"
+            />
+          </div>
+
+          <!-- Notes -->
+          <div class="col-span-2">
+            <label class="label">
+              <span class="label-text font-medium">
+                <i class="ri-file-text-line mr-2"></i>
+                Notas
+              </span>
+            </label>
+            <textarea
+              [value]="formData().notes || ''"
+              (input)="onFormFieldChange('notes', $any($event.target).value)"
+              class="textarea textarea-bordered w-full rounded-2xl"
+              rows="3"
+              placeholder="Notas adicionales..."
+            ></textarea>
+          </div>
+        </div>
+
+        @if (error()) {
+        <div class="alert alert-error rounded-2xl mt-4">
+          <i class="ri-error-warning-line"></i>
+          <span>{{ error() }}</span>
+        </div>
+        }
+
+        <div class="modal-action">
+          <button
+            type="button"
+            class="btn btn-outline rounded-2xl"
+            (click)="closeModal()"
+            [disabled]="loading()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary rounded-2xl"
+            [disabled]="loading()"
+          >
+            @if (loading()) {
+            <span class="loading loading-spinner"></span>
+            } Registrar Pago
+          </button>
+        </div>
+      </form>
+      } @else if (selectedPayment()) {
+      <!-- View Details -->
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-neutral-600">Folio de Pago</p>
+            <p class="font-semibold font-mono">
+              {{ selectedPayment()!.paymentNumber }}
+            </p>
+          </div>
+          <div>
+            <p class="text-sm text-neutral-600">Estado</p>
+            <span
+              class="badge rounded-xl"
+              [ngClass]="getStatusBadgeClass(selectedPayment()!.status)"
+            >
+              {{ getStatusLabel(selectedPayment()!.status) }}
+            </span>
+          </div>
+          <div>
+            <p class="text-sm text-neutral-600">Residente</p>
+            <p class="font-semibold">{{ selectedPayment()!.residentName }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-neutral-600">Unidad</p>
+            <p class="font-semibold">{{ selectedPayment()!.unitNumber }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-neutral-600">Factura</p>
+            <p class="font-semibold font-mono">
+              {{ selectedPayment()!.invoiceNumber }}
+            </p>
+          </div>
+          <div>
+            <p class="text-sm text-neutral-600">Fecha de Pago</p>
+            <p class="font-semibold">
+              {{ formatDate(selectedPayment()!.paymentDate) }}
+            </p>
+          </div>
+          <div>
+            <p class="text-sm text-neutral-600">Método de Pago</p>
+            <p class="font-semibold">
+              {{ getMethodLabel(selectedPayment()!.paymentMethod) }}
+            </p>
+          </div>
+          <div>
+            <p class="text-sm text-neutral-600">Referencia</p>
+            <p class="font-semibold font-mono">
+              {{ selectedPayment()!.reference || 'N/A' }}
+            </p>
+          </div>
+          <div class="col-span-2">
+            <p class="text-sm text-neutral-600">Monto</p>
+            <p class="text-2xl font-bold text-success">
+              {{ formatCurrency(selectedPayment()!.amount) }}
+            </p>
+          </div>
+          @if (selectedPayment()!.notes) {
+          <div class="col-span-2">
+            <p class="text-sm text-neutral-600">Notas</p>
+            <p class="text-sm">{{ selectedPayment()!.notes }}</p>
+          </div>
+          }
+        </div>
+
+        <div class="modal-action">
+          <button class="btn btn-outline rounded-2xl" (click)="closeModal()">
+            Cerrar
+          </button>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  <!-- Toast Notification -->
+  @if (showToast()) {
+  <div class="toast toast-top toast-end z-50">
+    <div
+      class="alert rounded-2xl shadow-xl"
+      [ngClass]="{
+        'alert-success': toastType() === 'success',
+        'alert-error': toastType() === 'error',
+        'alert-info': toastType() === 'info'
+      }"
+    >
+      @if (toastType() === 'success') {
+      <i class="ri-checkbox-circle-line text-xl"></i>
+      } @else if (toastType() === 'error') {
+      <i class="ri-error-warning-line text-xl"></i>
+      } @else {
+      <i class="ri-information-line text-xl"></i>
+      }
+      <span>{{ toastMessage() }}</span>
+    </div>
+  </div>
+  }
+</div>

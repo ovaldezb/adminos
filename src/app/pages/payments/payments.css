@@ -1,0 +1,218 @@
+/* Glass morphism effects */
+.glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Smooth transitions */
+* {
+  transition: all 0.2s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(14, 165, 233, 0.5);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(14, 165, 233, 0.7);
+}
+
+/* Enhanced table styles */
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table thead tr {
+  border: none;
+}
+
+.table thead th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: rgba(0, 0, 0, 0.6);
+  padding: 1rem;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.table tbody tr:hover {
+  background: rgba(14, 165, 233, 0.05);
+}
+
+.table tbody td {
+  padding: 1rem;
+}
+
+/* Badge enhancements */
+.badge {
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Button hover effects */
+.btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Card hover effects */
+.glass:hover {
+  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* Modal backdrop */
+.modal-box {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Input focus states */
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: rgba(14, 165, 233, 0.5);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+/* Avatar enhancements */
+.avatar.placeholder > div {
+  font-weight: 600;
+}
+
+/* Statistics cards animation */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.glass {
+  animation: slideInUp 0.4s ease-out;
+}
+
+/* Toast notification animation */
+.toast {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Pagination styles */
+.join-item.btn-active {
+  background: rgba(14, 165, 233, 0.9);
+  color: white;
+  font-weight: 600;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  color: rgba(14, 165, 233, 0.8);
+}
+
+/* Form section spacing */
+form .grid {
+  gap: 1.5rem;
+}
+
+/* Enhanced select dropdown */
+select option {
+  padding: 0.5rem;
+}
+
+/* Status badge colors */
+.badge-warning {
+  background: rgba(251, 189, 35, 0.15);
+  color: rgb(202, 138, 4);
+  border: 1px solid rgba(251, 189, 35, 0.3);
+}
+
+.badge-success {
+  background: rgba(54, 211, 153, 0.15);
+  color: rgb(5, 150, 105);
+  border: 1px solid rgba(54, 211, 153, 0.3);
+}
+
+.badge-error {
+  background: rgba(248, 114, 114, 0.15);
+  color: rgb(220, 38, 38);
+  border: 1px solid rgba(248, 114, 114, 0.3);
+}
+
+.badge-info {
+  background: rgba(58, 191, 248, 0.15);
+  color: rgb(3, 105, 161);
+  border: 1px solid rgba(58, 191, 248, 0.3);
+}
+
+/* Icon colors */
+.text-success {
+  color: rgb(5, 150, 105);
+}
+
+.text-primary {
+  color: rgb(14, 165, 233);
+}
+
+.text-info {
+  color: rgb(3, 105, 161);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .table {
+    font-size: 0.875rem;
+  }
+
+  .table thead th,
+  .table tbody td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .glass {
+    padding: 1rem;
+  }
+
+  .modal-box {
+    max-width: 95%;
+  }
+}
