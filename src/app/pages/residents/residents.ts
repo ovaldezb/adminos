@@ -54,6 +54,7 @@ export class ResidentsComponent {
   protected readonly searchTerm = signal('');
   protected readonly typeFilter = signal<ResidentType | ''>('');
   protected readonly statusFilter = signal<'active' | 'inactive' | ''>('');
+  protected readonly buildingFilter = signal<string>('');
   
   // Modal state
   protected readonly showModal = signal(false);
@@ -125,7 +126,23 @@ export class ResidentsComponent {
       filtered = filtered.filter(r => !r.isActive);
     }
     
+    const building = this.buildingFilter();
+    if (building) {
+      filtered = filtered.filter(r => r.buildingName === building);
+    }
+    
     return filtered;
+  });
+
+  // Computed available building names for filter
+  protected readonly buildingNames = computed(() => {
+    const buildings = new Set<string>();
+    this.residents().forEach(r => {
+      if (r.buildingName) {
+        buildings.add(r.buildingName);
+      }
+    });
+    return Array.from(buildings).sort();
   });
 
   // Computed statistics
@@ -144,6 +161,39 @@ export class ResidentsComponent {
   protected readonly totalActive = computed(() => 
     this.filteredResidents().filter(r => r.isActive).length
   );
+
+  // === ADDITIONAL STATISTICS METHODS ===
+  protected getActiveResidents(): number {
+    return this.totalActive();
+  }
+
+  protected getActivePercentage(): number {
+    const total = this.filteredResidents().length;
+    if (total === 0) return 0;
+    return (this.getActiveResidents() / total) * 100;
+  }
+
+  protected getOwners(): number {
+    return this.totalOwners();
+  }
+
+  protected getTenants(): number {
+    return this.totalTenants();
+  }
+
+  protected getTotalDebt(): number {
+    return this.filteredResidents().reduce((total, resident) => {
+      return total + (resident.totalDebt || 0);
+    }, 0);
+  }
+
+  protected getResidentsWithDebt(): number {
+    return this.totalWithDebt();
+  }
+
+  protected formatPercentage(value: number): string {
+    return `${Math.round(value)}%`;
+  }
 
   constructor(
     private router: Router,
@@ -552,6 +602,13 @@ export class ResidentsComponent {
     this.loadResidents();
   }
 
+  onBuildingFilterChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.buildingFilter.set(value);
+    this.currentPage.set(1);
+    this.loadResidents();
+  }
+
   onStatusFilterChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value as 'active' | 'inactive' | '';
     this.statusFilter.set(value);
@@ -562,6 +619,7 @@ export class ResidentsComponent {
   clearFilters(): void {
     this.searchTerm.set('');
     this.typeFilter.set('');
+    this.buildingFilter.set('');
     this.statusFilter.set('');
     this.currentPage.set(1);
     this.loadResidents();
@@ -630,7 +688,7 @@ export class ResidentsComponent {
     return labels[type] || type;
   }
 
-  formatCurrency(amount: number): string {
+  protected formatCurrency(amount: number): string {
     return new Intl.NumberFormat('es-MX', {
       style: 'currency',
       currency: 'MXN',
