@@ -289,11 +289,7 @@
                   </div>
                   <div>
                     <span class="text-neutral-500">Unidad:</span>
-                    <span class="text-neutral-700 ml-1">
-                      @for (unitNumber of resident.unitNumbers || resident.units; track unitNumber; let isLast = $last) {
-                        <span>{{ unitNumber }}@if (!isLast) {, }</span>
-                      }
-                    </span>
+                    <span class="text-neutral-700 ml-1">{{ resident.unitNumber }}</span>
                   </div>
                   <div>
                     <span class="text-neutral-500">Estado:</span>
@@ -465,11 +461,9 @@
                   </div>
                 }
                 <div>
-                  <span class="text-sm text-neutral-500">Unidad(es):</span>
+                  <span class="text-sm text-neutral-500">Unidad:</span>
                   <div class="flex flex-wrap gap-2 mt-1">
-                    @for (unitNumber of selectedResident()!.unitNumbers || selectedResident()!.units; track unitNumber) {
-                      <span class="badge badge-lg badge-primary">{{ unitNumber }}</span>
-                    }
+                    <span class="badge badge-lg badge-primary">{{ selectedResident()!.unitNumber }}</span>
                   </div>
                 </div>
               </div>
@@ -613,7 +607,8 @@
                 >
                   <option [value]="ResidentType.OWNER">Propietario</option>
                   <option [value]="ResidentType.TENANT">Inquilino</option>
-                  <option [value]="ResidentType.BOTH">Propietario/Residente</option>
+                  <option [value]="ResidentType.FAMILY_MEMBER">Familiar</option>
+                  <option [value]="ResidentType.COHABITANT">Residente</option>
                 </select>
               </div>
 
