@@ -2,8 +2,9 @@
 export interface Unit {
   id: string;
   condominiumId: string;
+  buildingId?: string; // Asociación con edificio/torre/privada
   unitNumber: string;
-  tower: string;
+  tower: string; // Mantiene compatibilidad, pero ahora puede referirse al nombre del building
   floor: number;
   area: number; // m²
   bedrooms: number;
@@ -41,6 +42,7 @@ export enum PropertyType {
 
 // Unit with owner/resident information
 export interface UnitDetails extends Unit {
+  buildingName?: string; // Nombre del edificio asociado
   ownerId?: string;
   ownerName?: string;
   ownerEmail?: string;
@@ -58,6 +60,7 @@ export interface UnitDetails extends Unit {
 // Interface for creating/updating units
 export interface CreateUnitDto {
   condominiumId: string;
+  buildingId?: string; // Opcional: ID del edificio asociado
   unitNumber: string;
   tower: string;
   floor: number;

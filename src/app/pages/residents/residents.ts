@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
 import type { Condominium } from '../../components/condo-selector/condo-selector';
-import { ResidentService } from '../../services';
+import { ResidentService, UnitService, BuildingService, CondominiumService } from '../../services';
 import { 
   Resident, 
   ResidentDetails, 
@@ -13,7 +13,9 @@ import {
   DocumentType,
   CreateResidentDto,
   UpdateResidentDto,
-  ApiResponse
+  ApiResponse,
+  UnitDetails,
+  BuildingDetails
 } from '../../models';
 
 @Component({
@@ -30,6 +32,11 @@ export class ResidentsComponent {
   
   // Expose Math for template
   protected readonly Math = Math;
+  
+  // Dropdown data
+  protected readonly availableCondominiums = signal<Condominium[]>([]);
+  protected readonly availableBuildings = signal<BuildingDetails[]>([]);
+  protected readonly availableUnits = signal<UnitDetails[]>([]);
   
   // Data signals
   protected readonly residents = signal<ResidentDetails[]>([]);
@@ -77,6 +84,7 @@ export class ResidentsComponent {
     documentNumber: '',
     type: ResidentType.OWNER,
     condominiumId: '',
+    buildingId: '',
     unitId: '',
     moveInDate: new Date(),
     emergencyContactName: '',
@@ -118,7 +126,7 @@ export class ResidentsComponent {
 
   // Computed statistics
   protected readonly totalOwners = computed(() => 
-    this.filteredResidents().filter(r => r.type === ResidentType.OWNER || r.type === ResidentType.BOTH).length
+    this.filteredResidents().filter(r => r.type === ResidentType.OWNER).length
   );
 
   protected readonly totalTenants = computed(() => 
@@ -135,13 +143,19 @@ export class ResidentsComponent {
 
   constructor(
     private router: Router,
-    private residentService: ResidentService
+    private residentService: ResidentService,
+    private unitService: UnitService,
+    private buildingService: BuildingService,
+    private condominiumService: CondominiumService
   ) {
     // Load initial data
     effect(() => {
       const condo = this.selectedCondo();
       this.loadResidents();
     });
+    
+    // Load condominiums for dropdown
+    this.loadCondominiums();
   }
 
   toggleSidebar(): void {
@@ -156,6 +170,91 @@ export class ResidentsComponent {
   }
 
   // CRUD Operations
+  loadCondominiums(): void {
+    this.condominiumService.getAllCondominiums().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.availableCondominiums.set(response.data);
+        }
+      },
+      error: (err) => console.error('Error loading condominiums:', err)
+    });
+  }
+
+  loadBuildingsByCondominium(condominiumId: string): void {
+    if (!condominiumId || condominiumId === 'all') {
+      this.availableBuildings.set([]);
+      this.availableUnits.set([]);
+      return;
+    }
+
+    this.buildingService.getBuildings({ condominiumId }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.availableBuildings.set(response.data.items);
+        }
+      },
+      error: (err) => console.error('Error loading buildings:', err)
+    });
+  }
+
+  loadUnitsByBuilding(buildingId: string): void {
+    if (!buildingId) {
+      this.availableUnits.set([]);
+      return;
+    }
+
+    const condominiumId = this.formData().condominiumId;
+    
+    this.unitService.getUnits({ 
+      page: 1,
+      condominiumId, 
+      pageSize: 1000 // Obtener todas las unidades
+    }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          // Filtrar unidades por edificio
+          const units = response.data.items.filter(u => u.buildingId === buildingId);
+          this.availableUnits.set(units);
+        }
+      },
+      error: (err) => console.error('Error loading units:', err)
+    });
+  }
+
+  onCondominiumChange(event: Event): void {
+    const condominiumId = (event.target as HTMLSelectElement).value;
+    this.formData.update(current => ({
+      ...current,
+      condominiumId,
+      buildingId: '',
+      unitId: ''
+    }));
+    this.loadBuildingsByCondominium(condominiumId);
+  }
+
+  onBuildingChange(event: Event): void {
+    const buildingId = (event.target as HTMLSelectElement).value;
+    this.formData.update(current => ({
+      ...current,
+      buildingId,
+      unitId: ''
+    }));
+    this.loadUnitsByBuilding(buildingId);
+  }
+
+  onUnitChange(event: Event): void {
+    const unitId = (event.target as HTMLSelectElement).value;
+    // Buscar la unidad seleccionada para obtener el buildingId automáticamente
+    const selectedUnit = this.availableUnits().find(u => u.id === unitId);
+    
+    this.formData.update(current => ({
+      ...current,
+      unitId,
+      buildingId: selectedUnit?.buildingId || current.buildingId
+    }));
+  }
+
   loadResidents(): void {
     this.loading.set(true);
     this.error.set(null);
@@ -188,6 +287,9 @@ export class ResidentsComponent {
   openCreateModal(): void {
     this.modalMode.set('create');
     this.selectedResident.set(null);
+    
+    const selectedCondoId = this.selectedCondo()?.id === 'all' ? '' : this.selectedCondo()?.id || '';
+    
     this.formData.set({
       firstName: '',
       lastName: '',
@@ -196,12 +298,19 @@ export class ResidentsComponent {
       documentType: DocumentType.CURP,
       documentNumber: '',
       type: ResidentType.OWNER,
-      condominiumId: this.selectedCondo()?.id === 'all' ? '' : this.selectedCondo()?.id || '',
+      condominiumId: selectedCondoId,
+      buildingId: '',
       unitId: '',
       moveInDate: new Date(),
       emergencyContactName: '',
       emergencyContactPhone: ''
     });
+    
+    // Si hay un condominio seleccionado, cargar sus edificios
+    if (selectedCondoId) {
+      this.loadBuildingsByCondominium(selectedCondoId);
+    }
+    
     this.showModal.set(true);
   }
 
@@ -217,11 +326,21 @@ export class ResidentsComponent {
       documentNumber: resident.documentNumber,
       type: resident.type,
       condominiumId: resident.condominiumId,
+      buildingId: resident.buildingId,
       unitId: resident.unitId,
       moveInDate: resident.moveInDate,
       emergencyContactName: resident.emergencyContactName,
       emergencyContactPhone: resident.emergencyContactPhone
     });
+    
+    // Cargar edificios y unidades del condominio actual
+    if (resident.condominiumId) {
+      this.loadBuildingsByCondominium(resident.condominiumId);
+    }
+    if (resident.buildingId) {
+      this.loadUnitsByBuilding(resident.buildingId);
+    }
+    
     this.showModal.set(true);
   }
 
@@ -377,7 +496,7 @@ export class ResidentsComponent {
 
   private validateForm(data: Partial<CreateResidentDto>): boolean {
     if (!data.firstName || !data.lastName || !data.email || !data.phone || 
-        !data.documentNumber || !data.condominiumId || !data.unitId) {
+        !data.documentNumber || !data.condominiumId || !data.buildingId || !data.unitId) {
       this.error.set('Por favor complete todos los campos obligatorios');
       return false;
     }
@@ -460,7 +579,8 @@ export class ResidentsComponent {
     const classes: Record<ResidentType, string> = {
       [ResidentType.OWNER]: 'badge-primary',
       [ResidentType.TENANT]: 'badge-secondary',
-      [ResidentType.BOTH]: 'badge-info'
+      [ResidentType.FAMILY_MEMBER]: 'badge-accent',
+      [ResidentType.COHABITANT]: 'badge-neutral'
     };
     return classes[type] || 'badge-neutral';
   }
@@ -469,7 +589,8 @@ export class ResidentsComponent {
     const labels: Record<ResidentType, string> = {
       [ResidentType.OWNER]: 'Propietario',
       [ResidentType.TENANT]: 'Inquilino',
-      [ResidentType.BOTH]: 'Propietario/Residente'
+      [ResidentType.FAMILY_MEMBER]: 'Familiar',
+      [ResidentType.COHABITANT]: 'Residente'
     };
     return labels[type] || type;
   }

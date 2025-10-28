@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
 import type { Condominium } from '../../components/condo-selector/condo-selector';
-import { UnitService } from '../../services';
+import { UnitService, BuildingService, CondominiumService } from '../../services';
 import { 
   Unit, 
   UnitDetails, 
@@ -13,7 +13,8 @@ import {
   PropertyType,
   CreateUnitDto,
   UpdateUnitDto,
-  ApiResponse
+  ApiResponse,
+  BuildingDetails
 } from '../../models';
 
 @Component({
@@ -30,6 +31,10 @@ export class UnitsComponent {
   
   // Expose Math for template
   protected readonly Math = Math;
+  
+  // Dropdown data for buildings
+  protected readonly availableCondominiums = signal<Condominium[]>([]);
+  protected readonly availableBuildings = signal<BuildingDetails[]>([]);
   
   // Data signals
   protected readonly units = signal<UnitDetails[]>([]);
@@ -65,6 +70,7 @@ export class UnitsComponent {
   // Form data
   protected readonly formData = signal<Partial<CreateUnitDto>>({
     condominiumId: '',
+    buildingId: '',
     unitNumber: '',
     tower: '',
     floor: 1,
@@ -129,13 +135,18 @@ export class UnitsComponent {
 
   constructor(
     private router: Router,
-    private unitService: UnitService
+    private unitService: UnitService,
+    private buildingService: BuildingService,
+    private condominiumService: CondominiumService
   ) {
     // Load initial data
     effect(() => {
       const condo = this.selectedCondo();
       this.loadUnits();
     });
+    
+    // Load condominiums for dropdown
+    this.loadCondominiums();
   }
 
   toggleSidebar(): void {
@@ -150,6 +161,59 @@ export class UnitsComponent {
   }
 
   // CRUD Operations
+  loadCondominiums(): void {
+    this.condominiumService.getAllCondominiums().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.availableCondominiums.set(response.data);
+        }
+      },
+      error: (err) => console.error('Error loading condominiums:', err)
+    });
+  }
+
+  loadBuildingsByCondominium(condominiumId: string): void {
+    if (!condominiumId || condominiumId === 'all') {
+      this.availableBuildings.set([]);
+      return;
+    }
+
+    this.buildingService.getBuildings({ 
+      page: 1,
+      pageSize: 1000,
+      condominiumId 
+    }).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.availableBuildings.set(response.data.items);
+        }
+      },
+      error: (err) => console.error('Error loading buildings:', err)
+    });
+  }
+
+  onCondominiumChange(event: Event): void {
+    const condominiumId = (event.target as HTMLSelectElement).value;
+    this.formData.update(current => ({
+      ...current,
+      condominiumId,
+      buildingId: '',
+      tower: ''
+    }));
+    this.loadBuildingsByCondominium(condominiumId);
+  }
+
+  onBuildingChange(event: Event): void {
+    const buildingId = (event.target as HTMLSelectElement).value;
+    const selectedBuilding = this.availableBuildings().find(b => b.id === buildingId);
+    
+    this.formData.update(current => ({
+      ...current,
+      buildingId,
+      tower: selectedBuilding?.name || ''
+    }));
+  }
+
   loadUnits(): void {
     this.loading.set(true);
     this.error.set(null);
@@ -182,8 +246,12 @@ export class UnitsComponent {
   openCreateModal(): void {
     this.modalMode.set('create');
     this.selectedUnit.set(null);
+    
+    const selectedCondoId = this.selectedCondo()?.id === 'all' ? '' : this.selectedCondo()?.id || '';
+    
     this.formData.set({
-      condominiumId: this.selectedCondo()?.id === 'all' ? '' : this.selectedCondo()?.id || '',
+      condominiumId: selectedCondoId,
+      buildingId: '',
       unitNumber: '',
       tower: '',
       floor: 1,
@@ -201,6 +269,12 @@ export class UnitsComponent {
       isFurnished: false,
       description: ''
     });
+    
+    // Si hay un condominio seleccionado, cargar sus edificios
+    if (selectedCondoId) {
+      this.loadBuildingsByCondominium(selectedCondoId);
+    }
+    
     this.showModal.set(true);
   }
 
@@ -209,6 +283,7 @@ export class UnitsComponent {
     this.selectedUnit.set(unit);
     this.formData.set({
       condominiumId: unit.condominiumId,
+      buildingId: unit.buildingId,
       unitNumber: unit.unitNumber,
       tower: unit.tower,
       floor: unit.floor,
@@ -226,6 +301,12 @@ export class UnitsComponent {
       isFurnished: unit.isFurnished,
       description: unit.description
     });
+    
+    // Cargar edificios del condominio actual
+    if (unit.condominiumId) {
+      this.loadBuildingsByCondominium(unit.condominiumId);
+    }
+    
     this.showModal.set(true);
   }
 
@@ -339,10 +420,21 @@ export class UnitsComponent {
   }
 
   private validateForm(data: Partial<CreateUnitDto>): boolean {
-    if (!data.condominiumId || !data.unitNumber || !data.tower) {
-      this.error.set('Por favor complete todos los campos obligatorios');
+    if (!data.condominiumId || !data.buildingId || !data.unitNumber || !data.tower) {
+      this.error.set('Por favor complete todos los campos obligatorios (Condominio, Edificio, Número de Unidad)');
       return false;
     }
+    
+    if (!data.area || data.area <= 0) {
+      this.error.set('El área debe ser mayor a 0');
+      return false;
+    }
+    
+    if (!data.monthlyFee || data.monthlyFee < 0) {
+      this.error.set('La cuota mensual debe ser mayor o igual a 0');
+      return false;
+    }
+    
     return true;
   }
 
@@ -442,6 +534,17 @@ export class UnitsComponent {
       [PropertyType.TOWNHOUSE]: 'Casa'
     };
     return labels[type] || type;
+  }
+
+  getTypeLabel(type: any): string {
+    // Para tipos de edificio
+    const buildingLabels: Record<string, string> = {
+      'tower': 'Torre',
+      'building': 'Edificio',
+      'private_residence': 'Privada',
+      'cluster': 'Conjunto'
+    };
+    return buildingLabels[type] || type;
   }
 
   formatCurrency(amount: number): string {

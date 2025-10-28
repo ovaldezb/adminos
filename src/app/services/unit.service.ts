@@ -23,6 +23,8 @@ export class UnitService {
     {
       id: 'U-101',
       condominiumId: '1',
+      buildingId: 'bld-001',
+      buildingName: 'Torre Palmas',
       unitNumber: '101',
       tower: 'Torre A',
       floor: 1,
@@ -57,6 +59,8 @@ export class UnitService {
     {
       id: 'U-102',
       condominiumId: '1',
+      buildingId: 'bld-001',
+      buildingName: 'Torre Palmas',
       unitNumber: '102',
       tower: 'Torre A',
       floor: 1,
@@ -91,6 +95,8 @@ export class UnitService {
     {
       id: 'U-103',
       condominiumId: '1',
+      buildingId: 'bld-001',
+      buildingName: 'Torre Palmas',
       unitNumber: '103',
       tower: 'Torre A',
       floor: 1,
@@ -115,6 +121,8 @@ export class UnitService {
     {
       id: 'U-201',
       condominiumId: '2',
+      buildingId: 'bld-002',
+      buildingName: 'Torre Jardines',
       unitNumber: '201',
       tower: 'Único',
       floor: 2,
@@ -149,6 +157,8 @@ export class UnitService {
     {
       id: 'U-202',
       condominiumId: '2',
+      buildingId: 'bld-002',
+      buildingName: 'Torre Jardines',
       unitNumber: '202',
       tower: 'Único',
       floor: 2,

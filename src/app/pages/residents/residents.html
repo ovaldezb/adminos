@@ -137,6 +137,7 @@
                   <th class="text-neutral-100">Documento</th>
                   <th class="text-neutral-100">Tipo</th>
                   <th class="text-neutral-100">Contacto</th>
+                  <th class="text-neutral-100">Edificio</th>
                   <th class="text-neutral-100">Unidad(es)</th>
                   <th class="text-neutral-100">Estado</th>
                   <th class="text-neutral-100">Deuda</th>
@@ -183,6 +184,16 @@
                           <span>{{ resident.phone }}</span>
                         </div>
                       </div>
+                    </td>
+                    <td class="text-neutral-700">
+                      @if (resident.buildingName) {
+                        <div class="flex items-center gap-1">
+                          <i class="ri-building-line text-xs text-primary"></i>
+                          <span class="text-sm">{{ resident.buildingName }}</span>
+                        </div>
+                      } @else {
+                        <span class="text-xs text-neutral-400">No especificado</span>
+                      }
                     </td>
                     <td>
                       <div class="flex flex-wrap gap-1">
@@ -444,10 +455,24 @@
 
             <div class="col-span-2">
               <h4 class="font-semibold mb-2 text-neutral-700">Unidades</h4>
-              <div class="flex flex-wrap gap-2">
-                @for (unitNumber of selectedResident()!.unitNumbers || selectedResident()!.units; track unitNumber) {
-                  <span class="badge badge-lg badge-primary">{{ unitNumber }}</span>
+              <div class="space-y-2">
+                @if (selectedResident()!.buildingName) {
+                  <div>
+                    <span class="text-sm text-neutral-500">Edificio/Torre:</span>
+                    <p class="font-medium flex items-center gap-2">
+                      <i class="ri-building-line text-primary"></i>
+                      {{ selectedResident()!.buildingName }}
+                    </p>
+                  </div>
                 }
+                <div>
+                  <span class="text-sm text-neutral-500">Unidad(es):</span>
+                  <div class="flex flex-wrap gap-2 mt-1">
+                    @for (unitNumber of selectedResident()!.unitNumbers || selectedResident()!.units; track unitNumber) {
+                      <span class="badge badge-lg badge-primary">{{ unitNumber }}</span>
+                    }
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -593,18 +618,80 @@
                 </select>
               </div>
 
+              <!-- Condominio Dropdown -->
               <div class="form-control">
                 <label class="label">
-                  <span class="label-text font-semibold">ID de Unidad *</span>
+                  <span class="label-text font-semibold">Condominio *</span>
                 </label>
-                <input
-                  type="text"
-                  class="input input-bordered"
-                  [(ngModel)]="formData().unitId"
-                  name="unitId"
-                  placeholder="Ej: U-101"
+                <select
+                  class="select select-bordered"
+                  [value]="formData().condominiumId"
+                  (change)="onCondominiumChange($event)"
+                  name="condominiumId"
                   required
-                />
+                >
+                  <option value="">Seleccione un condominio</option>
+                  @for (condo of availableCondominiums(); track condo.id) {
+                    <option [value]="condo.id">{{ condo.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Edificio/Torre Dropdown -->
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Edificio/Torre *</span>
+                </label>
+                <select
+                  class="select select-bordered"
+                  [value]="formData().buildingId"
+                  (change)="onBuildingChange($event)"
+                  name="buildingId"
+                  [disabled]="!formData().condominiumId"
+                  required
+                >
+                  <option value="">
+                    @if (!formData().condominiumId) {
+                      Primero seleccione un condominio
+                    } @else {
+                      Seleccione un edificio
+                    }
+                  </option>
+                  @for (building of availableBuildings(); track building.id) {
+                    <option [value]="building.id">{{ building.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Unidad Dropdown -->
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Unidad *</span>
+                </label>
+                <select
+                  class="select select-bordered"
+                  [value]="formData().unitId"
+                  (change)="onUnitChange($event)"
+                  name="unitId"
+                  [disabled]="!formData().buildingId"
+                  required
+                >
+                  <option value="">
+                    @if (!formData().buildingId) {
+                      Primero seleccione un edificio
+                    } @else {
+                      Seleccione una unidad
+                    }
+                  </option>
+                  @for (unit of availableUnits(); track unit.id) {
+                    <option [value]="unit.id">
+                      {{ unit.unitNumber }} - {{ unit.tower }} - Piso {{ unit.floor }}
+                      @if (unit.status === 'occupied') {
+                        (Ocupada)
+                      }
+                    </option>
+                  }
+                </select>
               </div>
 
               <div class="form-control">

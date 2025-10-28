@@ -40,6 +40,13 @@ export class SideMenuComponent {
       route: '/facturas'
     },
     { 
+      icon: 'ri-building-line', 
+      label: 'Edificios', 
+      route: '/edificios',
+      badge: '5',
+      badgeColor: 'badge-primary'
+    },
+    { 
       icon: 'ri-home-4-fill', 
       label: 'Unidades', 
       route: '/unidades',

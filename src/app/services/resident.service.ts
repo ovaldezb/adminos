@@ -6,7 +6,8 @@ import {
   ResidentType, 
   DocumentType,
   CreateResidentDto,
-  UpdateResidentDto
+  UpdateResidentDto,
+  UnitResidents
 } from '../models/resident.model';
 import { ApiResponse, PaginatedResponse, PaginationParams } from '../models/api.model';
 
@@ -17,8 +18,9 @@ export class ResidentService {
   // Simulated AWS Lambda endpoint
   private readonly lambdaEndpoint = 'https://api.example.com/residents';
 
-  // Mock data - simulating MongoDB collection
+  // Mock data - simulating MongoDB collection with new structure
   private mockResidents: ResidentDetails[] = [
+    // Unidad U-101 - Familia Pérez (Dueño + esposa + hijo)
     {
       id: 'R-001',
       firstName: 'Juan Carlos',
@@ -29,9 +31,11 @@ export class ResidentService {
       documentNumber: 'PEGJ850315HDFRNN09',
       type: ResidentType.OWNER,
       condominiumId: '1',
+      buildingId: 'bld-001',
+      buildingName: 'Torre Palmas',
       unitId: 'U-101',
-      units: ['U-101'],
-      unitNumbers: ['101'],
+      unitNumber: '101',
+      isResponsible: true,
       moveInDate: new Date('2020-03-15'),
       isActive: true,
       emergencyContactName: 'María Pérez',
@@ -43,6 +47,56 @@ export class ResidentService {
       updatedAt: new Date('2025-10-15'),
     },
     {
+      id: 'R-001-01',
+      firstName: 'Ana María',
+      lastName: 'Pérez García',
+      email: 'ana.perez@email.com',
+      phone: '+52 55 1234-5679',
+      documentType: DocumentType.CURP,
+      documentNumber: 'PEGA900520MDFRNN08',
+      type: ResidentType.FAMILY_MEMBER,
+      condominiumId: '1',
+      buildingId: 'bld-001',
+      buildingName: 'Torre Palmas',
+      unitId: 'U-101',
+      unitNumber: '101',
+      isResponsible: false,
+      relationship: 'Esposa',
+      moveInDate: new Date('2020-03-15'),
+      isActive: true,
+      totalDebt: 0,
+      paymentHistory: 0,
+      averagePaymentDelay: 0,
+      createdAt: new Date('2020-03-15'),
+      updatedAt: new Date('2025-10-15'),
+    },
+    {
+      id: 'R-001-02',
+      firstName: 'Carlos Andrés',
+      lastName: 'Pérez García',
+      email: '',
+      phone: '',
+      documentType: DocumentType.CURP,
+      documentNumber: 'PEGC150812HDFRNN07',
+      type: ResidentType.FAMILY_MEMBER,
+      condominiumId: '1',
+      buildingId: 'bld-001',
+      buildingName: 'Torre Palmas',
+      unitId: 'U-101',
+      unitNumber: '101',
+      isResponsible: false,
+      relationship: 'Hijo',
+      moveInDate: new Date('2020-03-15'),
+      isActive: true,
+      totalDebt: 0,
+      paymentHistory: 0,
+      averagePaymentDelay: 0,
+      createdAt: new Date('2020-03-15'),
+      updatedAt: new Date('2025-10-15'),
+    },
+    
+    // Unidad U-102 - María García (Dueña sola)
+    {
       id: 'R-002',
       firstName: 'María Guadalupe',
       lastName: 'García Martínez',
@@ -52,9 +106,11 @@ export class ResidentService {
       documentNumber: 'GAMG920620MDFRRL03',
       type: ResidentType.OWNER,
       condominiumId: '1',
+      buildingId: 'bld-001',
+      buildingName: 'Torre Palmas',
       unitId: 'U-102',
-      units: ['U-102'],
-      unitNumbers: ['102'],
+      unitNumber: '102',
+      isResponsible: true,
       moveInDate: new Date('2019-06-20'),
       isActive: true,
       emergencyContactName: 'Carlos García',
@@ -65,6 +121,8 @@ export class ResidentService {
       createdAt: new Date('2019-06-20'),
       updatedAt: new Date('2025-10-20'),
     },
+    
+    // Unidad U-201 - Carlos Rodríguez (Dueño)
     {
       id: 'R-003',
       firstName: 'Carlos Alberto',
@@ -75,9 +133,11 @@ export class ResidentService {
       documentNumber: 'ROLC880112ABC',
       type: ResidentType.OWNER,
       condominiumId: '2',
+      buildingId: 'bld-002',
+      buildingName: 'Torre Jardines',
       unitId: 'U-201',
-      units: ['U-201', 'U-202'],
-      unitNumbers: ['201', '202'],
+      unitNumber: '201',
+      isResponsible: true,
       moveInDate: new Date('2021-01-10'),
       isActive: true,
       emergencyContactName: 'Ana Rodríguez',
@@ -88,6 +148,8 @@ export class ResidentService {
       createdAt: new Date('2021-01-10'),
       updatedAt: new Date('2025-10-10'),
     },
+    
+    // Unidad U-305 - Ana Martínez (Inquilina principal)
     {
       id: 'R-004',
       firstName: 'Ana Patricia',
@@ -98,9 +160,11 @@ export class ResidentService {
       documentNumber: '1234567890123',
       type: ResidentType.TENANT,
       condominiumId: '3',
+      buildingId: 'bld-003',
+      buildingName: 'Privada Los Robles',
       unitId: 'U-305',
-      units: ['U-305'],
-      unitNumbers: ['305'],
+      unitNumber: '305',
+      isResponsible: true,
       moveInDate: new Date('2025-10-01'),
       isActive: true,
       emergencyContactName: 'Luis Martínez',
@@ -109,101 +173,8 @@ export class ResidentService {
       paymentHistory: 1,
       averagePaymentDelay: 0,
       createdAt: new Date('2025-10-01'),
-      updatedAt: new Date('2025-10-01'),
-    },
-    {
-      id: 'R-005',
-      firstName: 'Luis Fernando',
-      lastName: 'Torres Ramírez',
-      email: 'luis.torres@email.com',
-      phone: '+52 55 5678-9012',
-      documentType: DocumentType.CURP,
-      documentNumber: 'TORL950214HDFRMR08',
-      type: ResidentType.OWNER,
-      condominiumId: '3',
-      unitId: 'U-305',
-      units: ['U-305'],
-      unitNumbers: ['305'],
-      moveInDate: new Date('2022-02-14'),
-      isActive: true,
-      emergencyContactName: 'Carmen Torres',
-      emergencyContactPhone: '+52 55 5432-1098',
-      totalDebt: 0,
-      paymentHistory: 35,
-      averagePaymentDelay: 1,
-      createdAt: new Date('2022-02-14'),
-      updatedAt: new Date('2025-10-10'),
-    },
-    {
-      id: 'R-006',
-      firstName: 'Roberto',
-      lastName: 'Silva Méndez',
-      email: 'roberto.silva@email.com',
-      phone: '+52 55 6789-0123',
-      documentType: DocumentType.CURP,
-      documentNumber: 'SIMR780510HDFNND01',
-      type: ResidentType.BOTH,
-      condominiumId: '1',
-      unitId: 'U-502',
-      units: ['U-502', 'U-103'],
-      unitNumbers: ['502', '103'],
-      moveInDate: new Date('2023-05-10'),
-      isActive: true,
-      emergencyContactName: 'Patricia Silva',
-      emergencyContactPhone: '+52 55 4321-0987',
-      totalDebt: 0,
-      paymentHistory: 28,
-      averagePaymentDelay: 0,
-      createdAt: new Date('2023-05-10'),
-      updatedAt: new Date('2025-10-18'),
-    },
-    {
-      id: 'R-007',
-      firstName: 'Elena',
-      lastName: 'Vargas Sánchez',
-      email: 'elena.vargas@email.com',
-      phone: '+52 55 7890-1234',
-      documentType: DocumentType.PASSPORT,
-      documentNumber: 'G12345678',
-      type: ResidentType.TENANT,
-      condominiumId: '2',
-      unitId: 'U-202',
-      units: ['U-202'],
-      unitNumbers: ['202'],
-      moveInDate: new Date('2024-08-15'),
-      isActive: true,
-      emergencyContactName: 'Miguel Vargas',
-      emergencyContactPhone: '+52 55 3210-9876',
-      totalDebt: 17000,
-      paymentHistory: 14,
-      averagePaymentDelay: 3,
-      createdAt: new Date('2024-08-15'),
-      updatedAt: new Date('2025-10-20'),
-    },
-    {
-      id: 'R-008',
-      firstName: 'Fernando',
-      lastName: 'Campos Ortega',
-      email: 'fernando.campos@email.com',
-      phone: '+52 55 8901-2345',
-      documentType: DocumentType.CURP,
-      documentNumber: 'CAOF830625HDFMRR06',
-      type: ResidentType.OWNER,
-      condominiumId: '1',
-      unitId: 'U-501',
-      units: ['U-501'],
-      unitNumbers: ['501'],
-      moveInDate: new Date('2020-05-20'),
-      isActive: false,
-      moveOutDate: new Date('2025-09-30'),
-      emergencyContactName: 'Lucia Campos',
-      emergencyContactPhone: '+52 55 2109-8765',
-      totalDebt: 0,
-      paymentHistory: 60,
-      averagePaymentDelay: 2,
-      createdAt: new Date('2020-05-20'),
-      updatedAt: new Date('2025-09-30'),
-    },
+      updatedAt: new Date('2025-10-15'),
+    }
   ];
 
   /**
@@ -262,38 +233,44 @@ export class ResidentService {
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch single resident
-   * Lambda: getResidentById
+   * Get residents by unit ID
    */
-  getResidentById(id: string): Observable<ApiResponse<ResidentDetails>> {
-    const resident = this.mockResidents.find((r) => r.id === id);
-
-    if (!resident) {
+  getResidentsByUnit(unitId: string): Observable<ApiResponse<UnitResidents>> {
+    const residents = this.mockResidents.filter(r => r.unitId === unitId);
+    const responsible = residents.find(r => r.isResponsible);
+    
+    if (residents.length === 0) {
       return of({
         success: false,
         error: {
-          code: 'RESIDENT_NOT_FOUND',
-          message: 'Residente no encontrado',
+          code: 'UNIT_NOT_FOUND',
+          message: 'No se encontraron residentes para esta unidad'
         },
-        timestamp: new Date(),
+        timestamp: new Date()
       }).pipe(delay(200));
     }
 
+    const unitResidents: UnitResidents = {
+      unitId,
+      unitNumber: residents[0].unitNumber || '',
+      buildingName: residents[0].buildingName || '',
+      responsible,
+      residents,
+      totalDebt: responsible?.totalDebt || 0
+    };
+
     return of({
       success: true,
-      data: resident,
-      message: 'Residente obtenido exitosamente',
+      data: unitResidents,
+      message: 'Residentes de la unidad obtenidos exitosamente',
       timestamp: new Date(),
     }).pipe(delay(Math.random() * 400 + 200));
   }
 
   /**
-   * Simulates AWS Lambda POST request to create resident
-   * Lambda: createResident
+   * Create new resident
    */
-  createResident(
-    residentData: CreateResidentDto
-  ): Observable<ApiResponse<Resident>> {
+  createResident(residentData: CreateResidentDto): Observable<ApiResponse<Resident>> {
     const newResident: Resident = {
       id: `R-${String(Date.now()).slice(-6)}`,
       firstName: residentData.firstName,
@@ -304,11 +281,14 @@ export class ResidentService {
       documentNumber: residentData.documentNumber,
       type: residentData.type,
       condominiumId: residentData.condominiumId,
+      buildingId: residentData.buildingId,
       unitId: residentData.unitId,
+      isResponsible: residentData.isResponsible,
       moveInDate: residentData.moveInDate,
       isActive: true,
       emergencyContactName: residentData.emergencyContactName,
       emergencyContactPhone: residentData.emergencyContactPhone,
+      relationship: residentData.relationship,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -316,7 +296,8 @@ export class ResidentService {
     // Add to mock data
     this.mockResidents.push({
       ...newResident,
-      units: [newResident.unitId],
+      unitNumber: '', // This would be populated from unit service
+      buildingName: '', // This would be populated from building service
       totalDebt: 0,
       paymentHistory: 0,
       averagePaymentDelay: 0,
@@ -331,13 +312,9 @@ export class ResidentService {
   }
 
   /**
-   * Simulates AWS Lambda PUT request to update resident
-   * Lambda: updateResident
+   * Update resident
    */
-  updateResident(
-    id: string,
-    updates: UpdateResidentDto
-  ): Observable<ApiResponse<ResidentDetails>> {
+  updateResident(id: string, updates: UpdateResidentDto): Observable<ApiResponse<ResidentDetails>> {
     const residentIndex = this.mockResidents.findIndex((r) => r.id === id);
 
     if (residentIndex === -1) {
@@ -368,39 +345,9 @@ export class ResidentService {
   }
 
   /**
-   * Simulates AWS Lambda DELETE request to deactivate resident
-   * Lambda: deactivateResident
+   * Deactivate resident
    */
   deactivateResident(id: string): Observable<ApiResponse<void>> {
-    const resident = this.mockResidents.find((r) => r.id === id);
-
-    if (!resident) {
-      return of({
-        success: false,
-        error: {
-          code: 'RESIDENT_NOT_FOUND',
-          message: 'Residente no encontrado',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
-
-    resident.isActive = false;
-    resident.moveOutDate = new Date();
-    resident.updatedAt = new Date();
-
-    return of({
-      success: true,
-      message: 'Residente desactivado exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 300));
-  }
-
-  /**
-   * Simulates AWS Lambda DELETE request to permanently delete resident
-   * Lambda: deleteResident
-   */
-  deleteResident(id: string): Observable<ApiResponse<void>> {
     const residentIndex = this.mockResidents.findIndex((r) => r.id === id);
 
     if (residentIndex === -1) {
@@ -414,47 +361,23 @@ export class ResidentService {
       }).pipe(delay(200));
     }
 
-    // Permanently remove from mock data
-    this.mockResidents.splice(residentIndex, 1);
+    this.mockResidents[residentIndex].isActive = false;
+    this.mockResidents[residentIndex].updatedAt = new Date();
 
     return of({
       success: true,
-      message: 'Residente eliminado exitosamente',
+      message: 'Residente desactivado exitosamente',
       timestamp: new Date(),
     }).pipe(delay(Math.random() * 500 + 300));
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch residents with debt
-   * Lambda: getResidentsWithDebt
+   * Delete resident
    */
-  getResidentsWithDebt(
-    condominiumId?: string
-  ): Observable<ApiResponse<ResidentDetails[]>> {
-    let residents = this.mockResidents.filter((r) => r.totalDebt > 0);
+  deleteResident(id: string): Observable<ApiResponse<void>> {
+    const index = this.mockResidents.findIndex((r) => r.id === id);
 
-    if (condominiumId && condominiumId !== 'all') {
-      residents = residents.filter((r) => r.condominiumId === condominiumId);
-    }
-
-    return of({
-      success: true,
-      data: residents,
-      message: 'Residentes con deuda obtenidos exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 300));
-  }
-
-  /**
-   * Simulates AWS Lambda GET request to fetch resident payment history
-   * Lambda: getResidentPaymentHistory
-   */
-  getResidentPaymentHistory(
-    residentId: string
-  ): Observable<ApiResponse<{ totalPayments: number; totalAmount: number; averageDelay: number }>> {
-    const resident = this.mockResidents.find((r) => r.id === residentId);
-
-    if (!resident) {
+    if (index === -1) {
       return of({
         success: false,
         error: {
@@ -465,16 +388,11 @@ export class ResidentService {
       }).pipe(delay(200));
     }
 
-    const history = {
-      totalPayments: resident.paymentHistory,
-      totalAmount: resident.paymentHistory * 1500, // Mock calculation
-      averageDelay: resident.averagePaymentDelay,
-    };
+    this.mockResidents.splice(index, 1);
 
     return of({
       success: true,
-      data: history,
-      message: 'Historial de pagos obtenido exitosamente',
+      message: 'Residente eliminado exitosamente',
       timestamp: new Date(),
     }).pipe(delay(Math.random() * 500 + 300));
   }

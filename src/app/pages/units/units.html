@@ -447,6 +447,51 @@
           <!-- Create/Edit Form -->
           <form (submit)="$event.preventDefault(); saveUnit()">
             <div class="grid grid-cols-2 gap-4">
+              <!-- Condominio Dropdown -->
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Condominio *</span>
+                </label>
+                <select
+                  class="select select-bordered"
+                  [value]="formData().condominiumId"
+                  (change)="onCondominiumChange($event)"
+                  name="condominiumId"
+                  required
+                >
+                  <option value="">Seleccione un condominio</option>
+                  @for (condo of availableCondominiums(); track condo.id) {
+                    <option [value]="condo.id">{{ condo.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Edificio/Torre Dropdown -->
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Edificio/Torre *</span>
+                </label>
+                <select
+                  class="select select-bordered"
+                  [value]="formData().buildingId"
+                  (change)="onBuildingChange($event)"
+                  name="buildingId"
+                  [disabled]="!formData().condominiumId"
+                  required
+                >
+                  <option value="">
+                    @if (!formData().condominiumId) {
+                      Primero seleccione un condominio
+                    } @else {
+                      Seleccione un edificio
+                    }
+                  </option>
+                  @for (building of availableBuildings(); track building.id) {
+                    <option [value]="building.id">{{ building.name }} ({{ getTypeLabel(building.type) }})</option>
+                  }
+                </select>
+              </div>
+
               <!-- Basic Info -->
               <div class="form-control">
                 <label class="label">
@@ -457,20 +502,22 @@
                   class="input input-bordered"
                   [(ngModel)]="formData().unitNumber"
                   name="unitNumber"
+                  placeholder="Ej: 101, A-201, Casa 5"
                   required
                 />
               </div>
 
               <div class="form-control">
                 <label class="label">
-                  <span class="label-text font-semibold">Torre *</span>
+                  <span class="label-text font-semibold">Torre/Referencia</span>
                 </label>
                 <input
                   type="text"
                   class="input input-bordered"
                   [(ngModel)]="formData().tower"
                   name="tower"
-                  required
+                  placeholder="Se llena automáticamente o personalizable"
+                  readonly
                 />
               </div>
 
