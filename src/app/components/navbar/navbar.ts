@@ -1,8 +1,9 @@
-import { Component, signal, output, input } from '@angular/core';
+import { Component, signal, output, input, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CondoSelectorComponent } from '../condo-selector/condo-selector';
 import { Condominium } from '../../models';
+import { CondominiumService } from '../../services';
 
 @Component({
   selector: 'app-navbar',
@@ -66,6 +67,14 @@ export class NavbarComponent {
     }
   ]);
 
+  constructor(private condominiumService: CondominiumService) {
+    // Sincronizar con el servicio global (si otro componente cambia la selección)
+    effect(() => {
+      const globalCondo = this.condominiumService.selectedCondominium();
+      // Aquí se podría actualizar el selector si es necesario
+    });
+  }
+
   onToggleSidebar(): void {
     this.toggleSidebar.emit();
   }
@@ -96,6 +105,9 @@ export class NavbarComponent {
   }
 
   onCondoSelected(condo: Condominium | null): void {
+    // Actualizar el servicio global
+    this.condominiumService.setSelectedCondominium(condo);
+    // Emitir el evento para componentes que escuchen directamente
     this.condoChanged.emit(condo);
   }
 }

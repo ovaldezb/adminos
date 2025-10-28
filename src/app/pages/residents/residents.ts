@@ -201,7 +201,16 @@ export class ResidentsComponent {
     private buildingService: BuildingService,
     private condominiumService: CondominiumService
   ) {
-    // Load initial data
+    // Sincronizar con el condominio seleccionado globalmente
+    effect(() => {
+      const globalCondo = this.condominiumService.selectedCondominium();
+      if (globalCondo && globalCondo.id !== this.selectedCondo()?.id) {
+        this.selectedCondo.set(globalCondo);
+        this.loadResidents();
+      }
+    });
+    
+    // Load initial data based on selected condo
     effect(() => {
       const condo = this.selectedCondo();
       this.loadResidents();
@@ -338,10 +347,23 @@ export class ResidentsComponent {
   }
 
   openCreateModal(): void {
+    const selectedCondoId = this.selectedCondo()?.id;
+    
+    // Validar que hay un condominio seleccionado
+    if (!selectedCondoId || selectedCondoId === 'all') {
+      this.showToastMessage('⚠️ Por favor seleccione un condominio específico desde el menú superior para crear residentes', 'error');
+      return;
+    }
+    
+    // Validar que el condominio tiene unidades
+    const selectedCondo = this.selectedCondo();
+    if (selectedCondo && selectedCondo.totalUnits === 0) {
+      this.showToastMessage('📋 Este condominio no tiene unidades registradas. Por favor cree edificios y unidades primero.', 'info');
+      return;
+    }
+    
     this.modalMode.set('create');
     this.selectedResident.set(null);
-    
-    const selectedCondoId = this.selectedCondo()?.id === 'all' ? '' : this.selectedCondo()?.id || '';
     
     this.formData.set({
       firstName: '',
@@ -356,13 +378,13 @@ export class ResidentsComponent {
       unitId: '',
       moveInDate: new Date(),
       emergencyContactName: '',
-      emergencyContactPhone: ''
+      emergencyContactPhone: '',
+      isAdministrator: false,
+      canReceiveNotifications: true
     });
     
-    // Si hay un condominio seleccionado, cargar sus edificios
-    if (selectedCondoId) {
-      this.loadBuildingsByCondominium(selectedCondoId);
-    }
+    // Cargar edificios del condominio seleccionado
+    this.loadBuildingsByCondominium(selectedCondoId);
     
     this.showModal.set(true);
   }
@@ -635,13 +657,22 @@ export class ResidentsComponent {
     this.router.navigate(['/login']);
   }
 
-  // Wizard methods
   openWizard(): void {
     const selectedCondoId = this.selectedCondo()?.id;
+    
+    // Validar que hay un condominio seleccionado
     if (!selectedCondoId || selectedCondoId === 'all') {
-      this.showToastMessage('Por favor seleccione un condominio específico', 'error');
+      this.showToastMessage('⚠️ Por favor seleccione un condominio específico desde el menú superior', 'error');
       return;
     }
+
+    // Validar que el condominio tiene unidades
+    const selectedCondo = this.selectedCondo();
+    if (selectedCondo && selectedCondo.totalUnits === 0) {
+      this.showToastMessage('📋 Este condominio no tiene unidades registradas. Por favor cree edificios y unidades primero.', 'info');
+      return;
+    }
+
     this.showWizard.set(true);
   }
 

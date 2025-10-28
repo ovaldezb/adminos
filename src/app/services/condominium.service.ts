@@ -1,10 +1,16 @@
-import { Injectable } from '@angular/core';
-import { Observable, of, delay } from 'rxjs';
+import { Injectable, signal } from '@angular/core';
+import { Observable, of, delay, throwError } from 'rxjs';
 import {
   Condominium,
   CondominiumStats,
   CondominiumDetails,
   CreateCondominiumDto,
+  UpdateCondominiumDto,
+  CondominiumType,
+  Tower,
+  PrivateStreet,
+  Amenity,
+  AmenityType
 } from '../models/condominium.model';
 import { ApiResponse } from '../models/api.model';
 
@@ -12,6 +18,9 @@ import { ApiResponse } from '../models/api.model';
   providedIn: 'root',
 })
 export class CondominiumService {
+  // Signal para el condominio seleccionado globalmente
+  public readonly selectedCondominium = signal<Condominium | null>(null);
+
   // Simulated AWS Lambda endpoint
   private readonly lambdaEndpoint = 'https://api.example.com/condominiums';
 
@@ -20,146 +29,209 @@ export class CondominiumService {
     {
       id: '1',
       name: 'Torres del Parque',
+      type: CondominiumType.BUILDING,
       address: 'Av. Primavera 123, San Borja',
       city: 'Lima',
       state: 'Lima',
       zipCode: '15037',
       country: 'Perú',
-      units: 156,
-      towers: 2,
-      avatar: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400',
+      towers: [
+        { id: 't1', name: 'Torre A', floors: 10, unitsPerFloor: 4, totalUnits: 40 },
+        { id: 't2', name: 'Torre B', floors: 12, unitsPerFloor: 6, totalUnits: 72 },
+        { id: 't3', name: 'Torre C', floors: 8, unitsPerFloor: 4, totalUnits: 32 }
+      ],
+      amenities: [
+        { 
+          id: 'a1', 
+          name: 'Alberca Olímpica', 
+          type: AmenityType.POOL, 
+          isRentable: true, 
+          hourlyRate: 250, 
+          capacity: 40,
+          description: 'Alberca techada con calefacción',
+          isActive: true 
+        },
+        { 
+          id: 'a2', 
+          name: 'Gimnasio Premium', 
+          type: AmenityType.GYM, 
+          isRentable: false,
+          capacity: 25,
+          description: 'Gimnasio con equipamiento completo',
+          isActive: true 
+        },
+        { 
+          id: 'a3', 
+          name: 'Salón de Eventos', 
+          type: AmenityType.PARTY_ROOM, 
+          isRentable: true, 
+          hourlyRate: 500,
+          capacity: 80,
+          description: 'Salón para fiestas y eventos',
+          isActive: true 
+        }
+      ],
+      maintenanceFee: 1800,
+      currency: 'MXN',
+      billingDay: 1,
+      units: 144,
+      totalUnits: 144,
+      occupiedUnits: 138,
       color: '#0ea5e9',
-      description: 'Moderno complejo residencial en San Borja',
+      description: 'Moderno complejo residencial con 3 torres',
+      isActive: true,
       createdAt: new Date('2020-01-15'),
       updatedAt: new Date('2025-10-15'),
     },
     {
       id: '2',
-      name: 'Condominio Vista Hermosa',
-      address: 'Calle Los Jazmines 456, Miraflores',
-      city: 'Lima',
-      state: 'Lima',
-      zipCode: '15074',
-      country: 'Perú',
-      units: 89,
-      towers: 1,
-      avatar: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400',
+      name: 'Privadas del Sol',
+      type: CondominiumType.RESIDENTIAL_COMPLEX,
+      address: 'Blvd. Las Palmas 567, Querétaro',
+      city: 'Querétaro',
+      state: 'Querétaro',
+      zipCode: '76100',
+      country: 'México',
+      privateStreets: [
+        { id: 'ps1', name: 'Privada Norte', totalHouses: 12 },
+        { id: 'ps2', name: 'Privada Sur', totalHouses: 15 },
+        { id: 'ps3', name: 'Privada Este', totalHouses: 10 },
+        { id: 'ps4', name: 'Privada Oeste', totalHouses: 8 }
+      ],
+      amenities: [
+        { 
+          id: 'a4', 
+          name: 'Salón de Fiestas', 
+          type: AmenityType.PARTY_ROOM, 
+          isRentable: true, 
+          hourlyRate: 600,
+          capacity: 60,
+          description: 'Salón techado con cocina integral',
+          isActive: true 
+        },
+        { 
+          id: 'a5', 
+          name: 'Cancha de Fútbol', 
+          type: AmenityType.SPORTS_COURT, 
+          isRentable: true, 
+          hourlyRate: 200,
+          capacity: 22,
+          description: 'Cancha de pasto sintético',
+          isActive: true 
+        },
+        { 
+          id: 'a6', 
+          name: 'Área de Juegos Infantiles', 
+          type: AmenityType.PLAYGROUND, 
+          isRentable: false,
+          isActive: true 
+        }
+      ],
+      maintenanceFee: 950,
+      currency: 'MXN',
+      billingDay: 5,
+      units: 45,
+      totalUnits: 45,
+      occupiedUnits: 43,
       color: '#8b5cf6',
-      description: 'Exclusivo condominio con vista al mar',
+      description: 'Fraccionamiento familiar con 4 privadas',
+      isActive: true,
       createdAt: new Date('2019-03-20'),
       updatedAt: new Date('2025-10-10'),
     },
     {
       id: '3',
-      name: 'Edificio Sunset Boulevard',
+      name: 'Conjunto Residencial Las Flores',
+      type: CondominiumType.GATED_COMMUNITY,
       address: 'Av. Angamos 789, Surco',
       city: 'Lima',
       state: 'Lima',
       zipCode: '15023',
       country: 'Perú',
-      units: 234,
-      towers: 3,
-      avatar: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400',
+      privateStreets: [
+        { id: 'ps5', name: 'Calle Las Rosas', totalHouses: 18 },
+        { id: 'ps6', name: 'Calle Los Tulipanes', totalHouses: 16 }
+      ],
+      amenities: [
+        { 
+          id: 'a7', 
+          name: 'Casa Club', 
+          type: AmenityType.PARTY_ROOM, 
+          isRentable: true, 
+          hourlyRate: 800,
+          capacity: 100,
+          description: 'Casa club con terraza y parrilla',
+          isActive: true 
+        },
+        { 
+          id: 'a8', 
+          name: 'Piscina Semi-Olímpica', 
+          type: AmenityType.POOL, 
+          isRentable: false,
+          capacity: 30,
+          isActive: true 
+        },
+        { 
+          id: 'a9', 
+          name: 'Área de BBQ', 
+          type: AmenityType.BARBECUE_AREA, 
+          isRentable: true, 
+          hourlyRate: 150,
+          capacity: 12,
+          isActive: true 
+        }
+      ],
+      maintenanceFee: 1200,
+      currency: 'PEN',
+      billingDay: 10,
+      units: 34,
+      totalUnits: 34,
+      occupiedUnits: 32,
       color: '#10b981',
-      description: 'Torres modernas en el corazón de Surco',
+      description: 'Conjunto habitacional con seguridad 24/7',
+      isActive: true,
       createdAt: new Date('2021-06-10'),
       updatedAt: new Date('2025-10-12'),
-    },
-    {
-      id: '4',
-      name: 'Residencial Las Palmas',
-      address: 'Jr. Las Flores 321, San Isidro',
-      city: 'Lima',
-      state: 'Lima',
-      zipCode: '15036',
-      country: 'Perú',
-      units: 67,
-      towers: 1,
-      avatar: 'https://images.unsplash.com/photo-1460574283810-2aab119d8511?w=400',
-      color: '#f59e0b',
-      description: 'Residencial exclusivo en San Isidro',
-      createdAt: new Date('2018-11-25'),
-      updatedAt: new Date('2025-09-30'),
-    },
-    {
-      id: '5',
-      name: 'Condominio El Mirador',
-      address: 'Av. La Marina 555, Pueblo Libre',
-      city: 'Lima',
-      state: 'Lima',
-      zipCode: '15084',
-      country: 'Perú',
-      units: 250,
-      towers: 3,
-      avatar: 'https://images.unsplash.com/photo-1516156008625-3a9d6067fab5?w=400',
-      color: '#ec4899',
-      description: 'Condominio moderno con vista panorámica',
-      createdAt: new Date('2022-02-14'),
-      updatedAt: new Date('2025-10-20'),
-    },
+    }
   ];
 
   private mockStats: Record<string, CondominiumStats> = {
     '1': {
       condominiumId: '1',
-      totalUnits: 156,
-      occupiedUnits: 145,
-      vacantUnits: 11,
-      monthlyCollection: 234500,
+      totalUnits: 144,
+      occupiedUnits: 138,
+      vacantUnits: 6,
+      monthlyCollection: 248400,
       pendingInvoices: 18,
       delinquentUnits: 8,
-      collectionRate: 94.2,
+      collectionRate: 95.8,
       month: '10',
       year: 2025,
     },
     '2': {
       condominiumId: '2',
-      totalUnits: 89,
-      occupiedUnits: 87,
+      totalUnits: 45,
+      occupiedUnits: 43,
       vacantUnits: 2,
-      monthlyCollection: 156800,
-      pendingInvoices: 12,
-      delinquentUnits: 5,
-      collectionRate: 95.5,
+      monthlyCollection: 40850,
+      pendingInvoices: 6,
+      delinquentUnits: 3,
+      collectionRate: 95.6,
       month: '10',
       year: 2025,
     },
     '3': {
       condominiumId: '3',
-      totalUnits: 234,
-      occupiedUnits: 228,
-      vacantUnits: 6,
-      monthlyCollection: 389000,
-      pendingInvoices: 28,
-      delinquentUnits: 14,
-      collectionRate: 93.8,
+      totalUnits: 34,
+      occupiedUnits: 32,
+      vacantUnits: 2,
+      monthlyCollection: 38400,
+      pendingInvoices: 4,
+      delinquentUnits: 2,
+      collectionRate: 94.1,
       month: '10',
       year: 2025,
-    },
-    '4': {
-      condominiumId: '4',
-      totalUnits: 67,
-      occupiedUnits: 64,
-      vacantUnits: 3,
-      monthlyCollection: 98500,
-      pendingInvoices: 8,
-      delinquentUnits: 3,
-      collectionRate: 96.8,
-      month: '10',
-      year: 2025,
-    },
-    '5': {
-      condominiumId: '5',
-      totalUnits: 250,
-      occupiedUnits: 242,
-      vacantUnits: 8,
-      monthlyCollection: 425000,
-      pendingInvoices: 32,
-      delinquentUnits: 16,
-      collectionRate: 92.5,
-      month: '10',
-      year: 2025,
-    },
+    }
   };
 
   /**
@@ -224,18 +296,10 @@ export class CondominiumService {
 
     const details: CondominiumDetails = {
       ...condominium,
-      amenities: [
-        'Piscina',
-        'Gimnasio',
-        'Sala de eventos',
-        'Áreas verdes',
-        'Seguridad 24/7',
-      ],
       adminName: 'Carlos Mendoza',
       adminEmail: `admin@${condominium.name.toLowerCase().replace(/\s+/g, '')}.com`,
       adminPhone: '+51 999 888 777',
       bankAccount: '1234-5678-9012-3456',
-      maintenanceFee: 350,
     };
 
     return of({
@@ -332,16 +396,23 @@ export class CondominiumService {
     const newCondominium: Condominium = {
       id: String(Date.now()),
       name: condominiumDto.name,
+      type: condominiumDto.type,
       address: condominiumDto.address,
       city: condominiumDto.city,
       state: condominiumDto.state,
       zipCode: condominiumDto.zipCode,
       country: condominiumDto.country,
       description: condominiumDto.description,
-      units: 0, // Initially no units
-      towers: 1, // Default to 1 tower
-      avatar: undefined,
-      color: '#6366f1', // Default color
+      towers: condominiumDto.towers?.map(t => ({ ...t, id: `tower_${Date.now()}_${Math.random()}` })),
+      privateStreets: condominiumDto.privateStreets?.map(ps => ({ ...ps, id: `ps_${Date.now()}_${Math.random()}` })),
+      amenities: condominiumDto.amenities?.map(a => ({ ...a, id: `amenity_${Date.now()}_${Math.random()}` })),
+      maintenanceFee: condominiumDto.maintenanceFee,
+      currency: condominiumDto.currency,
+      billingDay: condominiumDto.billingDay,
+      totalUnits: this.calculateTotalUnits(condominiumDto),
+      occupiedUnits: 0,
+      color: '#6366f1',
+      isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -356,13 +427,23 @@ export class CondominiumService {
     }).pipe(delay(Math.random() * 700 + 500));
   }
 
+  private calculateTotalUnits(dto: CreateCondominiumDto): number {
+    if (dto.towers) {
+      return dto.towers.reduce((total, tower) => total + (tower.floors * tower.unitsPerFloor), 0);
+    }
+    if (dto.privateStreets) {
+      return dto.privateStreets.reduce((total, ps) => total + ps.totalHouses, 0);
+    }
+    return 0;
+  }
+
   /**
    * Simulates AWS Lambda PUT request to update condominium
    * Lambda: updateCondominium
    */
   updateCondominium(
     id: string,
-    updates: Partial<Condominium>
+    updates: UpdateCondominiumDto
   ): Observable<ApiResponse<Condominium>> {
     const index = this.mockCondominiums.findIndex((c) => c.id === id);
 
@@ -377,9 +458,12 @@ export class CondominiumService {
       }).pipe(delay(200));
     }
 
-    const updated = {
+    const updated: Condominium = {
       ...this.mockCondominiums[index],
       ...updates,
+      towers: updates.towers?.map(t => ({ ...t, id: `tower_${Date.now()}_${Math.random()}` })) || this.mockCondominiums[index].towers,
+      privateStreets: updates.privateStreets?.map(ps => ({ ...ps, id: `ps_${Date.now()}_${Math.random()}` })) || this.mockCondominiums[index].privateStreets,
+      amenities: updates.amenities?.map(a => ({ ...a, id: `amenity_${Date.now()}_${Math.random()}` })) || this.mockCondominiums[index].amenities,
       updatedAt: new Date(),
     };
     this.mockCondominiums[index] = updated;
@@ -390,6 +474,11 @@ export class CondominiumService {
       message: 'Condominio actualizado exitosamente',
       timestamp: new Date(),
     }).pipe(delay(Math.random() * 600 + 400));
+  }
+
+  // Método para establecer el condominio seleccionado globalmente
+  setSelectedCondominium(condominium: Condominium | null): void {
+    this.selectedCondominium.set(condominium);
   }
 
   /**

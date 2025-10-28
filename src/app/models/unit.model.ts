@@ -3,8 +3,10 @@ export interface Unit {
   id: string;
   condominiumId: string;
   buildingId?: string; // Asociación con edificio/torre/privada
+  towerId?: string; // ID de la torre (si es edificio con torres)
+  privateStreetId?: string; // ID de la privada (si es fraccionamiento)
   unitNumber: string;
-  tower: string; // Mantiene compatibilidad, pero ahora puede referirse al nombre del building
+  tower?: string; // Mantiene compatibilidad (nombre para display)
   floor: number;
   area: number; // m²
   bedrooms: number;
@@ -19,8 +21,22 @@ export interface Unit {
   hasGarden?: boolean;
   isFurnished?: boolean;
   description?: string;
+  
+  // Información de ocupación
+  isOccupied: boolean;
+  occupancyStatus: UnitOccupancyStatus;
+  residents?: string[]; // IDs de residentes
+  primaryResidentId?: string; // ID del residente principal
+  
   createdAt: Date;
   updatedAt: Date;
+}
+
+export enum UnitOccupancyStatus {
+  VACANT = 'VACANT',
+  OWNER_OCCUPIED = 'OWNER_OCCUPIED',
+  TENANT_OCCUPIED = 'TENANT_OCCUPIED',
+  UNDER_MAINTENANCE = 'UNDER_MAINTENANCE'
 }
 
 export enum UnitStatus {
@@ -42,7 +58,10 @@ export enum PropertyType {
 
 // Unit with owner/resident information
 export interface UnitDetails extends Unit {
+  condominiumName?: string;
   buildingName?: string; // Nombre del edificio asociado
+  towerName?: string; // Nombre de la torre
+  privateStreetName?: string; // Nombre de la privada
   ownerId?: string;
   ownerName?: string;
   ownerEmail?: string;
@@ -55,14 +74,27 @@ export interface UnitDetails extends Unit {
   debtAmount: number;
   lastPaymentDate?: Date;
   occupancyStartDate?: Date;
+  
+  // Residentes completos si están cargados
+  residentDetails?: Array<{
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    type: string;
+    isAdministrator: boolean;
+    canReceiveNotifications: boolean;
+  }>;
 }
 
 // Interface for creating/updating units
 export interface CreateUnitDto {
   condominiumId: string;
   buildingId?: string; // Opcional: ID del edificio asociado
+  towerId?: string; // Opcional: ID de la torre
+  privateStreetId?: string; // Opcional: ID de la privada
   unitNumber: string;
-  tower: string;
+  tower?: string;
   floor: number;
   area: number;
   bedrooms: number;

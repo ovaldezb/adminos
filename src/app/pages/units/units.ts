@@ -101,7 +101,7 @@ export class UnitsComponent {
     if (search) {
       filtered = filtered.filter(u =>
         u.unitNumber.toLowerCase().includes(search) ||
-        u.tower.toLowerCase().includes(search) ||
+        (u.tower && u.tower.toLowerCase().includes(search)) ||
         u.ownerName?.toLowerCase().includes(search) ||
         u.residentName?.toLowerCase().includes(search)
       );

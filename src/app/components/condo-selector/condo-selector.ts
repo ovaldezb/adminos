@@ -1,6 +1,7 @@
-import { Component, signal, output, HostListener, ElementRef } from '@angular/core';
+import { Component, signal, output, HostListener, ElementRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Condominium } from '../../models';
+import { Condominium, CondominiumType } from '../../models';
+import { CondominiumService } from '../../services';
 
 @Component({
   selector: 'app-condo-selector',
@@ -13,103 +14,72 @@ export class CondoSelectorComponent {
   
   protected readonly showSelector = signal(false);
   protected readonly selectedCondo = signal<Condominium | null>(null);
-  
-  protected readonly condominiums = signal<Condominium[]>([
-    {
-      id: 'all',
-      name: 'Todos los Condominios',
-      address: 'Vista General',
-      city: 'Global',
-      state: 'Global',
-      zipCode: '00000',
-      country: 'Global',
-      units: 0,
-      towers: 0,
-      color: 'from-neutral-600 to-neutral-400',
-      description: 'Vista general de todos los condominios',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '1',
-      name: 'Torres del Sol',
-      address: 'Av. Principal 123, Col. Centro',
-      city: 'Guadalajara',
-      state: 'Jalisco',
-      zipCode: '44100',
-      country: 'México',
-      units: 248,
-      towers: 3,
-      color: 'from-primary to-sky-400',
-      description: 'Moderno complejo residencial con vista al sol',
-      createdAt: new Date('2020-01-15'),
-      updatedAt: new Date()
-    },
-    {
-      id: '2',
-      name: 'Residencial Las Palmas',
-      address: 'Calle Palma Real 456, Col. Norte',
-      city: 'Guadalajara',
-      state: 'Jalisco',
-      zipCode: '44200',
-      country: 'México',
-      units: 186,
-      towers: 2,
-      color: 'from-success to-green-400',
-      description: 'Exclusivo residencial familiar',
-      createdAt: new Date('2019-06-10'),
-      updatedAt: new Date()
-    },
-    {
-      id: '3',
-      name: 'Conjunto Villa Verde',
-      address: 'Blvd. Jardines 789, Col. Sur',
-      city: 'Zapopan',
-      state: 'Jalisco',
-      zipCode: '45030',
-      country: 'México',
-      units: 124,
-      towers: 2,
-      color: 'from-secondary to-purple-400',
-      description: 'Conjunto residencial ecológico',
-      createdAt: new Date('2021-03-20'),
-      updatedAt: new Date()
-    },
-    {
-      id: '4',
-      name: 'Edificio Mirador',
-      address: 'Av. Mirador 321, Col. Este',
-      city: 'Guadalajara',
-      state: 'Jalisco',
-      zipCode: '44300',
-      country: 'México',
-      units: 96,
-      towers: 1,
-      color: 'from-warning to-yellow-400',
-      description: 'Torre con vista panorámica de la ciudad',
-      createdAt: new Date('2018-11-25'),
-      updatedAt: new Date()
-    },
-    {
-      id: '5',
-      name: 'Terrazas del Parque',
-      address: 'Calle del Parque 654, Col. Oeste',
-      city: 'Guadalajara',
-      state: 'Jalisco',
-      zipCode: '44400',
-      country: 'México',
-      units: 142,
-      towers: 2,
-      color: 'from-info to-cyan-400',
-      description: 'Residencial con vista al parque central',
-      createdAt: new Date('2022-02-14'),
-      updatedAt: new Date()
-    }
-  ]);
+  protected readonly condominiums = signal<Condominium[]>([]);
+  protected readonly loading = signal(false);
 
-  constructor(private elementRef: ElementRef) {
-    // Seleccionar "Todos" por defecto
-    this.selectedCondo.set(this.condominiums()[0]);
+  constructor(
+    private elementRef: ElementRef,
+    private condominiumService: CondominiumService
+  ) {
+    // Cargar condominios desde el servicio
+    this.loadCondominiums();
+    
+    // Sincronizar con el servicio global
+    effect(() => {
+      const globalCondo = this.condominiumService.selectedCondominium();
+      if (globalCondo && globalCondo.id !== this.selectedCondo()?.id) {
+        this.selectedCondo.set(globalCondo);
+      }
+    });
+  }
+
+  private loadCondominiums(): void {
+    this.loading.set(true);
+    this.condominiumService.getAllCondominiums().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          // Agregar opción "Todos" al inicio
+          const allOption: Condominium = {
+            id: 'all',
+            name: 'Todos los Condominios',
+            type: CondominiumType.BUILDING,
+            address: 'Vista General',
+            city: 'Global',
+            state: 'Global',
+            postalCode: '00000',
+            country: 'Global',
+            maintenanceFee: 0,
+            currency: 'MXN',
+            billingDay: 1,
+            totalUnits: 0,
+            occupiedUnits: 0,
+            color: 'from-neutral-600 to-neutral-400',
+            description: 'Vista general de todos los condominios',
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          };
+          
+          this.condominiums.set([allOption, ...response.data]);
+          
+          // Seleccionar "Todos" por defecto SOLO si no hay selección previa
+          const currentSelection = this.condominiumService.selectedCondominium();
+          if (!currentSelection) {
+            this.selectedCondo.set(allOption);
+            this.condominiumService.setSelectedCondominium(allOption);
+            this.condoSelected.emit(allOption);
+          } else {
+            // Mantener la selección actual
+            this.selectedCondo.set(currentSelection);
+          }
+        }
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading condominiums:', err);
+        this.loading.set(false);
+      }
+    });
   }
 
   @HostListener('document:click', ['$event'])
@@ -135,18 +105,28 @@ export class CondoSelectorComponent {
     console.log('✅ Condominio seleccionado:', condo.name);
     this.selectedCondo.set(condo);
     this.showSelector.set(false);
+    
+    // Actualizar el servicio global
+    this.condominiumService.setSelectedCondominium(condo);
+    
+    // Emitir el evento
     this.condoSelected.emit(condo);
   }
 
   getTotalUnits(): number {
     return this.condominiums()
       .filter(c => c.id !== 'all')
-      .reduce((sum, c) => sum + c.units, 0);
+      .reduce((sum, c) => sum + (c.totalUnits || c.units || 0), 0);
   }
 
   getTotalTowers(): number {
     return this.condominiums()
       .filter(c => c.id !== 'all')
-      .reduce((sum, c) => sum + c.towers, 0);
+      .reduce((sum, c) => {
+        if (c.towers && Array.isArray(c.towers)) {
+          return sum + c.towers.length;
+        }
+        return sum;
+      }, 0);
   }
 }

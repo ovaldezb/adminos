@@ -12,6 +12,11 @@ export interface Resident {
   buildingId?: string; // ID del edificio/torre asociado
   unitId: string;
   isResponsible: boolean; // Indica si es el responsable principal de la unidad
+  
+  // Banderas administrativas
+  isAdministrator: boolean; // Puede administrar el condominio
+  canReceiveNotifications: boolean; // Recibe notificaciones y anuncios
+  
   moveInDate: Date;
   moveOutDate?: Date;
   isActive: boolean;
@@ -38,12 +43,13 @@ export enum DocumentType {
 }
 
 export interface ResidentDetails extends Resident {
+  condominiumName: string;
   buildingName?: string; // Nombre del edificio/torre
   unitNumber?: string; // Número de unidad para display
   otherResidents?: Resident[]; // Otros residentes en la misma unidad
   totalDebt: number;
-  paymentHistory: number; // Number of payments
-  averagePaymentDelay: number; // Days
+  paymentHistory?: number; // Number of payments
+  averagePaymentDelay?: number; // Days
 }
 
 // DTOs for creating/updating residents
@@ -58,7 +64,12 @@ export interface CreateResidentDto {
   condominiumId: string;
   buildingId?: string; // ID del edificio/torre (se obtiene automáticamente de la unidad seleccionada)
   unitId: string;
-  isResponsible: boolean; // Indica si es el responsable principal
+  isResponsible?: boolean; // Indica si es el responsable principal
+  
+  // Banderas administrativas
+  isAdministrator?: boolean;
+  canReceiveNotifications?: boolean;
+  
   moveInDate: Date;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
