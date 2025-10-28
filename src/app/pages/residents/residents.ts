@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
+import { ResidentWizardComponent, WizardCompletedData } from '../../components/resident-wizard/resident-wizard';
 import type { Condominium } from '../../components/condo-selector/condo-selector';
 import { ResidentService, UnitService, BuildingService, CondominiumService } from '../../services';
 import { 
@@ -20,7 +21,7 @@ import {
 
 @Component({
   selector: 'app-residents',
-  imports: [CommonModule, FormsModule, NavbarComponent, SideMenuComponent],
+  imports: [CommonModule, FormsModule, NavbarComponent, SideMenuComponent, ResidentWizardComponent],
   templateUrl: './residents.html',
   styleUrl: './residents.css'
 })
@@ -73,6 +74,9 @@ export class ResidentsComponent {
   protected readonly showDeleteModal = signal(false);
   protected readonly residentToDelete = signal<ResidentDetails | null>(null);
   protected readonly isDeleting = signal(false);
+  
+  // Wizard state
+  protected readonly showWizard = signal(false);
   
   // Form data
   protected readonly formData = signal<Partial<CreateResidentDto>>({
@@ -572,6 +576,26 @@ export class ResidentsComponent {
 
   onLogout(): void {
     this.router.navigate(['/login']);
+  }
+
+  // Wizard methods
+  openWizard(): void {
+    const selectedCondoId = this.selectedCondo()?.id;
+    if (!selectedCondoId || selectedCondoId === 'all') {
+      this.showToastMessage('Por favor seleccione un condominio específico', 'error');
+      return;
+    }
+    this.showWizard.set(true);
+  }
+
+  onWizardComplete(data: WizardCompletedData): void {
+    this.showWizard.set(false);
+    this.showToastMessage('Asignación completada exitosamente', 'success');
+    this.loadResidents(); // Reload data
+  }
+
+  onWizardCancel(): void {
+    this.showWizard.set(false);
   }
 
   // Utility methods

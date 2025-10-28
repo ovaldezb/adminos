@@ -323,17 +323,41 @@ export class UnitService {
   ];
 
   /**
+   * Validates if unit number is unique within a building
+   * Lambda: validateUnitNumber
+   */
+  validateUnitNumber(buildingId: string, unitNumber: string, excludeId?: string): Observable<ApiResponse<{ isUnique: boolean }>> {
+    const existingUnit = this.mockUnits.find(u => 
+      u.buildingId === buildingId && 
+      u.unitNumber === unitNumber &&
+      u.id !== excludeId
+    );
+
+    return of({
+      success: true,
+      data: { isUnique: !existingUnit },
+      message: existingUnit ? 'Número de unidad ya existe' : 'Número de unidad disponible',
+      timestamp: new Date(),
+    }).pipe(delay(300));
+  }
+
+  /**
    * Simulates AWS Lambda GET request to fetch all units
    * Lambda: getUnits
    */
   getUnits(
-    params?: PaginationParams & { condominiumId?: string; status?: UnitStatus; search?: string }
+    params?: PaginationParams & { condominiumId?: string; buildingId?: string; status?: UnitStatus; search?: string }
   ): Observable<ApiResponse<PaginatedResponse<UnitDetails>>> {
     let filtered = [...this.mockUnits];
 
     // Filter by condominiumId
     if (params?.condominiumId && params.condominiumId !== 'all') {
       filtered = filtered.filter((u) => u.condominiumId === params.condominiumId);
+    }
+
+    // Filter by buildingId
+    if (params?.buildingId) {
+      filtered = filtered.filter((u) => u.buildingId === params.buildingId);
     }
 
     // Filter by status

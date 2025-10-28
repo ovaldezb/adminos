@@ -1,0 +1,241 @@
+/* Wizard Component Styles */
+.wizard-container {
+  position: relative;
+}
+
+/* Step progress customization */
+.steps .step {
+  color: #737373;
+}
+
+.steps .step-primary {
+  color: #0284c7;
+  font-weight: 600;
+}
+
+.steps .step-primary::before {
+  background-color: #0284c7;
+  border-color: #0284c7;
+  color: white;
+}
+
+/* Form sections */
+.wizard-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.wizard-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.wizard-section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #171717;
+}
+
+/* Card styling for form groups */
+.wizard-card {
+  background-color: #fafafa;
+  border: 1px solid #d4d4d4;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.wizard-card-header {
+  font-weight: 600;
+  color: #404040;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Quick create buttons */
+.quick-create-btn {
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #0284c7;
+  color: #0284c7;
+  background-color: transparent;
+}
+
+/* Form validation states */
+.form-control input.input:invalid,
+.form-control select.select:invalid,
+.form-control textarea.textarea:invalid {
+  border-color: #dc2626;
+}
+
+.form-control input.input:invalid:focus,
+.form-control select.select:invalid:focus,
+.form-control textarea.textarea:invalid:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.form-control input.input:valid,
+.form-control select.select:valid,
+.form-control textarea.textarea:valid {
+  border-color: #059669;
+}
+
+/* Loading states */
+.wizard-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #737373;
+}
+
+/* Error display */
+.wizard-error {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Success states */
+.wizard-success {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #059669;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Animation improvements */
+.wizard-step-enter {
+  opacity: 0;
+  transform: translateX(1rem);
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+.wizard-step-leave {
+  opacity: 1;
+  transform: translateX(0);
+  animation: slideOutLeft 0.3s ease-in forwards;
+}
+
+@keyframes slideInRight {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutLeft {
+  to {
+    opacity: 0;
+    transform: translateX(-1rem);
+  }
+}
+
+/* Button states */
+.btn-wizard {
+  transition: all 0.2s ease;
+}
+
+.btn-wizard:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Focus improvements */
+.wizard-focus:focus {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+}
+
+/* Chip/badge styling for selections */
+.wizard-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background-color: rgba(2, 132, 199, 0.1);
+  color: #0284c7;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.wizard-chip-remove {
+  background: none;
+  border: none;
+  color: #0284c7;
+  font-size: 0.75rem;
+  padding: 0.125rem;
+  cursor: pointer;
+}
+
+.wizard-chip-remove:hover {
+  color: #0369a1;
+}
+
+/* Status indicators */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.status-indicator.available {
+  color: #059669;
+}
+
+.status-indicator.occupied {
+  color: #d97706;
+}
+
+.status-indicator.maintenance {
+  color: #dc2626;
+}
+
+/* Form group sections */
+.form-section {
+  border: 1px solid #d4d4d4;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background-color: white;
+}
+
+.form-section-owner {
+  border-color: #93c5fd;
+  background-color: #eff6ff;
+}
+
+.form-section-resident {
+  border-color: #86efac;
+  background-color: #f0fdf4;
+}
+
+.form-section-assignment {
+  border-color: #d4d4d4;
+  background-color: #fafafa;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modal-box {
+    width: 100%;
+    max-width: none;
+    margin: 1rem;
+  }
+  
+  .wizard-section .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -30,8 +30,7 @@
           
           <button 
             (click)="openCreateModal()" 
-            class="btn btn-primary rounded-2xl gap-2 shadow-lg hover:shadow-xl transition-all"
-            [disabled]="isOverviewMode()">
+            class="btn btn-primary rounded-2xl gap-2 shadow-lg hover:shadow-xl transition-all">
             <i class="ri-add-line text-base"></i>
             Nuevo Edificio
           </button>
@@ -395,6 +394,20 @@
         } @else {
           <!-- Create/Edit Mode -->
           <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+            <!-- Condominio Selection -->
+            <div class="form-control">
+              <label class="label"><span class="label-text text-neutral-700 font-medium">Condominio <span class="text-error">*</span></span></label>
+              <select
+                [value]="formData().condominiumId"
+                (change)="updateFormField('condominiumId', $any($event.target).value)"
+                class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900">
+                <option value="">Seleccionar condominio...</option>
+                @for (condo of availableCondominiums(); track condo.id) {
+                  <option [value]="condo.id">{{ condo.name }}</option>
+                }
+              </select>
+            </div>
+
             <!-- Basic Info -->
             <div class="grid grid-cols-2 gap-4">
               <div class="form-control">

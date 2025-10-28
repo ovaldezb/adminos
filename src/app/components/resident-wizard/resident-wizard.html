@@ -1,0 +1,830 @@
+<!-- Wizard Modal -->
+<div class="modal" [class.modal-open]="isVisible" *ngIf="isVisible">
+  <div class="modal-box w-11/12 max-w-6xl glass backdrop-blur-lg bg-white/95 border-0 shadow-xl rounded-2xl">
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between p-6 border-b border-neutral-200">
+      <div>
+        <h2 class="text-2xl font-bold text-neutral-900">Asistente de Asignación de Residentes</h2>
+        <p class="text-sm text-neutral-600 mt-1">{{ getStepTitle(currentStep()) }}</p>
+      </div>
+      <button 
+        type="button" 
+        class="btn btn-ghost btn-sm text-neutral-600 hover:text-neutral-900"
+        (click)="cancel()">
+        <i class="ri-close-line text-lg"></i>
+      </button>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="px-6 py-4 border-b border-neutral-200">
+      <div class="steps w-full">
+        <div class="step" [class.step-primary]="currentStep() >= 1">
+          <span class="text-xs">Edificio</span>
+        </div>
+        <div class="step" [class.step-primary]="currentStep() >= 2">
+          <span class="text-xs">Unidad</span>
+        </div>
+        <div class="step" [class.step-primary]="currentStep() >= 3">
+          <span class="text-xs">Asignación</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Content -->
+    <div class="p-6 max-h-[60vh] overflow-y-auto">
+      <!-- Error: No valid condominium -->
+      <div *ngIf="!hasValidCondominium()" class="alert alert-error mb-6">
+        <i class="ri-error-warning-line text-lg"></i>
+        <div>
+          <h4 class="font-semibold">Condominio requerido</h4>
+          <p class="text-sm">Por favor seleccione un condominio específico antes de usar el asistente.</p>
+          <p class="text-xs text-neutral-600 mt-1">Condominio recibido: "{{ condominiumId }}"</p>
+        </div>
+      </div>
+
+      <!-- Step 1: Building Selection -->
+      <div *ngIf="currentStep() === 1 && hasValidCondominium()" class="space-y-6" [formGroup]="step1Form">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-neutral-900">Seleccionar o Crear Edificio</h3>
+          <button 
+            type="button"
+            class="btn btn-sm btn-primary"
+            (click)="openCreateBuildingModal()">
+            <i class="ri-add-line text-base"></i>
+            Crear Nuevo
+          </button>
+        </div>
+
+        <!-- Building Selection -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-medium text-neutral-800">Edificio Existente</span>
+          </label>
+          <select 
+            class="select select-bordered w-full"
+            formControlName="selectedBuildingId"
+            [disabled]="step1Form.get('isCreatingBuilding')?.value">
+            <option value="">Seleccionar edificio...</option>
+            <option 
+              *ngFor="let building of availableBuildings()" 
+              [value]="building.id">
+              {{ building.name }} - {{ building.totalUnits }} unidades
+            </option>
+          </select>
+          <div class="label" *ngIf="loadingBuildings()">
+            <span class="label-text-alt text-info">
+              <span class="loading loading-spinner loading-xs"></span>
+              Cargando edificios...
+            </span>
+          </div>
+        </div>
+
+        <!-- Create Building Toggle -->
+        <div class="form-control">
+          <label class="label cursor-pointer justify-start gap-3">
+            <input 
+              type="checkbox" 
+              class="checkbox checkbox-primary"
+              formControlName="isCreatingBuilding">
+            <span class="label-text font-medium text-neutral-800">Crear nuevo edificio</span>
+          </label>
+        </div>
+
+        <!-- Building Creation Form -->
+        <div *ngIf="step1Form.get('isCreatingBuilding')?.value" class="card bg-neutral-50 border border-neutral-200 p-4 space-y-4">
+          <h4 class="font-semibold text-neutral-800">Datos del Nuevo Edificio</h4>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Nombre *</span>
+              </label>
+              <input 
+                type="text" 
+                class="input input-bordered"
+                formControlName="name"
+                placeholder="Ej: Torre A, Edificio Central...">
+              <div class="label" *ngIf="step1Form.get('name')?.errors?.['required'] && step1Form.get('name')?.touched">
+                <span class="label-text-alt text-error">El nombre es requerido</span>
+              </div>
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Tipo *</span>
+              </label>
+              <select class="select select-bordered" formControlName="type">
+                <option [value]="BuildingType.BUILDING">Edificio</option>
+                <option [value]="BuildingType.TOWER">Torre</option>
+                <option [value]="BuildingType.PRIVATE_RESIDENCE">Privada</option>
+                <option [value]="BuildingType.CLUSTER">Conjunto</option>
+              </select>
+            </div>
+
+            <div class="form-control md:col-span-2">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Dirección *</span>
+              </label>
+              <input 
+                type="text" 
+                class="input input-bordered"
+                formControlName="mainEntranceAddress"
+                placeholder="Dirección del acceso principal">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Total de Unidades *</span>
+              </label>
+              <input 
+                type="number" 
+                class="input input-bordered"
+                formControlName="totalUnits"
+                min="1"
+                placeholder="1">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Pisos</span>
+              </label>
+              <input 
+                type="number" 
+                class="input input-bordered"
+                formControlName="floors"
+                min="1"
+                placeholder="1">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Año de Construcción</span>
+              </label>
+              <input 
+                type="number" 
+                class="input input-bordered"
+                formControlName="yearBuilt"
+                [min]="1900"
+                [max]="currentYear">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Espacios de Estacionamiento</span>
+              </label>
+              <input 
+                type="number" 
+                class="input input-bordered"
+                formControlName="parkingSpots"
+                min="0"
+                placeholder="0">
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="label cursor-pointer justify-start gap-3">
+              <input 
+                type="checkbox" 
+                class="checkbox checkbox-primary"
+                formControlName="hasCommonAreas">
+              <span class="label-text font-medium text-neutral-800">Tiene áreas comunes</span>
+            </label>
+          </div>
+
+          <div *ngIf="step1Form.get('hasCommonAreas')?.value" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Descripción de Áreas Comunes</span>
+              </label>
+              <input 
+                type="text" 
+                class="input input-bordered"
+                formControlName="commonAreasDescription"
+                placeholder="Salón de eventos, terraza, jardín...">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Tarifa de Renta (por hora)</span>
+              </label>
+              <input 
+                type="number" 
+                class="input input-bordered"
+                formControlName="commonAreaRentalRate"
+                min="0"
+                step="0.01"
+                placeholder="0.00">
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium text-neutral-800">Descripción</span>
+            </label>
+            <textarea 
+              class="textarea textarea-bordered"
+              formControlName="description"
+              rows="3"
+              placeholder="Descripción adicional del edificio..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Unit Selection -->
+      <div *ngIf="currentStep() === 2 && hasValidCondominium()" class="space-y-6" [formGroup]="step2Form">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-neutral-900">Seleccionar o Crear Unidad</h3>
+            <p class="text-sm text-neutral-600" *ngIf="selectedBuilding()">
+              En: <span class="font-medium">{{ selectedBuilding()?.name }}</span>
+            </p>
+          </div>
+          <button 
+            type="button"
+            class="btn btn-sm btn-primary"
+            (click)="openCreateUnitModal()"
+            [disabled]="!selectedBuildingId()">
+            <i class="ri-add-line text-base"></i>
+            Crear Nueva
+          </button>
+        </div>
+
+        <!-- Unit Selection -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-medium text-neutral-800">Unidad Existente</span>
+          </label>
+          <select 
+            class="select select-bordered w-full"
+            formControlName="selectedUnitId"
+            [disabled]="step2Form.get('isCreatingUnit')?.value || !selectedBuildingId()">
+            <option value="">Seleccionar unidad...</option>
+            <option 
+              *ngFor="let unit of availableUnits()" 
+              [value]="unit.id">
+              {{ unit.unitNumber }} - {{ unit.area }}m² - 
+              <span class="badge" [class]="getUnitStatusBadgeClass(unit.status)">
+                {{ getUnitStatusLabel(unit.status) }}
+              </span>
+            </option>
+          </select>
+          <div class="label" *ngIf="loadingUnits()">
+            <span class="label-text-alt text-info">
+              <span class="loading loading-spinner loading-xs"></span>
+              Cargando unidades...
+            </span>
+          </div>
+          <div class="label" *ngIf="!selectedBuildingId()">
+            <span class="label-text-alt text-warning">Primero seleccione un edificio</span>
+          </div>
+        </div>
+
+        <!-- Create Unit Toggle -->
+        <div class="form-control">
+          <label class="label cursor-pointer justify-start gap-3">
+            <input 
+              type="checkbox" 
+              class="checkbox checkbox-primary"
+              formControlName="isCreatingUnit"
+              [disabled]="!selectedBuildingId()">
+            <span class="label-text font-medium text-neutral-800">Crear nueva unidad</span>
+          </label>
+        </div>
+
+        <!-- Unit Creation Form -->
+        <div *ngIf="step2Form.get('isCreatingUnit')?.value" class="card bg-neutral-50 border border-neutral-200 p-4 space-y-4">
+          <h4 class="font-semibold text-neutral-800">Datos de la Nueva Unidad</h4>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Número/Clave *</span>
+              </label>
+              <input 
+                type="text" 
+                class="input input-bordered"
+                formControlName="unitNumber"
+                placeholder="Ej: 101, A-1, etc.">
+              <div class="label" *ngIf="step2Form.get('unitNumber')?.errors?.['unitNumberTaken'] && step2Form.get('unitNumber')?.touched">
+                <span class="label-text-alt text-error">Este número ya existe</span>
+              </div>
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Piso *</span>
+              </label>
+              <input 
+                type="number" 
+                class="input input-bordered"
+                formControlName="floor"
+                min="1"
+                placeholder="1">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Área (m²) *</span>
+              </label>
+              <input 
+                type="number" 
+                class="input input-bordered"
+                formControlName="area"
+                min="1"
+                step="0.01"
+                placeholder="50">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Recámaras *</span>
+              </label>
+              <input 
+                type="number" 
+                class="input input-bordered"
+                formControlName="bedrooms"
+                min="0"
+                placeholder="1">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Baños *</span>
+              </label>
+              <input 
+                type="number" 
+                class="input input-bordered"
+                formControlName="bathrooms"
+                min="1"
+                step="0.5"
+                placeholder="1">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Estacionamientos *</span>
+              </label>
+              <input 
+                type="number" 
+                class="input input-bordered"
+                formControlName="parkingSpaces"
+                min="0"
+                placeholder="1">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Tipo de Propiedad *</span>
+              </label>
+              <select class="select select-bordered" formControlName="propertyType">
+                <option [value]="PropertyType.APARTMENT">Departamento</option>
+                <option [value]="PropertyType.PENTHOUSE">Penthouse</option>
+                <option [value]="PropertyType.DUPLEX">Dúplex</option>
+                <option [value]="PropertyType.STUDIO">Estudio</option>
+                <option [value]="PropertyType.LOFT">Loft</option>
+                <option [value]="PropertyType.TOWNHOUSE">Casa</option>
+              </select>
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Cuota Mensual *</span>
+              </label>
+              <input 
+                type="number" 
+                class="input input-bordered"
+                formControlName="monthlyFee"
+                min="0"
+                step="0.01"
+                placeholder="1000">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Estado *</span>
+              </label>
+              <select class="select select-bordered" formControlName="status">
+                <option [value]="UnitStatus.VACANT">Disponible</option>
+                <option [value]="UnitStatus.UNDER_MAINTENANCE">Mantenimiento</option>
+                <option [value]="UnitStatus.FOR_RENT">En Renta</option>
+                <option [value]="UnitStatus.FOR_SALE">En Venta</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="form-control">
+              <label class="label cursor-pointer justify-start gap-3">
+                <input 
+                  type="checkbox" 
+                  class="checkbox checkbox-primary"
+                  formControlName="hasBalcony">
+                <span class="label-text font-medium text-neutral-800">Tiene Balcón</span>
+              </label>
+            </div>
+
+            <div class="form-control">
+              <label class="label cursor-pointer justify-start gap-3">
+                <input 
+                  type="checkbox" 
+                  class="checkbox checkbox-primary"
+                  formControlName="hasGarden">
+                <span class="label-text font-medium text-neutral-800">Tiene Jardín</span>
+              </label>
+            </div>
+
+            <div class="form-control">
+              <label class="label cursor-pointer justify-start gap-3">
+                <input 
+                  type="checkbox" 
+                  class="checkbox checkbox-primary"
+                  formControlName="isFurnished">
+                <span class="label-text font-medium text-neutral-800">Amueblado</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium text-neutral-800">Descripción</span>
+            </label>
+            <textarea 
+              class="textarea textarea-bordered"
+              formControlName="description"
+              rows="3"
+              placeholder="Descripción adicional de la unidad..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Owner/Resident Assignment -->
+      <div *ngIf="currentStep() === 3 && hasValidCondominium()" class="space-y-6" [formGroup]="step3Form">
+        <div>
+          <h3 class="text-lg font-semibold text-neutral-900">Asignar Propietario y Residente</h3>
+          <p class="text-sm text-neutral-600">
+            Unidad: <span class="font-medium">{{ selectedUnit()?.unitNumber || 'Nueva unidad' }}</span>
+            en {{ selectedBuilding()?.name }}
+          </p>
+        </div>
+
+        <!-- Owner Section -->
+        <div class="card bg-blue-50 border border-blue-200 p-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <h4 class="font-semibold text-neutral-800 flex items-center gap-2">
+              <i class="ri-user-star-line text-blue-600"></i>
+              Propietario
+            </h4>
+            <button 
+              type="button"
+              class="btn btn-sm btn-primary"
+              (click)="openCreateOwnerModal()">
+              <i class="ri-add-line text-base"></i>
+              Crear Nuevo
+            </button>
+          </div>
+
+          <!-- Owner Selection -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium text-neutral-800">Propietario Existente</span>
+            </label>
+            <select 
+              class="select select-bordered w-full"
+              formControlName="selectedOwnerId"
+              [disabled]="step3Form.get('isCreatingOwner')?.value">
+              <option value="">Seleccionar propietario...</option>
+              <option 
+                *ngFor="let owner of availableOwners()" 
+                [value]="owner.id">
+                {{ owner.firstName }} {{ owner.lastName }} - {{ owner.email }}
+              </option>
+            </select>
+            <div class="label" *ngIf="loadingOwners()">
+              <span class="label-text-alt text-info">
+                <span class="loading loading-spinner loading-xs"></span>
+                Cargando propietarios...
+              </span>
+            </div>
+          </div>
+
+          <!-- Create Owner Toggle -->
+          <div class="form-control">
+            <label class="label cursor-pointer justify-start gap-3">
+              <input 
+                type="checkbox" 
+                class="checkbox checkbox-primary"
+                formControlName="isCreatingOwner">
+              <span class="label-text font-medium text-neutral-800">Crear nuevo propietario</span>
+            </label>
+          </div>
+
+          <!-- Owner Creation Form -->
+          <div *ngIf="step3Form.get('isCreatingOwner')?.value" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-lg border">
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Nombre *</span>
+              </label>
+              <input 
+                type="text" 
+                class="input input-bordered"
+                formControlName="ownerFirstName"
+                placeholder="Nombre(s)">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Apellidos *</span>
+              </label>
+              <input 
+                type="text" 
+                class="input input-bordered"
+                formControlName="ownerLastName"
+                placeholder="Apellidos">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Email *</span>
+              </label>
+              <input 
+                type="email" 
+                class="input input-bordered"
+                formControlName="ownerEmail"
+                placeholder="correo@ejemplo.com">
+              <div class="label" *ngIf="step3Form.get('ownerEmail')?.errors?.['emailTaken'] && step3Form.get('ownerEmail')?.touched">
+                <span class="label-text-alt text-error">Este email ya está registrado</span>
+              </div>
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Teléfono *</span>
+              </label>
+              <input 
+                type="tel" 
+                class="input input-bordered"
+                formControlName="ownerPhone"
+                placeholder="5512345678">
+            </div>
+          </div>
+        </div>
+
+        <!-- Owner Inhabits Toggle -->
+        <div class="form-control">
+          <label class="label cursor-pointer justify-start gap-3">
+            <input 
+              type="checkbox" 
+              class="checkbox checkbox-primary"
+              formControlName="ownerInhabits">
+            <span class="label-text font-medium text-neutral-800">El propietario habita la unidad</span>
+          </label>
+        </div>
+
+        <!-- Resident Section -->
+        <div *ngIf="!ownerInhabits()" class="card bg-green-50 border border-green-200 p-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <h4 class="font-semibold text-neutral-800 flex items-center gap-2">
+              <i class="ri-user-line text-green-600"></i>
+              Residente
+            </h4>
+            <button 
+              type="button"
+              class="btn btn-sm btn-secondary"
+              (click)="openCreateResidentModal()">
+              <i class="ri-add-line text-base"></i>
+              Crear Nuevo
+            </button>
+          </div>
+
+          <!-- Resident Selection -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium text-neutral-800">Residente Existente</span>
+            </label>
+            <select 
+              class="select select-bordered w-full"
+              formControlName="selectedResidentId"
+              [disabled]="step3Form.get('isCreatingResident')?.value">
+              <option value="">Seleccionar residente...</option>
+              <option 
+                *ngFor="let resident of availableResidents()" 
+                [value]="resident.id">
+                {{ resident.firstName }} {{ resident.lastName }} - {{ resident.email }}
+              </option>
+            </select>
+            <div class="label" *ngIf="loadingResidents()">
+              <span class="label-text-alt text-info">
+                <span class="loading loading-spinner loading-xs"></span>
+                Cargando residentes...
+              </span>
+            </div>
+          </div>
+
+          <!-- Create Resident Toggle -->
+          <div class="form-control">
+            <label class="label cursor-pointer justify-start gap-3">
+              <input 
+                type="checkbox" 
+                class="checkbox checkbox-secondary"
+                formControlName="isCreatingResident">
+              <span class="label-text font-medium text-neutral-800">Crear nuevo residente</span>
+            </label>
+          </div>
+
+          <!-- Resident Creation Form -->
+          <div *ngIf="step3Form.get('isCreatingResident')?.value" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-lg border">
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Nombre *</span>
+              </label>
+              <input 
+                type="text" 
+                class="input input-bordered"
+                formControlName="residentFirstName"
+                placeholder="Nombre(s)">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Apellidos *</span>
+              </label>
+              <input 
+                type="text" 
+                class="input input-bordered"
+                formControlName="residentLastName"
+                placeholder="Apellidos">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Email *</span>
+              </label>
+              <input 
+                type="email" 
+                class="input input-bordered"
+                formControlName="residentEmail"
+                placeholder="correo@ejemplo.com">
+              <div class="label" *ngIf="step3Form.get('residentEmail')?.errors?.['emailTaken'] && step3Form.get('residentEmail')?.touched">
+                <span class="label-text-alt text-error">Este email ya está registrado</span>
+              </div>
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Teléfono *</span>
+              </label>
+              <input 
+                type="tel" 
+                class="input input-bordered"
+                formControlName="residentPhone"
+                placeholder="5512345678">
+            </div>
+          </div>
+        </div>
+
+        <!-- Assignment Details -->
+        <div class="card bg-neutral-50 border border-neutral-200 p-4 space-y-4">
+          <h4 class="font-semibold text-neutral-800 flex items-center gap-2">
+            <i class="ri-calendar-line text-neutral-600"></i>
+            Detalles de la Asignación
+          </h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Fecha de Inicio *</span>
+              </label>
+              <input 
+                type="date" 
+                class="input input-bordered"
+                formControlName="startDate">
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-medium text-neutral-800">Notas</span>
+              </label>
+              <input 
+                type="text" 
+                class="input input-bordered"
+                formControlName="notes"
+                placeholder="Notas adicionales...">
+            </div>
+          </div>
+        </div>
+
+        <!-- Error Display -->
+        <div *ngIf="submitError()" class="alert alert-error">
+          <i class="ri-error-warning-line text-lg"></i>
+          <span>{{ submitError() }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="flex items-center justify-between p-6 border-t border-neutral-200">
+      <button 
+        type="button" 
+        class="btn btn-ghost"
+        (click)="cancel()">
+        Cancelar
+      </button>
+
+      <div class="flex gap-3">
+        <button 
+          *ngIf="currentStep() > 1"
+          type="button" 
+          class="btn btn-outline"
+          (click)="previousStep()">
+          <i class="ri-arrow-left-line text-base"></i>
+          Anterior
+        </button>
+
+        <button 
+          *ngIf="currentStep() < totalSteps"
+          type="button" 
+          class="btn btn-primary"
+          [disabled]="!hasValidCondominium() || 
+                      (currentStep() === 1 && !canProceedStep1()) || 
+                      (currentStep() === 2 && !canProceedStep2())"
+          (click)="nextStep()">
+          Siguiente
+          <i class="ri-arrow-right-line text-base"></i>
+        </button>
+
+        <button 
+          *ngIf="currentStep() === totalSteps"
+          type="button" 
+          class="btn btn-success"
+          [disabled]="!hasValidCondominium() || !canProceedStep3() || isSubmitting()"
+          (click)="submitWizard()">
+          <span *ngIf="isSubmitting()" class="loading loading-spinner loading-sm"></span>
+          <span *ngIf="!isSubmitting()">
+            <i class="ri-check-line text-base"></i>
+            Completar Asignación
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Create Building Modal -->
+<div class="modal" [class.modal-open]="showCreateBuildingModal()">
+  <div class="modal-box">
+    <h3 class="font-bold text-lg">Crear Edificio Rápido</h3>
+    <div class="py-4">
+      <p class="text-sm text-neutral-600 mb-4">Complete los campos básicos para crear el edificio rápidamente.</p>
+      <!-- Add quick create form here if needed -->
+    </div>
+    <div class="modal-action">
+      <button class="btn btn-ghost" (click)="closeCreateBuildingModal()">Cancelar</button>
+      <button class="btn btn-primary" (click)="quickCreateBuilding()">Crear</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Create Unit Modal -->
+<div class="modal" [class.modal-open]="showCreateUnitModal()">
+  <div class="modal-box">
+    <h3 class="font-bold text-lg">Crear Unidad Rápido</h3>
+    <div class="py-4">
+      <p class="text-sm text-neutral-600 mb-4">Complete los campos básicos para crear la unidad rápidamente.</p>
+      <!-- Add quick create form here if needed -->
+    </div>
+    <div class="modal-action">
+      <button class="btn btn-ghost" (click)="closeCreateUnitModal()">Cancelar</button>
+      <button class="btn btn-primary" (click)="quickCreateUnit()">Crear</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Create Owner Modal -->
+<div class="modal" [class.modal-open]="showCreateOwnerModal()">
+  <div class="modal-box">
+    <h3 class="font-bold text-lg">Crear Propietario Rápido</h3>
+    <div class="py-4">
+      <p class="text-sm text-neutral-600 mb-4">Complete los datos básicos para crear el propietario rápidamente.</p>
+      <!-- Add quick create form here if needed -->
+    </div>
+    <div class="modal-action">
+      <button class="btn btn-ghost" (click)="closeCreateOwnerModal()">Cancelar</button>
+      <button class="btn btn-primary" (click)="quickCreateOwner()">Crear</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Create Resident Modal -->
+<div class="modal" [class.modal-open]="showCreateResidentModal()">
+  <div class="modal-box">
+    <h3 class="font-bold text-lg">Crear Residente Rápido</h3>
+    <div class="py-4">
+      <p class="text-sm text-neutral-600 mb-4">Complete los datos básicos para crear el residente rápidamente.</p>
+      <!-- Add quick create form here if needed -->
+    </div>
+    <div class="modal-action">
+      <button class="btn btn-ghost" (click)="closeCreateResidentModal()">Cancelar</button>
+      <button class="btn btn-primary" (click)="quickCreateResident()">Crear</button>
+    </div>
+  </div>
+</div>

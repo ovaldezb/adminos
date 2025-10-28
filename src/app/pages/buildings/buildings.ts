@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
 import type { Condominium } from '../../components/condo-selector/condo-selector';
-import { BuildingService } from '../../services';
+import { BuildingService, CondominiumService } from '../../services';
 import { 
   Building, 
   BuildingDetails, 
@@ -30,6 +30,9 @@ export class BuildingsComponent {
   
   // Expose Math for template
   protected readonly Math = Math;
+  
+  // Dropdown data
+  protected readonly availableCondominiums = signal<Condominium[]>([]);
   
   // Data signals
   protected readonly buildings = signal<BuildingDetails[]>([]);
@@ -137,13 +140,17 @@ export class BuildingsComponent {
 
   constructor(
     private router: Router,
-    private buildingService: BuildingService
+    private buildingService: BuildingService,
+    private condominiumService: CondominiumService
   ) {
     // Load initial data
     effect(() => {
       const condo = this.selectedCondo();
       this.loadBuildings();
     });
+    
+    // Load condominiums for dropdown
+    this.loadCondominiums();
   }
 
   toggleSidebar(): void {
@@ -158,6 +165,17 @@ export class BuildingsComponent {
   }
 
   // CRUD Operations
+  loadCondominiums(): void {
+    this.condominiumService.getAllCondominiums().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.availableCondominiums.set(response.data);
+        }
+      },
+      error: (err) => console.error('Error loading condominiums:', err)
+    });
+  }
+
   loadBuildings(): void {
     this.loading.set(true);
     this.error.set(null);
@@ -191,8 +209,13 @@ export class BuildingsComponent {
   openCreateModal(): void {
     this.modalMode.set('create');
     this.selectedBuilding.set(null);
+    
+    // Si hay un condominio específico seleccionado, lo usamos; si no, dejamos que el usuario seleccione
+    const selectedCondoId = this.selectedCondo()?.id;
+    const defaultCondoId = selectedCondoId === 'all' ? '' : selectedCondoId || '';
+    
     this.formData.set({
-      condominiumId: this.selectedCondo()?.id === 'all' ? '' : this.selectedCondo()?.id || '',
+      condominiumId: defaultCondoId,
       name: '',
       type: BuildingType.BUILDING,
       mainEntranceAddress: '',

@@ -10,3 +10,4 @@ export * from './notification.model';
 export * from './user.model';
 export * from './api.model';
 export * from './building.model';
+export * from './assignment.model';

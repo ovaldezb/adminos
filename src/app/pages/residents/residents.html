@@ -88,6 +88,10 @@
               <i class="ri-filter-off-line"></i>
               <span class="hidden sm:inline">Limpiar</span>
             </button>
+            <button class="btn btn-secondary btn-sm gap-2" (click)="openWizard()">
+              <i class="ri-magic-line"></i>
+              <span class="hidden sm:inline">Asistente</span>
+            </button>
             <button class="btn btn-primary btn-sm gap-2 flex-1 sm:flex-none" (click)="openCreateModal()">
               <i class="ri-add-line"></i>
               <span class="hidden sm:inline">Nuevo</span> Residente
@@ -924,4 +928,12 @@
       </div>
     </div>
   }
+
+  <!-- Resident Wizard -->
+  <app-resident-wizard
+    [condominiumId]="selectedCondo()?.id === 'all' ? '' : (selectedCondo()?.id || '')"
+    [isVisible]="showWizard()"
+    (onComplete)="onWizardComplete($event)"
+    (onCancel)="onWizardCancel()"
+  ></app-resident-wizard>
 </div>
