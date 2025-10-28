@@ -91,24 +91,20 @@
         <div class="card-body">
           <div class="flex flex-col lg:flex-row gap-4 items-center">
             <!-- Search -->
-            <div class="form-control flex-1">
-              <div class="input-group">
-                <span class="bg-base-300">
-                  <i class="ri-search-line text-xl"></i>
-                </span>
-                <input
-                  type="text"
-                  placeholder="Buscar por razón social, RFC, contacto..."
-                  class="input input-bordered flex-1"
-                  [value]="searchTerm()"
-                  (input)="onSearchChange($any($event.target).value)"
-                />
-              </div>
+            <div class="relative flex-1 min-w-0">
+              <input
+                type="text"
+                placeholder="Buscar por razón social, RFC, contacto..."
+                class="input input-bordered w-full text-sm pl-10"
+                [value]="searchTerm()"
+                (input)="onSearchChange($any($event.target).value)"
+              />
+              <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg"></i>
             </div>
 
             <!-- Category Filter -->
             <select
-              class="select select-bordered w-full lg:w-48"
+              class="select select-bordered w-full lg:w-48 text-sm font-medium"
               [value]="filterCategory()"
               (change)="onCategoryFilterChange($any($event.target).value)"
             >
@@ -120,7 +116,7 @@
 
             <!-- Status Filter -->
             <select
-              class="select select-bordered w-full lg:w-48"
+              class="select select-bordered w-full lg:w-48 text-sm font-medium"
               [value]="filterStatus()"
               (change)="onStatusFilterChange($any($event.target).value)"
             >

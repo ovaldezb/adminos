@@ -118,25 +118,21 @@
       <div class="glass rounded-2xl p-4 lg:p-6 shadow-xl mb-6">
         <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-4">
           <div class="flex flex-col sm:flex-row gap-3 flex-1 w-full">
-            <!-- Search -->
-            <div class="form-control flex-1 min-w-0">
-              <div class="input-group">
-                <span class="bg-base-200">
-                  <i class="ri-search-line"></i>
-                </span>
-                <input
-                  type="text"
-                  placeholder="Buscar residente..."
-                  class="input input-bordered w-full text-sm"
-                  [value]="searchTerm()"
-                  (input)="onSearchChange($event)"
-                />
-              </div>
+            <!-- Search Input with Icon -->
+            <div class="relative flex-1 min-w-0">
+              <input
+                type="text"
+                placeholder="Buscar residente..."
+                class="input input-bordered w-full text-sm pl-10"
+                [value]="searchTerm()"
+                (input)="onSearchChange($event)"
+              />
+              <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg"></i>
             </div>
 
             <!-- Type Filter -->
             <select
-              class="select select-bordered w-full sm:w-auto text-sm"
+              class="select select-bordered w-full sm:w-auto text-sm font-medium"
               [value]="typeFilter()"
               (change)="onTypeFilterChange($event)"
             >
@@ -149,7 +145,7 @@
 
             <!-- Building Filter -->
             <select
-              class="select select-bordered w-full sm:w-auto text-sm"
+              class="select select-bordered w-full sm:w-auto text-sm font-medium"
               [value]="buildingFilter()"
               (change)="onBuildingFilterChange($event)"
             >
@@ -161,7 +157,7 @@
 
             <!-- Status Filter -->
             <select
-              class="select select-bordered w-full sm:w-auto text-sm"
+              class="select select-bordered w-full sm:w-auto text-sm font-medium"
               [value]="statusFilter()"
               (change)="onStatusFilterChange($event)"
             >

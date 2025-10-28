@@ -111,14 +111,15 @@
       <div class="glass rounded-2xl p-4 shadow-lg mb-6 border border-white/20">
         <div class="flex flex-wrap gap-3">
           <!-- Search -->
-          <div class="flex-1 min-w-[200px]">
+          <div class="flex-1 min-w-[200px] relative">
             <input
               type="text"
               placeholder="Buscar edificio..."
               [value]="searchTerm()"
               (input)="onSearchChange($event)"
-              class="input input-bordered w-full rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 placeholder:text-neutral-500"
+              class="input input-bordered w-full rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 placeholder:text-neutral-500 pl-10"
             />
+            <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg"></i>
           </div>
 
           <!-- Type Filter -->

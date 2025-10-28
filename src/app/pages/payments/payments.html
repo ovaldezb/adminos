@@ -118,27 +118,30 @@
         <div class="flex flex-col gap-4">
           <!-- Search -->
           <div class="w-full">
-            <label class="label">
-              <span class="label-text font-medium">
+            <label class="label mb-2">
+              <span class="label-text font-semibold text-neutral-900">
                 <i class="ri-search-line mr-2"></i>
-                Buscar
+                Buscar Pago
               </span>
             </label>
-            <input
-              type="text"
-              [value]="searchTerm()"
-              (input)="onSearchChange($event)"
-              placeholder="Buscar por residente, folio, referencia..."
-              class="input input-bordered w-full rounded-2xl"
-            />
+            <div class="relative">
+              <input
+                type="text"
+                [value]="searchTerm()"
+                (input)="onSearchChange($event)"
+                placeholder="Residente, folio, referencia..."
+                class="input input-bordered w-full pl-10 font-medium"
+              />
+              <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg"></i>
+            </div>
           </div>
 
           <!-- Filters Row -->
           <div class="flex flex-col sm:flex-row gap-4">
             <!-- Status Filter -->
             <div class="flex-1">
-              <label class="label">
-                <span class="label-text font-medium">
+              <label class="label mb-2">
+                <span class="label-text font-semibold text-neutral-900">
                   <i class="ri-filter-line mr-2"></i>
                   Estado
                 </span>
@@ -146,7 +149,7 @@
               <select
                 [value]="statusFilter()"
                 (change)="onStatusFilterChange($event)"
-                class="select select-bordered w-full rounded-2xl"
+                class="select select-bordered w-full font-medium"
               >
                 <option value="">Todos</option>
                 <option [value]="PaymentStatus.PENDING">Pendiente</option>
@@ -158,8 +161,8 @@
 
             <!-- Method Filter -->
             <div class="flex-1">
-              <label class="label">
-                <span class="label-text font-medium">
+              <label class="label mb-2">
+                <span class="label-text font-semibold text-neutral-900">
                   <i class="ri-bank-card-line mr-2"></i>
                   Método
                 </span>
@@ -167,7 +170,7 @@
               <select
                 [value]="methodFilter()"
                 (change)="onMethodFilterChange($event)"
-                class="select select-bordered w-full rounded-2xl"
+                class="select select-bordered w-full font-medium"
               >
                 <option value="">Todos</option>
                 <option
@@ -180,12 +183,12 @@
             </div>
 
             <!-- Clear Filters Button -->
-            <div class="flex items-end">
+            <div class="flex items-end gap-2">
               <button
-                class="btn btn-outline rounded-2xl w-full sm:w-auto"
+                class="btn btn-ghost flex-1 sm:flex-none"
                 (click)="clearFilters()"
               >
-                <i class="ri-close-circle-line text-lg"></i>
+                <i class="ri-filter-off-line"></i>
                 Limpiar
               </button>
             </div>
