@@ -5,15 +5,30 @@
     (condoChanged)="onCondoSelected($event)"
   />
 
-  <div class="flex">
+  <div class="flex relative">
     <!-- Sidebar -->
-    <app-side-menu
-      [isOpen]="sidebarOpen()"
-    />
+    <div 
+      class="fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto"
+      [class.-translate-x-full]="!sidebarOpen()"
+      [class.translate-x-0]="sidebarOpen()"
+    >
+      <app-side-menu
+        [isOpen]="sidebarOpen()"
+        [selectedCondo]="selectedCondo()"
+        (close)="sidebarOpen.set(false)"
+      />
+    </div>
+
+    <!-- Overlay para móvil -->
+    @if (sidebarOpen()) {
+      <div 
+        class="fixed inset-0 bg-neutral-900/50 backdrop-blur-sm z-30 lg:hidden"
+        (click)="sidebarOpen.set(false)"
+      ></div>
+    }
 
     <!-- Main Content -->
-    <main class="flex-1 p-6 transition-all duration-300"
-          [class.ml-64]="sidebarOpen()">
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300 min-h-screen">
       
       <!-- Header Section -->
       <div class="glass rounded-2xl p-6 shadow-lg mb-6 border border-white/20">

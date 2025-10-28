@@ -20,11 +20,10 @@ import {
 @Component({
   selector: 'app-buildings',
   imports: [CommonModule, FormsModule, NavbarComponent, SideMenuComponent],
-  templateUrl: './buildings.html',
-  styleUrl: './buildings.css'
+  templateUrl: './buildings.html'
 })
 export class BuildingsComponent {
-  protected readonly sidebarOpen = signal(false);
+  protected readonly sidebarOpen = signal(window.innerWidth >= 1024); // Abierto solo en desktop
   protected readonly userName = signal('Administrador');
   protected readonly selectedCondo = signal<Condominium | null>(null);
   protected readonly isOverviewMode = computed(() => !this.selectedCondo() || this.selectedCondo()?.id === 'all');

@@ -1,7 +1,8 @@
-import { Component, signal, input } from '@angular/core';
+import { Component, signal, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { Condominium } from '../../models';
+import { filter } from 'rxjs/operators';
 
 interface MenuItem {
   icon: string;
@@ -20,6 +21,7 @@ interface MenuItem {
 export class SideMenuComponent {
   readonly isOpen = input<boolean>(false);
   readonly selectedCondo = input<Condominium | null>(null);
+  readonly close = output<void>();
   
   protected readonly menuItems = signal<MenuItem[]>([
     { 
@@ -93,6 +95,32 @@ export class SideMenuComponent {
       route: '/configuracion'
     }
   ]);
+
+  constructor(private router: Router) {
+    // Cerrar el sidebar cuando navegamos en móvil
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe(() => {
+        // Emitir evento para cerrar el sidebar en móvil
+        if (window.innerWidth < 1024) { // lg breakpoint
+          this.close.emit();
+        }
+      });
+  }
+
+  onMenuClick(item: MenuItem): void {
+    console.log('===== MENU CLICK DEBUG =====');
+    console.log('Item clicked:', item);
+    console.log('Label:', item.label);
+    console.log('Route:', item.route);
+    console.log('Current URL:', this.router.url);
+    console.log('============================');
+    
+    // Forzar navegación
+    this.router.navigate([item.route]).then(success => {
+      console.log('Navigation success:', success, 'to', item.route);
+    });
+  }
 
   getCondoInfo() {
     const condo = this.selectedCondo();

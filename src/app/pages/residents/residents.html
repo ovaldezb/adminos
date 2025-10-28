@@ -1,86 +1,103 @@
-<div class="min-h-screen bg-gradient-to-br from-neutral-50 via-sky-50 to-purple-50">
+<div class="min-h-screen bg-gradient-to-br from-neutral-50 via-sky-50 to-violet-50">
   <!-- Navbar -->
   <app-navbar
     (toggleSidebar)="toggleSidebar()"
     (condoChanged)="onCondoSelected($event)"
   />
 
-  <div class="flex">
+  <div class="flex relative">
     <!-- Sidebar -->
-    <app-side-menu
-      [isOpen]="sidebarOpen()"
-      (close)="toggleSidebar()"
-    />
+    <div 
+      class="fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto"
+      [class.-translate-x-full]="!sidebarOpen()"
+      [class.translate-x-0]="sidebarOpen()"
+    >
+      <app-side-menu
+        [isOpen]="sidebarOpen()"
+        [selectedCondo]="selectedCondo()"
+        (close)="sidebarOpen.set(false)"
+      />
+    </div>
+
+    <!-- Overlay para móvil -->
+    @if (sidebarOpen()) {
+      <div 
+        class="fixed inset-0 bg-neutral-900/50 backdrop-blur-sm z-30 lg:hidden"
+        (click)="sidebarOpen.set(false)"
+      ></div>
+    }
 
     <!-- Main Content -->
-    <main class="flex-1 p-6 lg:p-8 transition-all duration-300" [class.ml-0]="!sidebarOpen()" [class.ml-64]="sidebarOpen()">
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300 min-h-screen">
       <!-- Header -->
-      <div class="mb-8">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="p-3 glass rounded-2xl">
-            <i class="ri-user-follow-fill text-2xl text-primary"></i>
-          </div>
-          <div>
-            <h1 class="text-3xl font-bold text-neutral-800">Gestión de Residentes</h1>
-            <p class="text-neutral-600">{{ getCondoName() }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Statistics Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <!-- Total Residents -->
-        <div class="glass rounded-2xl p-4 shadow-lg border border-white/20">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs text-neutral-600 mb-1">Total Residentes</p>
-              <p class="text-2xl font-bold text-neutral-900">{{ filteredResidents().length }}</p>
-              <p class="text-xs text-neutral-500">de {{ residents().length }} totales</p>
+      <div class="glass rounded-2xl p-4 sm:p-6 shadow-lg mb-6 border border-white/20">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center flex-shrink-0">
+              <i class="ri-user-follow-fill text-xl sm:text-2xl text-primary"></i>
             </div>
-            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <i class="ri-user-follow-line text-lg text-primary"></i>
+            <div>
+              <h1 class="text-xl sm:text-2xl font-bold text-neutral-900">Gestión de Residentes</h1>
+              <p class="text-xs sm:text-sm text-neutral-600">{{ getCondoName() }}</p>
             </div>
           </div>
         </div>
 
-        <!-- Active Residents -->
-        <div class="glass rounded-2xl p-4 shadow-lg border border-white/20">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs text-neutral-600 mb-1">Activos</p>
-              <p class="text-2xl font-bold text-success">{{ getActiveResidents() }}</p>
-              <p class="text-xs text-neutral-500">{{ formatPercentage(getActivePercentage()) }} del total</p>
-            </div>
-            <div class="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-              <i class="ri-user-check-line text-lg text-success"></i>
-            </div>
-          </div>
-        </div>
-
-        <!-- Owners vs Tenants -->
-        <div class="glass rounded-2xl p-4 shadow-lg border border-white/20">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs text-neutral-600 mb-1">Propietarios</p>
-              <p class="text-2xl font-bold text-warning">{{ getOwners() }}</p>
-              <p class="text-xs text-neutral-500">{{ getTenants() }} inquilinos</p>
-            </div>
-            <div class="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
-              <i class="ri-vip-crown-line text-lg text-warning"></i>
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <!-- Total Residents -->
+          <div class="bg-white/70 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-neutral-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs text-neutral-600 mb-1">Total Residentes</p>
+                <p class="text-xl sm:text-2xl font-bold text-neutral-900">{{ filteredResidents().length }}</p>
+                <p class="text-xs text-neutral-500">de {{ residents().length }} totales</p>
+              </div>
+              <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <i class="ri-user-follow-line text-base sm:text-lg text-primary"></i>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Total Debt -->
-        <div class="glass rounded-2xl p-4 shadow-lg border border-white/20">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs text-neutral-600 mb-1">Deuda Total</p>
-              <p class="text-2xl font-bold text-error">{{ formatCurrency(getTotalDebt()) }}</p>
-              <p class="text-xs text-neutral-500">{{ getResidentsWithDebt() }} con deuda</p>
+          <!-- Active Residents -->
+          <div class="bg-white/70 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-neutral-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs text-neutral-600 mb-1">Activos</p>
+                <p class="text-xl sm:text-2xl font-bold text-success">{{ getActiveResidents() }}</p>
+                <p class="text-xs text-neutral-500">{{ formatPercentage(getActivePercentage()) }} del total</p>
+              </div>
+              <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                <i class="ri-user-check-line text-base sm:text-lg text-success"></i>
+              </div>
             </div>
-            <div class="w-10 h-10 rounded-lg bg-error/10 flex items-center justify-center">
-              <i class="ri-money-dollar-circle-line text-lg text-error"></i>
+          </div>
+
+          <!-- Owners vs Tenants -->
+          <div class="bg-white/70 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-neutral-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs text-neutral-600 mb-1">Propietarios</p>
+                <p class="text-xl sm:text-2xl font-bold text-warning">{{ getOwners() }}</p>
+                <p class="text-xs text-neutral-500">{{ getTenants() }} inquilinos</p>
+              </div>
+              <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+                <i class="ri-vip-crown-line text-base sm:text-lg text-warning"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Debt -->
+          <div class="bg-white/70 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-neutral-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs text-neutral-600 mb-1">Deuda Total</p>
+                <p class="text-xl sm:text-2xl font-bold text-error">{{ formatCurrency(getTotalDebt()) }}</p>
+                <p class="text-xs text-neutral-500">{{ getResidentsWithDebt() }} con deuda</p>
+              </div>
+              <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-error/10 flex items-center justify-center">
+                <i class="ri-money-dollar-circle-line text-base sm:text-lg text-error"></i>
+              </div>
             </div>
           </div>
         </div>
@@ -469,6 +486,8 @@
     </main>
   </div>
 
+  <!-- Modals y notificaciones fuera del contenedor principal -->
+  
   <!-- Modal -->
   @if (showModal()) {
     <div class="modal modal-open">

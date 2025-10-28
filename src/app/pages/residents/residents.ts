@@ -22,11 +22,10 @@ import {
 @Component({
   selector: 'app-residents',
   imports: [CommonModule, FormsModule, NavbarComponent, SideMenuComponent, ResidentWizardComponent],
-  templateUrl: './residents.html',
-  styleUrl: './residents.css'
+  templateUrl: './residents.html'
 })
 export class ResidentsComponent {
-  protected readonly sidebarOpen = signal(false);
+  protected readonly sidebarOpen = signal(window.innerWidth >= 1024); // Abierto solo en desktop
   protected readonly userName = signal('Administrador');
   protected readonly selectedCondo = signal<Condominium | null>(null);
   protected readonly isOverviewMode = computed(() => !this.selectedCondo() || this.selectedCondo()?.id === 'all');

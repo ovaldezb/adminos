@@ -1,14 +1,14 @@
 <!-- Side Menu Component -->
-<aside class="h-full bg-gradient-to-b from-neutral-800 to-neutral-900 text-white flex flex-col">
+<aside class="h-screen bg-gradient-to-b from-neutral-800 to-neutral-900 text-white flex flex-col overflow-y-auto">
   
   <!-- Logo & Condominium Info -->
-  <div class="p-6 border-b border-neutral-700">
+  <div class="p-4 sm:p-6 border-b border-neutral-700 flex-shrink-0">
     <div class="flex items-center gap-3 mb-4">
-      <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
-        <i class="ri-building-4-fill text-2xl"></i>
+      <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
+        <i class="ri-building-4-fill text-xl sm:text-2xl"></i>
       </div>
       <div class="min-w-0 flex-1">
-        <h2 class="text-xl font-bold truncate">CondoAdmin</h2>
+        <h2 class="text-lg sm:text-xl font-bold truncate">CondoAdmin</h2>
         <p class="text-xs text-neutral-400">Sistema de Gestión</p>
       </div>
     </div>
@@ -20,9 +20,9 @@
           <div [class]="'rounded-xl w-8 h-8 flex items-center justify-center ' + 
             (getCondoInfo().isOverview ? 'bg-secondary/20 text-secondary' : 'bg-primary/20 text-primary')">
             @if (getCondoInfo().isOverview) {
-              <i class="ri-dashboard-line"></i>
+              <i class="ri-dashboard-line text-base"></i>
             } @else {
-              <i class="ri-building-4-line"></i>
+              <i class="ri-building-4-line text-base"></i>
             }
           </div>
         </div>
@@ -32,11 +32,11 @@
       </div>
       <div class="flex items-center justify-between text-xs text-neutral-400">
         <span>
-          <i class="ri-home-4-line"></i>
+          <i class="ri-home-4-line text-base"></i>
           {{ getCondoInfo().units }} Unidades
         </span>
         <span>
-          <i class="ri-building-2-line"></i>
+          <i class="ri-building-2-line text-base"></i>
           {{ getCondoInfo().towers }} {{ getCondoInfo().isOverview ? 'Condominios' : 'Torres' }}
         </span>
       </div>
@@ -44,20 +44,21 @@
   </div>
 
   <!-- Navigation Menu -->
-  <nav class="flex-1 overflow-y-auto p-4">
-    <ul class="menu menu-lg gap-1">
+  <nav class="flex-1 overflow-y-auto p-3 sm:p-4">
+    <ul class="menu menu-md sm:menu-lg gap-1">
       @for (item of menuItems(); track item.route) {
         <li>
           <a 
             [routerLink]="item.route"
             routerLinkActive="active"
-            [routerLinkActiveOptions]="{exact: false}"
-            class="rounded-2xl hover:bg-white/10 transition-all group relative"
+            [routerLinkActiveOptions]="{exact: true}"
+            class="rounded-2xl hover:bg-white/10 transition-all group relative cursor-pointer"
+            (click)="onMenuClick(item)"
           >
-            <i [class]="item.icon + ' text-xl'"></i>
-            <span class="flex-1">{{ item.label }}</span>
+            <i [class]="item.icon + ' text-base sm:text-xl'"></i>
+            <span class="flex-1 text-sm sm:text-base">{{ item.label }}</span>
             @if (item.badge) {
-              <span [class]="'badge rounded-xl badge-sm ' + (item.badgeColor || 'badge-neutral')">
+              <span [class]="'badge rounded-xl badge-xs sm:badge-sm ' + (item.badgeColor || 'badge-neutral')">
                 {{ item.badge }}
               </span>
             }
@@ -68,10 +69,10 @@
   </nav>
 
   <!-- Quick Stats -->
-  <div class="p-4 border-t border-neutral-700">
-    <div class="glass-dark rounded-2xl p-4">
-      <h3 class="text-sm font-semibold mb-3 text-neutral-300">
-        <i class="ri-pulse-fill text-primary mr-2"></i>
+  <div class="p-3 sm:p-4 border-t border-neutral-700 flex-shrink-0">
+    <div class="glass-dark rounded-2xl p-3 sm:p-4">
+      <h3 class="text-xs sm:text-sm font-semibold mb-3 text-neutral-300">
+        <i class="ri-pulse-fill text-primary mr-2 text-base"></i>
         Resumen Rápido
       </h3>
       <div class="space-y-2 text-xs">
@@ -91,27 +92,27 @@
   </div>
 
   <!-- User Profile Section -->
-  <div class="p-4 border-t border-neutral-700">
-    <div class="flex items-center gap-3 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer">
+  <div class="p-3 sm:p-4 border-t border-neutral-700 flex-shrink-0">
+    <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer">
       <div class="avatar">
-        <div class="w-10 rounded-xl ring ring-primary ring-offset-base-100 ring-offset-1">
+        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl ring ring-primary ring-offset-base-100 ring-offset-1">
           <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Admin" alt="Usuario" />
         </div>
       </div>
       <div class="flex-1 min-w-0">
-        <p class="font-semibold text-sm truncate">Administrador</p>
+        <p class="font-semibold text-xs sm:text-sm truncate">Administrador</p>
         <p class="text-xs text-neutral-400 truncate">admin@condoadmin.com</p>
       </div>
-      <i class="ri-arrow-right-s-line text-xl text-neutral-400"></i>
+      <i class="ri-arrow-right-s-line text-lg sm:text-xl text-neutral-400"></i>
     </div>
     
     <!-- Logout Button -->
     <button 
       routerLink="/login"
-      class="btn btn-outline btn-error w-full rounded-2xl mt-3 btn-sm"
+      class="btn btn-outline btn-error w-full rounded-2xl mt-2 sm:mt-3 btn-xs sm:btn-sm"
     >
-      <i class="ri-logout-box-line"></i>
-      Cerrar Sesión
+      <i class="ri-logout-box-line text-base"></i>
+      <span class="hidden sm:inline">Cerrar Sesión</span>
     </button>
   </div>
 </aside>
