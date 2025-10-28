@@ -67,7 +67,8 @@
               <option value="">Todos los tipos</option>
               <option [value]="ResidentType.OWNER">Propietarios</option>
               <option [value]="ResidentType.TENANT">Inquilinos</option>
-              <option [value]="ResidentType.BOTH">Propietario/Residente</option>
+              <option [value]="ResidentType.FAMILY_MEMBER">Familiares</option>
+              <option [value]="ResidentType.COHABITANT">Residentes</option>
             </select>
 
             <!-- Status Filter -->
@@ -197,9 +198,7 @@
                     </td>
                     <td>
                       <div class="flex flex-wrap gap-1">
-                        @for (unitNumber of resident.unitNumbers || resident.units; track unitNumber) {
-                          <span class="badge badge-sm badge-outline">{{ unitNumber }}</span>
-                        }
+                        <span class="badge badge-sm badge-outline">{{ resident.unitNumber }}</span>
                       </div>
                     </td>
                     <td>
