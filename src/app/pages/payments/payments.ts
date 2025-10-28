@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
-import type { Condominium } from '../../components/condo-selector/condo-selector';
+import { Condominium } from '../../models';
 import { PaymentService, InvoiceService } from '../../services';
 import {
   Payment,

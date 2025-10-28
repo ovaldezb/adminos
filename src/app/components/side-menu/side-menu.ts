@@ -1,7 +1,7 @@
 import { Component, signal, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import type { Condominium } from '../condo-selector/condo-selector';
+import { Condominium } from '../../models';
 
 interface MenuItem {
   icon: string;

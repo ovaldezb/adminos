@@ -3,12 +3,32 @@ export interface Condominium {
   id: string;
   name: string;
   address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
   units: number;
   towers: number;
   avatar?: string;
   color: string;
+  description?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Create Condominium DTO
+export interface CreateCondominiumDto {
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  description?: string;
+}
+
+// Update Condominium DTO
+export interface UpdateCondominiumDto extends Partial<CreateCondominiumDto> {
 }
 
 // Condominium Statistics

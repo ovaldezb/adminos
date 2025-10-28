@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
-import type { Condominium } from '../../components/condo-selector/condo-selector';
 import { BuildingService, CondominiumService } from '../../services';
 import { 
   Building, 
@@ -13,7 +12,9 @@ import {
   BuildingStatus,
   CreateBuildingDto,
   UpdateBuildingDto,
-  ApiResponse
+  ApiResponse,
+  Condominium,
+  CreateCondominiumDto
 } from '../../models';
 
 @Component({
@@ -64,6 +65,22 @@ export class BuildingsComponent {
   protected readonly showDeleteModal = signal(false);
   protected readonly buildingToDelete = signal<BuildingDetails | null>(null);
   protected readonly isDeleting = signal(false);
+  
+  // Condominium creation modal
+  protected readonly showCondoModal = signal(false);
+  protected readonly condoLoading = signal(false);
+  protected readonly condoError = signal<string | null>(null);
+  
+  // Condominium form data
+  protected readonly condoFormData = signal<Partial<CreateCondominiumDto>>({
+    name: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: 'México',
+    description: ''
+  });
   
   // Form data
   protected readonly formData = signal<Partial<CreateBuildingDto>>({
@@ -499,6 +516,83 @@ export class BuildingsComponent {
 
   onLogout(): void {
     this.router.navigate(['/login']);
+  }
+
+  // Condominium Modal Methods
+  openCondoModal(): void {
+    this.condoFormData.set({
+      name: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: 'México',
+      description: ''
+    });
+    this.condoError.set(null);
+    this.showCondoModal.set(true);
+  }
+
+  closeCondoModal(): void {
+    this.showCondoModal.set(false);
+    this.condoError.set(null);
+    this.condoLoading.set(false);
+  }
+
+  updateCondoField(field: string, value: string): void {
+    const current = this.condoFormData();
+    this.condoFormData.set({
+      ...current,
+      [field]: value
+    });
+  }
+
+  saveCondominium(): void {
+    const data = this.condoFormData();
+    
+    if (!this.validateCondoForm(data)) {
+      return;
+    }
+
+    this.condoLoading.set(true);
+    this.condoError.set(null);
+
+    this.condominiumService.createCondominium(data as CreateCondominiumDto).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.showToastMessage('Condominio creado exitosamente', 'success');
+          this.closeCondoModal();
+          // Reload condominiums and select the new one
+          this.loadCondominiums();
+          // Auto-select the new condominium in the building form
+          setTimeout(() => {
+            this.updateFormField('condominiumId', response.data!.id);
+          }, 100);
+        } else {
+          this.condoError.set(response.error?.message || 'Error al crear el condominio');
+        }
+        this.condoLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error creating condominium:', err);
+        this.condoError.set('Error al crear el condominio');
+        this.condoLoading.set(false);
+      }
+    });
+  }
+
+  private validateCondoForm(data: Partial<CreateCondominiumDto>): boolean {
+    if (!data.name || !data.address || !data.city || !data.state || !data.zipCode) {
+      this.condoError.set('Por favor complete todos los campos obligatorios');
+      return false;
+    }
+    
+    if (data.name.length < 3) {
+      this.condoError.set('El nombre debe tener al menos 3 caracteres');
+      return false;
+    }
+    
+    return true;
   }
 
   // Utility methods

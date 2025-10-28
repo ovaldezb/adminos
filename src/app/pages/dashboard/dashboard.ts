@@ -1,9 +1,9 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
-import type { Condominium } from '../../components/condo-selector/condo-selector';
+import { Condominium } from '../../models';
 
 @Component({
   selector: 'app-dashboard',

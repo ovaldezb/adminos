@@ -1,7 +1,8 @@
 import { Component, signal, output, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { CondoSelectorComponent, type Condominium } from '../condo-selector/condo-selector';
+import { CondoSelectorComponent } from '../condo-selector/condo-selector';
+import { Condominium } from '../../models';
 
 @Component({
   selector: 'app-navbar',

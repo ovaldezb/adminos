@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
 import { ResidentWizardComponent, WizardCompletedData } from '../../components/resident-wizard/resident-wizard';
-import type { Condominium } from '../../components/condo-selector/condo-selector';
+import { Condominium } from '../../models';
 import { ResidentService, UnitService, BuildingService, CondominiumService } from '../../services';
 import { 
   Resident, 
