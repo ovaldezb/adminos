@@ -438,6 +438,72 @@
                 <p class="text-sm text-neutral-600">{{ selectedUnit()!.description }}</p>
               </div>
             }
+
+            <!-- Residents Section in View Mode -->
+            @if (selectedUnit()!.residentDetails && selectedUnit()!.residentDetails!.length > 0) {
+              <div class="col-span-2 border-t border-neutral-200 pt-4 mt-4">
+                <div class="flex items-center gap-2 mb-4">
+                  <i class="ri-user-3-fill text-xl text-primary"></i>
+                  <h4 class="font-bold text-lg text-neutral-800">Residentes ({{ selectedUnit()!.residentDetails!.length }})</h4>
+                </div>
+                
+                <div class="space-y-3">
+                  @for (resident of selectedUnit()!.residentDetails; track $index) {
+                    <div class="card bg-neutral-50 shadow-sm border-l-4"
+                         [ngClass]="{
+                           'border-primary': resident.isOwner,
+                           'border-secondary': resident.isManager && !resident.isOwner,
+                           'border-accent': !resident.isOwner && !resident.isManager
+                         }">
+                      <div class="card-body p-4">
+                        <div class="flex items-start justify-between">
+                          <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-2">
+                              <p class="font-bold text-neutral-800">{{ resident.name }}</p>
+                              <div class="flex gap-1">
+                                @if (resident.isOwner) {
+                                  <span class="badge badge-primary badge-sm">
+                                    <i class="ri-key-2-line mr-1"></i>
+                                    Dueño
+                                  </span>
+                                }
+                                @if (resident.isManager) {
+                                  <span class="badge badge-secondary badge-sm">
+                                    <i class="ri-shield-user-line mr-1"></i>
+                                    Encargado
+                                  </span>
+                                }
+                                @if (resident.isResident) {
+                                  <span class="badge badge-accent badge-sm">
+                                    <i class="ri-home-4-line mr-1"></i>
+                                    Vive Aquí
+                                  </span>
+                                }
+                                @if (!resident.isResident && resident.isOwner) {
+                                  <span class="badge badge-neutral badge-sm">Solo Dueño</span>
+                                }
+                              </div>
+                            </div>
+                            <div class="space-y-1">
+                              <div class="flex items-center gap-2 text-sm text-neutral-600">
+                                <i class="ri-phone-line"></i>
+                                <span>{{ resident.phone }}</span>
+                              </div>
+                              @if (resident.email) {
+                                <div class="flex items-center gap-2 text-sm text-neutral-600">
+                                  <i class="ri-mail-line"></i>
+                                  <span>{{ resident.email }}</span>
+                                </div>
+                              }
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
           </div>
         } @else {
           <!-- Create/Edit Form -->
@@ -724,6 +790,193 @@
                   name="description"
                   placeholder="Descripción opcional de la unidad..."
                 ></textarea>
+              </div>
+
+              <!-- === RESIDENTS SECTION === -->
+              <div class="col-span-2 border-t border-neutral-200 pt-6 mt-4">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="p-2 bg-primary/10 rounded-lg">
+                      <i class="ri-user-3-fill text-xl text-primary"></i>
+                    </div>
+                    <div>
+                      <h4 class="font-bold text-lg text-neutral-800">Residentes de la Unidad</h4>
+                      <p class="text-sm text-neutral-600">Agrega personas que habitan o son dueños de esta unidad</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm gap-2"
+                    (click)="addResident()"
+                  >
+                    <i class="ri-add-line"></i>
+                    Agregar Residente
+                  </button>
+                </div>
+
+                @if (unitResidents().length === 0) {
+                  <div class="text-center py-8 bg-neutral-50 rounded-xl border-2 border-dashed border-neutral-300">
+                    <i class="ri-user-add-line text-5xl text-neutral-300 mb-2"></i>
+                    <p class="text-neutral-500 font-medium">No hay residentes agregados</p>
+                    <p class="text-sm text-neutral-400">Haz clic en "Agregar Residente" para comenzar</p>
+                  </div>
+                }
+
+                @for (resident of unitResidents(); track $index) {
+                  <div class="card bg-neutral-50 shadow-md mb-4 border-l-4" 
+                       [ngClass]="{
+                         'border-primary': resident.isOwner,
+                         'border-secondary': resident.isManager && !resident.isOwner,
+                         'border-accent': !resident.isOwner && !resident.isManager
+                       }">
+                    <div class="card-body p-4">
+                      <!-- Header con número y botón eliminar -->
+                      <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                          <span class="badge badge-lg" 
+                                [ngClass]="{
+                                  'badge-primary': resident.isOwner,
+                                  'badge-secondary': resident.isManager && !resident.isOwner,
+                                  'badge-accent': !resident.isOwner && !resident.isManager
+                                }">
+                            <i class="ri-user-line mr-1"></i>
+                            Residente {{ $index + 1 }}
+                          </span>
+                          @if (resident.isOwner) {
+                            <span class="badge badge-primary badge-sm">Dueño</span>
+                          }
+                          @if (resident.isManager) {
+                            <span class="badge badge-secondary badge-sm">Encargado</span>
+                          }
+                          @if (resident.isResident) {
+                            <span class="badge badge-accent badge-sm">Vive Aquí</span>
+                          }
+                        </div>
+                        <button
+                          type="button"
+                          class="btn btn-ghost btn-sm btn-circle text-error hover:bg-error/10"
+                          (click)="removeResident($index)"
+                          title="Eliminar residente"
+                        >
+                          <i class="ri-delete-bin-line"></i>
+                        </button>
+                      </div>
+
+                      <!-- Formulario del residente -->
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <!-- Nombre -->
+                        <div class="form-control">
+                          <label class="label py-1">
+                            <span class="label-text text-sm font-semibold text-neutral-800">Nombre Completo *</span>
+                          </label>
+                          <input
+                            type="text"
+                            class="input input-bordered input-sm"
+                            [value]="resident.name"
+                            (input)="updateResident($index, 'name', $any($event.target).value)"
+                            placeholder="Ej: Juan Pérez García"
+                            required
+                          />
+                        </div>
+
+                        <!-- Celular -->
+                        <div class="form-control">
+                          <label class="label py-1">
+                            <span class="label-text text-sm font-semibold text-neutral-800">Celular *</span>
+                          </label>
+                          <input
+                            type="tel"
+                            class="input input-bordered input-sm"
+                            [value]="resident.phone"
+                            (input)="updateResident($index, 'phone', $any($event.target).value)"
+                            placeholder="Ej: +52 55 1234-5678"
+                            required
+                          />
+                        </div>
+
+                        <!-- Correo (opcional) -->
+                        <div class="form-control md:col-span-2">
+                          <label class="label py-1">
+                            <span class="label-text text-sm font-semibold text-neutral-800">Correo Electrónico (opcional)</span>
+                          </label>
+                          <input
+                            type="email"
+                            class="input input-bordered input-sm"
+                            [value]="resident.email"
+                            (input)="updateResident($index, 'email', $any($event.target).value)"
+                            placeholder="Ej: correo@ejemplo.com"
+                          />
+                        </div>
+
+                        <!-- Checkboxes en fila -->
+                        <div class="md:col-span-2 flex flex-wrap gap-4 pt-2">
+                          <div class="form-control">
+                            <label class="label cursor-pointer gap-2 py-1">
+                              <input
+                                type="checkbox"
+                                class="checkbox checkbox-primary checkbox-sm"
+                                [checked]="resident.isResident"
+                                (change)="updateResident($index, 'isResident', $any($event.target).checked)"
+                              />
+                              <span class="label-text font-semibold text-neutral-800">
+                                <i class="ri-home-4-line text-primary"></i>
+                                Vive Aquí
+                              </span>
+                            </label>
+                          </div>
+
+                          <div class="form-control">
+                            <label class="label cursor-pointer gap-2 py-1">
+                              <input
+                                type="checkbox"
+                                class="checkbox checkbox-secondary checkbox-sm"
+                                [checked]="resident.isManager"
+                                (change)="updateResident($index, 'isManager', $any($event.target).checked)"
+                              />
+                              <span class="label-text font-semibold text-neutral-800">
+                                <i class="ri-shield-user-line text-secondary"></i>
+                                Encargado
+                              </span>
+                            </label>
+                          </div>
+
+                          <div class="form-control">
+                            <label class="label cursor-pointer gap-2 py-1">
+                              <input
+                                type="checkbox"
+                                class="checkbox checkbox-accent checkbox-sm"
+                                [checked]="resident.isOwner"
+                                (change)="updateResident($index, 'isOwner', $any($event.target).checked)"
+                              />
+                              <span class="label-text font-semibold text-neutral-800">
+                                <i class="ri-key-2-line text-accent"></i>
+                                Es Dueño
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+
+                        <!-- Info badge -->
+                        <div class="md:col-span-2">
+                          <div class="alert alert-info py-2 px-3">
+                            <i class="ri-information-line text-sm"></i>
+                            <span class="text-xs">
+                              @if (!resident.isResident && resident.isOwner) {
+                                <strong>Solo Dueño:</strong> No vive en la unidad, solo es propietario
+                              } @else if (resident.isResident && resident.isOwner) {
+                                <strong>Dueño Residente:</strong> Es propietario y vive en la unidad
+                              } @else if (resident.isManager) {
+                                <strong>Encargado:</strong> Persona responsable del mantenimiento o administración
+                              } @else {
+                                <strong>Residente:</strong> Persona que habita en la unidad
+                              }
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                }
               </div>
             </div>
 

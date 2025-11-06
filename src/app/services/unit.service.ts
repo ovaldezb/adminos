@@ -56,6 +56,35 @@ export class UnitService {
       debtAmount: 0,
       lastPaymentDate: new Date('2025-10-15'),
       occupancyStartDate: new Date('2020-01-15'),
+      residentDetails: [
+        {
+          id: 'R-001',
+          name: 'Juan Carlos Pérez González',
+          phone: '+52 55 1234-5678',
+          email: 'juan.perez@email.com',
+          isResident: true,
+          isManager: true,
+          isOwner: true
+        },
+        {
+          id: 'R-001-01',
+          name: 'Ana María Pérez García',
+          phone: '+52 55 1234-5679',
+          email: 'ana.perez@email.com',
+          isResident: true,
+          isManager: false,
+          isOwner: false
+        },
+        {
+          id: 'R-001-02',
+          name: 'Carlos Andrés Pérez García',
+          phone: '',
+          email: '',
+          isResident: true,
+          isManager: false,
+          isOwner: false
+        }
+      ],
       createdAt: new Date('2020-01-15'),
       updatedAt: new Date('2025-10-15'),
     },
@@ -94,6 +123,17 @@ export class UnitService {
       debtAmount: 31500,
       lastPaymentDate: new Date('2025-09-01'),
       occupancyStartDate: new Date('2019-06-20'),
+      residentDetails: [
+        {
+          id: 'R-002',
+          name: 'María Guadalupe García Martínez',
+          phone: '+52 55 2345-6789',
+          email: 'maria.garcia@email.com',
+          isResident: true,
+          isManager: true,
+          isOwner: true
+        }
+      ],
       createdAt: new Date('2019-06-20'),
       updatedAt: new Date('2025-10-20'),
     },
@@ -224,6 +264,26 @@ export class UnitService {
       debtAmount: 0,
       lastPaymentDate: new Date('2025-10-01'),
       occupancyStartDate: new Date('2025-10-01'),
+      residentDetails: [
+        {
+          id: 'R-003',
+          name: 'Carlos Alberto Rodríguez López',
+          phone: '+52 55 3456-7890',
+          email: 'carlos.rodriguez@email.com',
+          isResident: false, // No vive ahí, solo es dueño
+          isManager: false,
+          isOwner: true
+        },
+        {
+          id: 'R-004',
+          name: 'Ana Patricia Martínez Hernández',
+          phone: '+52 55 4567-8901',
+          email: 'ana.martinez@email.com',
+          isResident: true,
+          isManager: true,
+          isOwner: false
+        }
+      ],
       createdAt: new Date('2022-05-10'),
       updatedAt: new Date('2025-10-01'),
     },
@@ -475,9 +535,11 @@ export class UnitService {
       hasGarden: unitData.hasGarden,
       isFurnished: unitData.isFurnished,
       description: unitData.description,
-      isOccupied: false,
-      occupancyStatus: UnitOccupancyStatus.VACANT,
-      residents: [],
+      isOccupied: (unitData.residents && unitData.residents.length > 0) || false,
+      occupancyStatus: (unitData.residents && unitData.residents.length > 0) 
+        ? UnitOccupancyStatus.OWNER_OCCUPIED 
+        : UnitOccupancyStatus.VACANT,
+      residents: unitData.residents || [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -487,6 +549,7 @@ export class UnitService {
       ...newUnit,
       hasDebt: false,
       debtAmount: 0,
+      residentDetails: unitData.residents || []
     });
 
     return of({
@@ -521,6 +584,8 @@ export class UnitService {
     const updated: UnitDetails = {
       ...this.mockUnits[unitIndex],
       ...updates,
+      residentDetails: updates.residents || this.mockUnits[unitIndex].residentDetails,
+      isOccupied: (updates.residents && updates.residents.length > 0) || this.mockUnits[unitIndex].isOccupied,
       updatedAt: new Date(),
     };
 

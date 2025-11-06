@@ -14,7 +14,8 @@ import {
   CreateUnitDto,
   UpdateUnitDto,
   ApiResponse,
-  BuildingDetails
+  BuildingDetails,
+  UnitResident
 } from '../../models';
 
 @Component({
@@ -86,8 +87,12 @@ export class UnitsComponent {
     hasBalcony: false,
     hasGarden: false,
     isFurnished: false,
-    description: ''
+    description: '',
+    residents: []
   });
+  
+  // Resident management in form
+  protected readonly unitResidents = signal<UnitResident[]>([]);
   
   // Enums for template
   protected readonly UnitStatus = UnitStatus;
@@ -267,8 +272,12 @@ export class UnitsComponent {
       hasBalcony: false,
       hasGarden: false,
       isFurnished: false,
-      description: ''
+      description: '',
+      residents: []
     });
+    
+    // Reset residents list
+    this.unitResidents.set([]);
     
     // Si hay un condominio seleccionado, cargar sus edificios
     if (selectedCondoId) {
@@ -322,7 +331,10 @@ export class UnitsComponent {
   }
 
   saveUnit(): void {
-    const data = this.formData();
+    const data = {
+      ...this.formData(),
+      residents: this.unitResidents()
+    };
     
     if (!this.validateForm(data)) {
       return;
@@ -432,6 +444,11 @@ export class UnitsComponent {
     
     if (!data.monthlyFee || data.monthlyFee < 0) {
       this.error.set('La cuota mensual debe ser mayor o igual a 0');
+      return false;
+    }
+    
+    // Validar residentes si existen
+    if (!this.validateResidents()) {
       return false;
     }
     
@@ -562,5 +579,71 @@ export class UnitsComponent {
       month: 'short',
       day: 'numeric'
     }).format(new Date(date));
+  }
+
+  // === Resident Management Methods ===
+  
+  addResident(): void {
+    const newResident: UnitResident = {
+      name: '',
+      phone: '',
+      email: '',
+      isResident: true, // Por defecto vive ahí
+      isManager: false,
+      isOwner: false
+    };
+    this.unitResidents.update(residents => [...residents, newResident]);
+  }
+
+  removeResident(index: number): void {
+    this.unitResidents.update(residents => 
+      residents.filter((_, i) => i !== index)
+    );
+  }
+
+  updateResident(index: number, field: keyof UnitResident, value: any): void {
+    this.unitResidents.update(residents => 
+      residents.map((r, i) => i === index ? { ...r, [field]: value } : r)
+    );
+  }
+
+  validateResidents(): boolean {
+    const residents = this.unitResidents();
+    
+    // Validar que todos los residentes tengan nombre y celular
+    for (let i = 0; i < residents.length; i++) {
+      const resident = residents[i];
+      
+      if (!resident.name || !resident.name.trim()) {
+        this.error.set(`El residente ${i + 1} debe tener un nombre`);
+        return false;
+      }
+      
+      if (!resident.phone || !resident.phone.trim()) {
+        this.error.set(`El residente ${i + 1} debe tener un número de celular`);
+        return false;
+      }
+      
+      // Validar email si existe
+      if (resident.email && resident.email.trim()) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(resident.email)) {
+          this.error.set(`El correo del residente ${i + 1} no es válido`);
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  }
+
+  getResidentLabel(resident: UnitResident, index: number): string {
+    const labels = [];
+    if (resident.isOwner) labels.push('Dueño');
+    if (resident.isManager) labels.push('Encargado');
+    if (resident.isResident) labels.push('Reside');
+    if (!resident.isResident && resident.isOwner) labels.push('Solo Dueño');
+    
+    return labels.length > 0 ? labels.join(' | ') : `Residente ${index + 1}`;
   }
 }

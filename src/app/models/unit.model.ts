@@ -1,3 +1,14 @@
+// Residente de unidad (incluido en Unit)
+export interface UnitResident {
+  id?: string; // ID del residente (si ya existe en la base de datos)
+  name: string;
+  phone: string;
+  email?: string; // Opcional
+  isResident: boolean; // Vive ahí
+  isManager: boolean; // Encargado/responsable
+  isOwner: boolean; // Dueño (solo vive ahí = false, dueño = true)
+}
+
 // Unit Interface
 export interface Unit {
   id: string;
@@ -25,7 +36,7 @@ export interface Unit {
   // Información de ocupación
   isOccupied: boolean;
   occupancyStatus: UnitOccupancyStatus;
-  residents?: string[]; // IDs de residentes
+  residents?: UnitResident[]; // Lista de residentes asociados
   primaryResidentId?: string; // ID del residente principal
   
   createdAt: Date;
@@ -75,16 +86,8 @@ export interface UnitDetails extends Unit {
   lastPaymentDate?: Date;
   occupancyStartDate?: Date;
   
-  // Residentes completos si están cargados
-  residentDetails?: Array<{
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-    type: string;
-    isAdministrator: boolean;
-    canReceiveNotifications: boolean;
-  }>;
+  // Residentes completos de la unidad
+  residentDetails?: UnitResident[];
 }
 
 // Interface for creating/updating units
@@ -109,11 +112,13 @@ export interface CreateUnitDto {
   hasGarden?: boolean;
   isFurnished?: boolean;
   description?: string;
+  residents?: UnitResident[]; // Lista de residentes
 }
 
 export interface UpdateUnitDto extends Partial<CreateUnitDto> {
   ownerId?: string;
   residentId?: string;
+  residents?: UnitResident[]; // Actualización de lista de residentes
 }
 
 // Unit statistics interface
