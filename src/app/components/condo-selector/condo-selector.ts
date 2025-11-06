@@ -43,19 +43,23 @@ export class CondoSelectorComponent {
             id: 'all',
             name: 'Todos los Condominios',
             type: CondominiumType.BUILDING,
-            address: 'Vista General',
+            street: 'Vista General',
+            neighborhood: 'Global',
+            number: '0',
+            zipCode: '00000',
             city: 'Global',
             state: 'Global',
-            postalCode: '00000',
             country: 'Global',
-            maintenanceFee: 0,
-            currency: 'MXN',
-            billingDay: 1,
+            paymentDay: 1,
+            conventionalPenalty: 0,
+            initialFolio: 1,
+            rfc: 'XAXX010101000',
+            isActive: true,
+            hasAC: false,
             totalUnits: 0,
             occupiedUnits: 0,
             color: 'from-neutral-600 to-neutral-400',
             description: 'Vista general de todos los condominios',
-            isActive: true,
             createdAt: new Date(),
             updatedAt: new Date()
           };
@@ -128,5 +132,23 @@ export class CondoSelectorComponent {
         }
         return sum;
       }, 0);
+  }
+
+  getCondoAddress(condo: Condominium): string {
+    if (condo.id === 'all') {
+      return 'Vista general de todos los condominios';
+    }
+    return `${condo.street} #${condo.number}, ${condo.neighborhood}, ${condo.city}`;
+  }
+
+  getCondoUnits(condo: Condominium): number {
+    return condo.totalUnits || condo.units || 0;
+  }
+
+  getCondoTowers(condo: Condominium): number | string {
+    if (condo.towers && Array.isArray(condo.towers)) {
+      return condo.towers.length;
+    }
+    return '-';
   }
 }

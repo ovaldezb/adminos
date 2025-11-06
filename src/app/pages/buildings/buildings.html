@@ -744,104 +744,23 @@
     </div>
   }
 
-  <!-- Create Condominium Modal -->
+  <!-- Create Condominium Modal - Simplified Version -->
   @if (showCondoModal()) {
     <div class="modal modal-open">
       <div class="modal-box glass border border-white/20">
         <h3 class="font-bold text-lg text-neutral-900 mb-4 flex items-center gap-2">
           <i class="ri-community-line text-primary"></i>
-          Crear Nuevo Condominio
+          Ir a Condominios
         </h3>
 
-        <div class="space-y-4">
-          <div class="form-control">
-            <label class="label"><span class="label-text text-neutral-700 font-medium">Nombre <span class="text-error">*</span></span></label>
-            <input
-              type="text"
-              [value]="condoFormData().name"
-              (input)="updateCondoField('name', $any($event.target).value)"
-              class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-              placeholder="Ej: Condominio Los Jardines"
-            />
+        <div class="text-center py-6">
+          <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mb-4">
+            <i class="ri-community-line text-4xl text-primary"></i>
           </div>
-
-          <div class="form-control">
-            <label class="label"><span class="label-text text-neutral-700 font-medium">Dirección <span class="text-error">*</span></span></label>
-            <input
-              type="text"
-              [value]="condoFormData().address"
-              (input)="updateCondoField('address', $any($event.target).value)"
-              class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-              placeholder="Ej: Av. Principal #123, Col. Centro"
-            />
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div class="form-control">
-              <label class="label"><span class="label-text text-neutral-700 font-medium">Ciudad <span class="text-error">*</span></span></label>
-              <input
-                type="text"
-                [value]="condoFormData().city"
-                (input)="updateCondoField('city', $any($event.target).value)"
-                class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                placeholder="Ej: Guadalajara"
-              />
-            </div>
-
-            <div class="form-control">
-              <label class="label"><span class="label-text text-neutral-700 font-medium">Estado <span class="text-error">*</span></span></label>
-              <input
-                type="text"
-                [value]="condoFormData().state"
-                (input)="updateCondoField('state', $any($event.target).value)"
-                class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                placeholder="Ej: Jalisco"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div class="form-control">
-              <label class="label"><span class="label-text text-neutral-700 font-medium">Código Postal <span class="text-error">*</span></span></label>
-              <input
-                type="text"
-                [value]="condoFormData().zipCode"
-                (input)="updateCondoField('zipCode', $any($event.target).value)"
-                class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                placeholder="Ej: 44100"
-              />
-            </div>
-
-            <div class="form-control">
-              <label class="label"><span class="label-text text-neutral-700 font-medium">País</span></label>
-              <input
-                type="text"
-                [value]="condoFormData().country"
-                (input)="updateCondoField('country', $any($event.target).value)"
-                class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                placeholder="México"
-              />
-            </div>
-          </div>
-
-          <div class="form-control">
-            <label class="label"><span class="label-text text-neutral-700 font-medium">Descripción</span></label>
-            <textarea
-              [value]="condoFormData().description"
-              (input)="updateCondoField('description', $any($event.target).value)"
-              class="textarea textarea-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-              rows="3"
-              placeholder="Descripción del condominio">
-            </textarea>
-          </div>
+          <p class="text-neutral-900 mb-4">
+            Para crear un nuevo condominio, por favor diríjase a la sección de Condominios donde podrá gestionar toda la información detallada.
+          </p>
         </div>
-
-        @if (condoError()) {
-          <div class="alert alert-error rounded-2xl mt-4">
-            <i class="ri-error-warning-line text-base"></i>
-            <span>{{ condoError() }}</span>
-          </div>
-        }
 
         <div class="modal-action">
           <button
@@ -850,13 +769,11 @@
             Cancelar
           </button>
           <button
-            (click)="saveCondominium()"
-            [disabled]="condoLoading()"
+            routerLink="/condominios"
+            (click)="closeCondoModal()"
             class="btn btn-primary rounded-2xl">
-            @if (condoLoading()) {
-              <span class="loading loading-spinner"></span>
-            }
-            Crear Condominio
+            <i class="ri-arrow-right-line text-base"></i>
+            Ir a Condominios
           </button>
         </div>
       </div>

@@ -42,6 +42,13 @@ export class SideMenuComponent {
       route: '/facturas'
     },
     { 
+      icon: 'ri-community-line', 
+      label: 'Condominios', 
+      route: '/condominios',
+      badge: '3',
+      badgeColor: 'badge-secondary'
+    },
+    { 
       icon: 'ri-building-line', 
       label: 'Edificios', 
       route: '/edificios',

@@ -15,6 +15,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.DashboardComponent)
   },
   {
+    path: 'condominios',
+    loadComponent: () => import('./pages/condominiums/condominiums').then(m => m.CondominiumsComponent)
+  },
+  {
     path: 'edificios',
     loadComponent: () => import('./pages/buildings/buildings').then(m => m.BuildingsComponent)
   },

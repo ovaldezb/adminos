@@ -1,7 +1,7 @@
 import { Component, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
 import { BuildingService, CondominiumService } from '../../services';
@@ -19,7 +19,7 @@ import {
 
 @Component({
   selector: 'app-buildings',
-  imports: [CommonModule, FormsModule, NavbarComponent, SideMenuComponent],
+  imports: [CommonModule, FormsModule, NavbarComponent, SideMenuComponent, RouterLink],
   templateUrl: './buildings.html'
 })
 export class BuildingsComponent {
@@ -73,11 +73,20 @@ export class BuildingsComponent {
   // Condominium form data
   protected readonly condoFormData = signal<Partial<CreateCondominiumDto>>({
     name: '',
-    address: '',
+    street: '',
+    neighborhood: '',
+    number: '',
+    zipCode: '',
     city: '',
     state: '',
-    zipCode: '',
     country: 'México',
+    paymentDay: 1,
+    conventionalPenalty: 0,
+    initialFolio: 1,
+    rfc: '',
+    isActive: true,
+    hasAC: false,
+    additionalInfo: '',
     description: ''
   });
   
@@ -521,11 +530,20 @@ export class BuildingsComponent {
   openCondoModal(): void {
     this.condoFormData.set({
       name: '',
-      address: '',
+      street: '',
+      neighborhood: '',
+      number: '',
+      zipCode: '',
       city: '',
       state: '',
-      zipCode: '',
       country: 'México',
+      paymentDay: 1,
+      conventionalPenalty: 0,
+      initialFolio: 1,
+      rfc: '',
+      isActive: true,
+      hasAC: false,
+      additionalInfo: '',
       description: ''
     });
     this.condoError.set(null);
@@ -581,7 +599,8 @@ export class BuildingsComponent {
   }
 
   private validateCondoForm(data: Partial<CreateCondominiumDto>): boolean {
-    if (!data.name || !data.address || !data.city || !data.state || !data.zipCode) {
+    if (!data.name || !data.street || !data.neighborhood || !data.number || 
+        !data.zipCode || !data.city) {
       this.condoError.set('Por favor complete todos los campos obligatorios');
       return false;
     }
