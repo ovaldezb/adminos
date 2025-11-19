@@ -214,117 +214,146 @@ export class InvoiceService {
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch single invoice
+   * GET /invoices/:id - Fetch single invoice via backend
    * Lambda: getInvoiceById
    */
   getInvoiceById(id: string): Observable<ApiResponse<InvoiceWithDetails>> {
-    const invoice = this.mockInvoices.find((i) => i.id === id);
+    return this.http.get<ApiResponse<InvoiceWithDetails>>(`${this.apiUrl}/${id}`).pipe(
+      catchError((error) => {
+        console.error(`Error fetching invoice ${id} from backend, using mock:`, error);
+        // Fallback a mock
+        const invoice = this.mockInvoices.find((i) => i.id === id);
 
-    if (!invoice) {
-      return of({
-        success: false,
-        error: {
-          code: 'INVOICE_NOT_FOUND',
-          message: 'Factura no encontrada',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+        if (!invoice) {
+          return of({
+            success: false,
+            error: {
+              code: 'INVOICE_NOT_FOUND',
+              message: 'Factura no encontrada',
+            },
+            timestamp: new Date(),
+          });
+        }
 
-    return of({
-      success: true,
-      data: invoice,
-      message: 'Factura obtenida exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 200));
+        return of({
+          success: true,
+          data: invoice,
+          message: 'Factura obtenida exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda POST request to create invoice
+   * POST /invoices - Create invoice via backend
    * Lambda: createInvoice
    */
   createInvoice(
     invoice: Partial<Invoice>
   ): Observable<ApiResponse<Invoice>> {
-    const newInvoice: Invoice = {
-      id: `INV-${String(Date.now()).slice(-6)}`,
-      invoiceNumber: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(this.mockInvoices.length + 1).padStart(3, '0')}`,
-      condominiumId: invoice.condominiumId!,
-      unitId: invoice.unitId!,
-      residentId: invoice.residentId!,
-      amount: invoice.amount || 0,
-      dueDate: invoice.dueDate || new Date(),
-      issueDate: new Date(),
-      status: InvoiceStatus.PENDING,
-      period: invoice.period || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
-      description: invoice.description || '',
-      items: invoice.items || [],
-      totalAmount: invoice.totalAmount || invoice.amount || 0,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    return this.http.post<ApiResponse<Invoice>>(this.apiUrl, invoice).pipe(
+      catchError((error) => {
+        console.error('Error creating invoice in backend, using mock:', error);
+        // Fallback a mock
+        const newInvoice: Invoice = {
+          id: `INV-${String(Date.now()).slice(-6)}`,
+          invoiceNumber: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(this.mockInvoices.length + 1).padStart(3, '0')}`,
+          condominiumId: invoice.condominiumId!,
+          unitId: invoice.unitId!,
+          residentId: invoice.residentId!,
+          amount: invoice.amount || 0,
+          dueDate: invoice.dueDate || new Date(),
+          issueDate: new Date(),
+          status: InvoiceStatus.PENDING,
+          period: invoice.period || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
+          description: invoice.description || '',
+          items: invoice.items || [],
+          totalAmount: invoice.totalAmount || invoice.amount || 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-    return of({
-      success: true,
-      data: newInvoice,
-      message: 'Factura creada exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 700 + 500));
+        return of({
+          success: true,
+          data: newInvoice,
+          message: 'Factura creada exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda PUT request to update invoice status
+   * PUT /invoices/:id/status - Update invoice status via backend
    * Lambda: updateInvoiceStatus
    */
   updateInvoiceStatus(
     id: string,
     status: InvoiceStatus
   ): Observable<ApiResponse<Invoice>> {
-    const invoice = this.mockInvoices.find((i) => i.id === id);
+    return this.http.put<ApiResponse<Invoice>>(`${this.apiUrl}/${id}/status`, { status }).pipe(
+      catchError((error) => {
+        console.error(`Error updating invoice ${id} status in backend, using mock:`, error);
+        // Fallback a mock
+        const invoice = this.mockInvoices.find((i) => i.id === id);
 
-    if (!invoice) {
-      return of({
-        success: false,
-        error: {
-          code: 'INVOICE_NOT_FOUND',
-          message: 'Factura no encontrada',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+        if (!invoice) {
+          return of({
+            success: false,
+            error: {
+              code: 'INVOICE_NOT_FOUND',
+              message: 'Factura no encontrada',
+            },
+            timestamp: new Date(),
+          });
+        }
 
-    invoice.status = status;
-    invoice.updatedAt = new Date();
+        invoice.status = status;
+        invoice.updatedAt = new Date();
 
-    return of({
-      success: true,
-      data: invoice,
-      message: 'Estado de factura actualizado exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 300));
+        return of({
+          success: true,
+          data: invoice,
+          message: 'Estado de factura actualizado exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch overdue invoices
+   * GET /invoices/overdue - Fetch overdue invoices via backend
    * Lambda: getOverdueInvoices
    */
   getOverdueInvoices(
     condominiumId?: string
   ): Observable<ApiResponse<InvoiceWithDetails[]>> {
-    let overdue = this.mockInvoices.filter(
-      (i) => i.status === InvoiceStatus.OVERDUE
-    );
-
+    let params = new HttpParams();
     if (condominiumId && condominiumId !== 'all') {
-      overdue = overdue.filter((i) => i.condominiumId === condominiumId);
+      params = params.set('condominiumId', condominiumId);
     }
 
-    return of({
-      success: true,
-      data: overdue,
-      message: 'Facturas vencidas obtenidas exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 250));
+    return this.http.get<ApiResponse<InvoiceWithDetails[]>>(`${this.apiUrl}/overdue`, { params }).pipe(
+      catchError((error) => {
+        console.error('Error fetching overdue invoices from backend, using mock:', error);
+        // Fallback a mock
+        let overdue = this.mockInvoices.filter(
+          (i) => i.status === InvoiceStatus.OVERDUE
+        );
+
+        if (condominiumId && condominiumId !== 'all') {
+          overdue = overdue.filter((i) => i.condominiumId === condominiumId);
+        }
+
+        return of({
+          success: true,
+          data: overdue,
+          message: 'Facturas vencidas obtenidas exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**

@@ -336,168 +336,198 @@ export class ProviderService {
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch single provider
+   * GET /providers/:id - Fetch single provider via backend
    * Lambda: getProviderById
    */
   getProviderById(id: string): Observable<ApiResponse<ProviderDetails>> {
-    const provider = this.mockProviders.find((p) => p.id === id);
+    return this.http.get<ApiResponse<ProviderDetails>>(`${this.apiUrl}/${id}`).pipe(
+      catchError((error) => {
+        console.error(`Error fetching provider ${id} from backend, using mock:`, error);
+        // Fallback a mock
+        const provider = this.mockProviders.find((p) => p.id === id);
 
-    if (!provider) {
-      return of({
-        success: false,
-        error: {
-          code: 'PROVIDER_NOT_FOUND',
-          message: 'Proveedor no encontrado',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+        if (!provider) {
+          return of({
+            success: false,
+            error: {
+              code: 'PROVIDER_NOT_FOUND',
+              message: 'Proveedor no encontrado',
+            },
+            timestamp: new Date(),
+          });
+        }
 
-    return of({
-      success: true,
-      data: provider,
-      message: 'Proveedor obtenido exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 200));
+        return of({
+          success: true,
+          data: provider,
+          message: 'Proveedor obtenido exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda POST request to create provider
+   * POST /providers - Create provider via backend
    * Lambda: createProvider
    */
   createProvider(providerData: CreateProviderDto): Observable<ApiResponse<Provider>> {
-    const newProvider: Provider = {
-      id: `P-${String(Date.now()).slice(-6)}`,
-      businessName: providerData.businessName,
-      tradeName: providerData.tradeName,
-      rfc: providerData.rfc,
-      category: providerData.category,
-      address: providerData.address,
-      city: providerData.city,
-      country: providerData.country,
-      contactName: providerData.contactName,
-      email: providerData.email,
-      phone: providerData.phone,
-      mobile: providerData.mobile,
-      website: providerData.website,
-      bankName: providerData.bankName,
-      bankAccount: providerData.bankAccount,
-      clabe: providerData.clabe,
-      isActive: true,
-      rating: providerData.rating,
-      notes: providerData.notes,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    return this.http.post<ApiResponse<Provider>>(this.apiUrl, providerData).pipe(
+      catchError((error) => {
+        console.error('Error creating provider in backend, using mock:', error);
+        // Fallback a mock
+        const newProvider: Provider = {
+          id: `P-${String(Date.now()).slice(-6)}`,
+          businessName: providerData.businessName,
+          tradeName: providerData.tradeName,
+          rfc: providerData.rfc,
+          category: providerData.category,
+          address: providerData.address,
+          city: providerData.city,
+          country: providerData.country,
+          contactName: providerData.contactName,
+          email: providerData.email,
+          phone: providerData.phone,
+          mobile: providerData.mobile,
+          website: providerData.website,
+          bankName: providerData.bankName,
+          bankAccount: providerData.bankAccount,
+          clabe: providerData.clabe,
+          isActive: true,
+          rating: providerData.rating,
+          notes: providerData.notes,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-    // Add to mock data
-    this.mockProviders.push({
-      ...newProvider,
-      condominiums: [],
-      totalContracts: 0,
-      totalInvoiced: 0,
-      averageRating: providerData.rating || 0,
-    });
+        // Add to mock data
+        this.mockProviders.push({
+          ...newProvider,
+          condominiums: [],
+          totalContracts: 0,
+          totalInvoiced: 0,
+          averageRating: providerData.rating || 0,
+        });
 
-    return of({
-      success: true,
-      data: newProvider,
-      message: 'Proveedor creado exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 700 + 500));
+        return of({
+          success: true,
+          data: newProvider,
+          message: 'Proveedor creado exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda PUT request to update provider
+   * PUT /providers/:id - Update provider via backend
    * Lambda: updateProvider
    */
   updateProvider(
     id: string,
     updates: UpdateProviderDto
   ): Observable<ApiResponse<ProviderDetails>> {
-    const providerIndex = this.mockProviders.findIndex((p) => p.id === id);
+    return this.http.put<ApiResponse<ProviderDetails>>(`${this.apiUrl}/${id}`, updates).pipe(
+      catchError((error) => {
+        console.error(`Error updating provider ${id} in backend, using mock:`, error);
+        // Fallback a mock
+        const providerIndex = this.mockProviders.findIndex((p) => p.id === id);
 
-    if (providerIndex === -1) {
-      return of({
-        success: false,
-        error: {
-          code: 'PROVIDER_NOT_FOUND',
-          message: 'Proveedor no encontrado',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+        if (providerIndex === -1) {
+          return of({
+            success: false,
+            error: {
+              code: 'PROVIDER_NOT_FOUND',
+              message: 'Proveedor no encontrado',
+            },
+            timestamp: new Date(),
+          });
+        }
 
-    const updated: ProviderDetails = {
-      ...this.mockProviders[providerIndex],
-      ...updates,
-      updatedAt: new Date(),
-    };
+        const updated: ProviderDetails = {
+          ...this.mockProviders[providerIndex],
+          ...updates,
+          updatedAt: new Date(),
+        };
 
-    this.mockProviders[providerIndex] = updated;
+        this.mockProviders[providerIndex] = updated;
 
-    return of({
-      success: true,
-      data: updated,
-      message: 'Proveedor actualizado exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 600 + 400));
+        return of({
+          success: true,
+          data: updated,
+          message: 'Proveedor actualizado exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda DELETE request to deactivate provider
+   * PATCH /providers/:id/deactivate - Deactivate provider via backend
    * Lambda: deactivateProvider
    */
   deactivateProvider(id: string): Observable<ApiResponse<void>> {
-    const provider = this.mockProviders.find((p) => p.id === id);
+    return this.http.patch<ApiResponse<void>>(`${this.apiUrl}/${id}/deactivate`, {}).pipe(
+      catchError((error) => {
+        console.error(`Error deactivating provider ${id} in backend, using mock:`, error);
+        // Fallback a mock
+        const provider = this.mockProviders.find((p) => p.id === id);
 
-    if (!provider) {
-      return of({
-        success: false,
-        error: {
-          code: 'PROVIDER_NOT_FOUND',
-          message: 'Proveedor no encontrado',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+        if (!provider) {
+          return of({
+            success: false,
+            error: {
+              code: 'PROVIDER_NOT_FOUND',
+              message: 'Proveedor no encontrado',
+            },
+            timestamp: new Date(),
+          });
+        }
 
-    provider.isActive = false;
-    provider.updatedAt = new Date();
+        provider.isActive = false;
+        provider.updatedAt = new Date();
 
-    return of({
-      success: true,
-      message: 'Proveedor desactivado exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 300));
+        return of({
+          success: true,
+          message: 'Proveedor desactivado exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda DELETE request to activate provider
+   * PATCH /providers/:id/activate - Activate provider via backend
    * Lambda: activateProvider
    */
   activateProvider(id: string): Observable<ApiResponse<void>> {
-    const provider = this.mockProviders.find((p) => p.id === id);
+    return this.http.patch<ApiResponse<void>>(`${this.apiUrl}/${id}/activate`, {}).pipe(
+      catchError((error) => {
+        console.error(`Error activating provider ${id} in backend, using mock:`, error);
+        // Fallback a mock
+        const provider = this.mockProviders.find((p) => p.id === id);
 
-    if (!provider) {
-      return of({
-        success: false,
-        error: {
-          code: 'PROVIDER_NOT_FOUND',
-          message: 'Proveedor no encontrado',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+        if (!provider) {
+          return of({
+            success: false,
+            error: {
+              code: 'PROVIDER_NOT_FOUND',
+              message: 'Proveedor no encontrado',
+            },
+            timestamp: new Date(),
+          });
+        }
 
-    provider.isActive = true;
-    provider.updatedAt = new Date();
+        provider.isActive = true;
+        provider.updatedAt = new Date();
 
-    return of({
-      success: true,
-      message: 'Proveedor activado exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 300));
+        return of({
+          success: true,
+          message: 'Proveedor activado exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**

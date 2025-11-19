@@ -419,31 +419,39 @@ export class ResidentService {
   }
 
   /**
-   * Deactivate resident
+   * PATCH /residents/:id/deactivate - Deactivate resident via backend
    */
   deactivateResident(id: string): Observable<ApiResponse<void>> {
-    const residentIndex = this.mockResidents.findIndex((r) => r.id === id);
+    return this.http
+      .patch<ApiResponse<void>>(`${this.apiUrl}/${id}/deactivate`, {})
+      .pipe(
+        catchError((error) => {
+          console.error(`Error deactivating resident ${id} in backend, using mock:`, error);
+          // Fallback a mock
+          const residentIndex = this.mockResidents.findIndex((r) => r.id === id);
 
-    if (residentIndex === -1) {
-      return of({
-        success: false,
-        message: 'Resident not found',
-        error: {
-          code: 'RESIDENT_NOT_FOUND',
-          message: 'Residente no encontrado',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+          if (residentIndex === -1) {
+            return of({
+              success: false,
+              message: 'Resident not found',
+              error: {
+                code: 'RESIDENT_NOT_FOUND',
+                message: 'Residente no encontrado',
+              },
+              timestamp: new Date(),
+            });
+          }
 
-    this.mockResidents[residentIndex].isActive = false;
-    this.mockResidents[residentIndex].updatedAt = new Date();
+          this.mockResidents[residentIndex].isActive = false;
+          this.mockResidents[residentIndex].updatedAt = new Date();
 
-    return of({
-      success: true,
-      message: 'Residente desactivado exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 300));
+          return of({
+            success: true,
+            message: 'Residente desactivado exitosamente (mock fallback)',
+            timestamp: new Date(),
+          });
+        })
+      );
   }
 
   /**

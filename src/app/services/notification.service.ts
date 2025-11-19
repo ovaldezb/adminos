@@ -126,20 +126,27 @@ export class NotificationService {
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch unread notification count
+   * GET /notifications/user/:userId/count - Fetch unread notifications count via backend
    * Lambda: getUnreadCount
    */
   getUnreadCount(userId: string): Observable<ApiResponse<number>> {
-    const count = this.mockNotifications.filter(
-      (n) => n.userId === userId && !n.isRead
-    ).length;
-
-    return of({
-      success: true,
-      data: count,
-      message: 'Contador obtenido exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 200 + 100));
+    return this.http
+      .get<ApiResponse<number>>(`${this.apiUrl}/user/${userId}/count`)
+      .pipe(
+        catchError((error) => {
+          console.error(`Error fetching unread count for user ${userId} from backend, using mock:`, error);
+          // Fallback a mock
+          const count = this.mockNotifications.filter(
+            (n) => n.userId === userId && !n.isRead
+          ).length;
+          return of({
+            success: true,
+            data: count,
+            message: 'Contador obtenido exitosamente (mock fallback)',
+            timestamp: new Date(),
+          });
+        })
+      );
   }
 
   /**

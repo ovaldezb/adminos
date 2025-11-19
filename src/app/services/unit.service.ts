@@ -409,22 +409,36 @@ export class UnitService {
   ];
 
   /**
-   * Validates if unit number is unique within a building
+   * GET /units/validate-number - Validates if unit number is unique within a building
    * Lambda: validateUnitNumber
    */
   validateUnitNumber(buildingId: string, unitNumber: string, excludeId?: string): Observable<ApiResponse<{ isUnique: boolean }>> {
-    const existingUnit = this.mockUnits.find(u => 
-      u.buildingId === buildingId && 
-      u.unitNumber === unitNumber &&
-      u.id !== excludeId
-    );
+    let params = new HttpParams()
+      .set('buildingId', buildingId)
+      .set('unitNumber', unitNumber);
+    
+    if (excludeId) {
+      params = params.set('excludeId', excludeId);
+    }
 
-    return of({
-      success: true,
-      data: { isUnique: !existingUnit },
-      message: existingUnit ? 'Número de unidad ya existe' : 'Número de unidad disponible',
-      timestamp: new Date(),
-    }).pipe(delay(300));
+    return this.http.get<ApiResponse<{ isUnique: boolean }>>(`${this.apiUrl}/validate-number`, { params }).pipe(
+      catchError((error) => {
+        console.error('Error validating unit number from backend, using mock:', error);
+        // Fallback a mock
+        const existingUnit = this.mockUnits.find(u => 
+          u.buildingId === buildingId && 
+          u.unitNumber === unitNumber &&
+          u.id !== excludeId
+        );
+
+        return of({
+          success: true,
+          data: { isUnique: !existingUnit },
+          message: existingUnit ? 'Número de unidad ya existe (mock fallback)' : 'Número de unidad disponible (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
@@ -691,178 +705,240 @@ export class UnitService {
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch vacant units
+   * GET /units/vacant - Fetch vacant units via backend
    * Lambda: getVacantUnits
    */
   getVacantUnits(
     condominiumId?: string
   ): Observable<ApiResponse<UnitDetails[]>> {
-    let units = this.mockUnits.filter((u) => u.status === UnitStatus.VACANT);
-
+    let params = new HttpParams();
     if (condominiumId && condominiumId !== 'all') {
-      units = units.filter((u) => u.condominiumId === condominiumId);
+      params = params.set('condominiumId', condominiumId);
     }
 
-    return of({
-      success: true,
-      data: units,
-      message: 'Unidades vacantes obtenidas exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 300));
+    return this.http
+      .get<ApiResponse<UnitDetails[]>>(`${this.apiUrl}/vacant`, { params })
+      .pipe(
+        catchError((error) => {
+          console.error('Error fetching vacant units from backend, using mock:', error);
+          // Fallback a mock
+          let units = this.mockUnits.filter((u) => u.status === UnitStatus.VACANT);
+          if (condominiumId && condominiumId !== 'all') {
+            units = units.filter((u) => u.condominiumId === condominiumId);
+          }
+          return of({
+            success: true,
+            data: units,
+            message: 'Unidades vacantes obtenidas exitosamente (mock fallback)',
+            timestamp: new Date(),
+          });
+        })
+      );
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch units with debt
+   * GET /units/with-debt - Fetch units with debt via backend
    * Lambda: getUnitsWithDebt
    */
   getUnitsWithDebt(
     condominiumId?: string
   ): Observable<ApiResponse<UnitDetails[]>> {
-    let units = this.mockUnits.filter((u) => u.hasDebt);
-
+    let params = new HttpParams();
     if (condominiumId && condominiumId !== 'all') {
-      units = units.filter((u) => u.condominiumId === condominiumId);
+      params = params.set('condominiumId', condominiumId);
     }
 
-    return of({
-      success: true,
-      data: units,
-      message: 'Unidades con deuda obtenidas exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 300));
+    return this.http
+      .get<ApiResponse<UnitDetails[]>>(`${this.apiUrl}/with-debt`, { params })
+      .pipe(
+        catchError((error) => {
+          console.error('Error fetching units with debt from backend, using mock:', error);
+          // Fallback a mock
+          let units = this.mockUnits.filter((u) => u.hasDebt);
+          if (condominiumId && condominiumId !== 'all') {
+            units = units.filter((u) => u.condominiumId === condominiumId);
+          }
+          return of({
+            success: true,
+            data: units,
+            message: 'Unidades con deuda obtenidas exitosamente (mock fallback)',
+            timestamp: new Date(),
+          });
+        })
+      );
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch unit statistics
+   * GET /units/stats - Fetch unit statistics via backend
    * Lambda: getUnitStats
    */
   getUnitStats(
     condominiumId?: string
   ): Observable<ApiResponse<UnitStatistics>> {
-    let units = [...this.mockUnits];
-
+    let params = new HttpParams();
     if (condominiumId && condominiumId !== 'all') {
-      units = units.filter((u) => u.condominiumId === condominiumId);
+      params = params.set('condominiumId', condominiumId);
     }
 
-    const byStatus: Record<string, number> = {};
-    units.forEach((u) => {
-      byStatus[u.status] = (byStatus[u.status] || 0) + 1;
-    });
+    return this.http
+      .get<ApiResponse<UnitStatistics>>(`${this.apiUrl}/stats`, { params })
+      .pipe(
+        catchError((error) => {
+          console.error('Error fetching unit stats from backend, using mock:', error);
+          // Fallback a mock
+          let units = [...this.mockUnits];
+          if (condominiumId && condominiumId !== 'all') {
+            units = units.filter((u) => u.condominiumId === condominiumId);
+          }
 
-    const byPropertyType: Record<string, number> = {};
-    units.forEach((u) => {
-      byPropertyType[u.propertyType] = (byPropertyType[u.propertyType] || 0) + 1;
-    });
+          const byStatus: Record<string, number> = {};
+          units.forEach((u) => {
+            byStatus[u.status] = (byStatus[u.status] || 0) + 1;
+          });
 
-    const totalOccupied = byStatus[UnitStatus.OCCUPIED] || 0;
-    const totalVacant = byStatus[UnitStatus.VACANT] || 0;
-    const totalArea = units.reduce((sum, u) => sum + u.area, 0);
-    const totalMonthlyRevenue = units
-      .filter(u => u.status === UnitStatus.OCCUPIED)
-      .reduce((sum, u) => sum + u.monthlyFee, 0);
-    const totalDebt = units.reduce((sum, u) => sum + u.debtAmount, 0);
-    const unitsWithDebt = units.filter(u => u.hasDebt).length;
+          const byPropertyType: Record<string, number> = {};
+          units.forEach((u) => {
+            byPropertyType[u.propertyType] = (byPropertyType[u.propertyType] || 0) + 1;
+          });
 
-    const stats: UnitStatistics = {
-      total: units.length,
-      byStatus: byStatus as Record<UnitStatus, number>,
-      byPropertyType: byPropertyType as Record<PropertyType, number>,
-      totalOccupied,
-      totalVacant,
-      occupancyRate: units.length > 0 ? (totalOccupied / units.length) * 100 : 0,
-      totalArea,
-      averageArea: units.length > 0 ? totalArea / units.length : 0,
-      totalMonthlyRevenue,
-      totalDebt,
-      unitsWithDebt,
-    };
+          const totalOccupied = byStatus[UnitStatus.OCCUPIED] || 0;
+          const totalVacant = byStatus[UnitStatus.VACANT] || 0;
+          const totalArea = units.reduce((sum, u) => sum + u.area, 0);
+          const totalMonthlyRevenue = units
+            .filter(u => u.status === UnitStatus.OCCUPIED)
+            .reduce((sum, u) => sum + u.monthlyFee, 0);
+          const totalDebt = units.reduce((sum, u) => sum + u.debtAmount, 0);
+          const unitsWithDebt = units.filter(u => u.hasDebt).length;
 
-    return of({
-      success: true,
-      data: stats,
-      message: 'Estadísticas de unidades obtenidas exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 300));
+          const stats: UnitStatistics = {
+            total: units.length,
+            byStatus: byStatus as Record<UnitStatus, number>,
+            byPropertyType: byPropertyType as Record<PropertyType, number>,
+            totalOccupied,
+            totalVacant,
+            occupancyRate: units.length > 0 ? (totalOccupied / units.length) * 100 : 0,
+            totalArea,
+            averageArea: units.length > 0 ? totalArea / units.length : 0,
+            totalMonthlyRevenue,
+            totalDebt,
+            unitsWithDebt,
+          };
+
+          return of({
+            success: true,
+            data: stats,
+            message: 'Estadísticas de unidades obtenidas exitosamente (mock fallback)',
+            timestamp: new Date(),
+          });
+        })
+      );
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch units by property type
+   * GET /units/by-property-type/:propertyType - Fetch units by property type via backend
    * Lambda: getUnitsByPropertyType
    */
   getUnitsByPropertyType(
     propertyType: PropertyType,
     condominiumId?: string
   ): Observable<ApiResponse<UnitDetails[]>> {
-    let units = this.mockUnits.filter((u) => u.propertyType === propertyType);
-
+    let params = new HttpParams();
     if (condominiumId && condominiumId !== 'all') {
-      units = units.filter((u) => u.condominiumId === condominiumId);
+      params = params.set('condominiumId', condominiumId);
     }
 
-    return of({
-      success: true,
-      data: units,
-      message: 'Unidades obtenidas exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 300));
+    return this.http
+      .get<ApiResponse<UnitDetails[]>>(`${this.apiUrl}/by-property-type/${propertyType}`, { params })
+      .pipe(
+        catchError((error) => {
+          console.error(`Error fetching units by property type ${propertyType} from backend, using mock:`, error);
+          // Fallback a mock
+          let units = this.mockUnits.filter((u) => u.propertyType === propertyType);
+          if (condominiumId && condominiumId !== 'all') {
+            units = units.filter((u) => u.condominiumId === condominiumId);
+          }
+          return of({
+            success: true,
+            data: units,
+            message: 'Unidades obtenidas exitosamente (mock fallback)',
+            timestamp: new Date(),
+          });
+        })
+      );
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch units by tower
+   * GET /units/by-tower/:tower - Fetch units by tower via backend
    * Lambda: getUnitsByTower
    */
   getUnitsByTower(
     tower: string,
     condominiumId?: string
   ): Observable<ApiResponse<UnitDetails[]>> {
-    let units = this.mockUnits.filter((u) => 
-      u.tower && u.tower.toLowerCase() === tower.toLowerCase()
-    );
-
+    let params = new HttpParams();
     if (condominiumId && condominiumId !== 'all') {
-      units = units.filter((u) => u.condominiumId === condominiumId);
+      params = params.set('condominiumId', condominiumId);
     }
 
-    return of({
-      success: true,
-      data: units,
-      message: 'Unidades obtenidas exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 300));
+    return this.http
+      .get<ApiResponse<UnitDetails[]>>(`${this.apiUrl}/by-tower/${tower}`, { params })
+      .pipe(
+        catchError((error) => {
+          console.error(`Error fetching units by tower ${tower} from backend, using mock:`, error);
+          // Fallback a mock
+          let units = this.mockUnits.filter((u) => 
+            u.tower && u.tower.toLowerCase() === tower.toLowerCase()
+          );
+          if (condominiumId && condominiumId !== 'all') {
+            units = units.filter((u) => u.condominiumId === condominiumId);
+          }
+          return of({
+            success: true,
+            data: units,
+            message: 'Unidades obtenidas exitosamente (mock fallback)',
+            timestamp: new Date(),
+          });
+        })
+      );
   }
 
   /**
-   * Simulates bulk update of units
+   * POST /units/bulk-update - Bulk update of units via backend
    * Lambda: bulkUpdateUnits
    */
   bulkUpdateUnits(
     unitIds: string[],
     updates: Partial<UpdateUnitDto>
   ): Observable<ApiResponse<{ updated: number; failed: number }>> {
-    let updated = 0;
-    let failed = 0;
+    return this.http.post<ApiResponse<{ updated: number; failed: number }>>(`${this.apiUrl}/bulk-update`, { unitIds, updates }).pipe(
+      catchError((error) => {
+        console.error('Error bulk updating units from backend, using mock:', error);
+        // Fallback a mock
+        let updated = 0;
+        let failed = 0;
 
-    unitIds.forEach(id => {
-      const unitIndex = this.mockUnits.findIndex(u => u.id === id);
-      if (unitIndex !== -1) {
-        this.mockUnits[unitIndex] = {
-          ...this.mockUnits[unitIndex],
-          ...updates,
-          updatedAt: new Date(),
-        };
-        updated++;
-      } else {
-        failed++;
-      }
-    });
+        unitIds.forEach(id => {
+          const unitIndex = this.mockUnits.findIndex(u => u.id === id);
+          if (unitIndex !== -1) {
+            this.mockUnits[unitIndex] = {
+              ...this.mockUnits[unitIndex],
+              ...updates,
+              updatedAt: new Date(),
+            };
+            updated++;
+          } else {
+            failed++;
+          }
+        });
 
-    return of({
-      success: true,
-      data: { updated, failed },
-      message: `${updated} unidades actualizadas, ${failed} fallidas`,
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 800 + 600));
+        return of({
+          success: true,
+          data: { updated, failed },
+          message: `${updated} unidades actualizadas, ${failed} fallidas (mock fallback)`,
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**

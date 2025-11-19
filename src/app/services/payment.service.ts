@@ -127,191 +127,260 @@ export class PaymentService {
   ];
 
   /**
-   * Simulates AWS Lambda GET request to fetch all payments
+   * GET /payments - Fetch all payments via backend with pagination
    * Lambda: getPayments
    */
   getPayments(
     params?: PaginationParams & { condominiumId?: string; status?: PaymentStatus }
   ): Observable<ApiResponse<PaginatedResponse<PaymentWithDetails>>> {
-    let filtered = [...this.mockPayments];
+    let httpParams = new HttpParams()
+      .set('page', String(params?.page || 1))
+      .set('pageSize', String(params?.pageSize || 10));
 
-    // Filter by condominiumId
     if (params?.condominiumId && params.condominiumId !== 'all') {
-      filtered = filtered.filter((p) => p.condominiumId === params.condominiumId);
+      httpParams = httpParams.set('condominiumId', params.condominiumId);
     }
-
-    // Filter by status
     if (params?.status) {
-      filtered = filtered.filter((p) => p.status === params.status);
+      httpParams = httpParams.set('status', params.status);
     }
 
-    const page = params?.page || 1;
-    const pageSize = params?.pageSize || 10;
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    const items = filtered.slice(start, end);
+    return this.http
+      .get<ApiResponse<PaginatedResponse<PaymentWithDetails>>>(this.apiUrl, { params: httpParams })
+      .pipe(
+        catchError((error) => {
+          console.error('Error fetching payments from backend, using mock:', error);
+          // Fallback a mock
+          let filtered = [...this.mockPayments];
 
-    const response: PaginatedResponse<PaymentWithDetails> = {
-      items,
-      total: filtered.length,
-      page,
-      pageSize,
-      totalPages: Math.ceil(filtered.length / pageSize),
-      hasNext: end < filtered.length,
-      hasPrevious: page > 1,
-    };
+          if (params?.condominiumId && params.condominiumId !== 'all') {
+            filtered = filtered.filter((p) => p.condominiumId === params.condominiumId);
+          }
+          if (params?.status) {
+            filtered = filtered.filter((p) => p.status === params.status);
+          }
 
-    return of({
-      success: true,
-      data: response,
-      message: 'Pagos obtenidos exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 300));
+          const page = params?.page || 1;
+          const pageSize = params?.pageSize || 10;
+          const start = (page - 1) * pageSize;
+          const end = start + pageSize;
+          const items = filtered.slice(start, end);
+
+          const response: PaginatedResponse<PaymentWithDetails> = {
+            items,
+            total: filtered.length,
+            page,
+            pageSize,
+            totalPages: Math.ceil(filtered.length / pageSize),
+            hasNext: end < filtered.length,
+            hasPrevious: page > 1,
+          };
+
+          return of({
+            success: true,
+            data: response,
+            message: 'Pagos obtenidos exitosamente (mock fallback)',
+            timestamp: new Date(),
+          });
+        })
+      );
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch single payment
+   * GET /payments/:id - Fetch single payment via backend
    * Lambda: getPaymentById
    */
   getPaymentById(id: string): Observable<ApiResponse<PaymentWithDetails>> {
-    const payment = this.mockPayments.find((p) => p.id === id);
+    return this.http
+      .get<ApiResponse<PaymentWithDetails>>(`${this.apiUrl}/${id}`)
+      .pipe(
+        catchError((error) => {
+          console.error(`Error fetching payment ${id} from backend, using mock:`, error);
+          // Fallback a mock
+          const payment = this.mockPayments.find((p) => p.id === id);
 
-    if (!payment) {
-      return of({
-        success: false,
-        error: {
-          code: 'PAYMENT_NOT_FOUND',
-          message: 'Pago no encontrado',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+          if (!payment) {
+            return of({
+              success: false,
+              error: {
+                code: 'PAYMENT_NOT_FOUND',
+                message: 'Pago no encontrado',
+              },
+              timestamp: new Date(),
+            });
+          }
 
-    return of({
-      success: true,
-      data: payment,
-      message: 'Pago obtenido exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 200));
+          return of({
+            success: true,
+            data: payment,
+            message: 'Pago obtenido exitosamente (mock fallback)',
+            timestamp: new Date(),
+          });
+        })
+      );
   }
 
   /**
-   * Simulates AWS Lambda POST request to register payment
+   * POST /payments - Register payment via backend
    * Lambda: registerPayment
    */
   registerPayment(
     payment: Partial<Payment>
   ): Observable<ApiResponse<Payment>> {
-    const newPayment: Payment = {
-      id: `PAY-${String(Date.now()).slice(-6)}`,
-      paymentNumber: `P-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(this.mockPayments.length + 1).padStart(3, '0')}`,
-      invoiceId: payment.invoiceId!,
-      condominiumId: payment.condominiumId!,
-      unitId: payment.unitId!,
-      residentId: payment.residentId!,
-      amount: payment.amount || 0,
-      paymentDate: payment.paymentDate || new Date(),
-      paymentMethod: payment.paymentMethod || PaymentMethod.CASH,
-      status: PaymentStatus.PENDING,
-      reference: payment.reference,
-      notes: payment.notes,
-      processedBy: payment.processedBy || 'system',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    return this.http
+      .post<ApiResponse<Payment>>(this.apiUrl, payment)
+      .pipe(
+        catchError((error) => {
+          console.error('Error registering payment in backend, using mock:', error);
+          // Fallback a mock
+          const newPayment: Payment = {
+            id: `PAY-${String(Date.now()).slice(-6)}`,
+            paymentNumber: `P-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(this.mockPayments.length + 1).padStart(3, '0')}`,
+            invoiceId: payment.invoiceId!,
+            condominiumId: payment.condominiumId!,
+            unitId: payment.unitId!,
+            residentId: payment.residentId!,
+            amount: payment.amount || 0,
+            paymentDate: payment.paymentDate || new Date(),
+            paymentMethod: payment.paymentMethod || PaymentMethod.CASH,
+            status: PaymentStatus.PENDING,
+            reference: payment.reference,
+            notes: payment.notes,
+            processedBy: payment.processedBy || 'system',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
 
-    return of({
-      success: true,
-      data: newPayment,
-      message: 'Pago registrado exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 700 + 500));
+          return of({
+            success: true,
+            data: newPayment,
+            message: 'Pago registrado exitosamente (mock fallback)',
+            timestamp: new Date(),
+          });
+        })
+      );
   }
 
   /**
-   * Simulates AWS Lambda PUT request to confirm payment
+   * PUT /payments/:id/confirm - Confirm payment via backend
    * Lambda: confirmPayment
    */
   confirmPayment(id: string): Observable<ApiResponse<Payment>> {
-    const payment = this.mockPayments.find((p) => p.id === id);
+    return this.http
+      .put<ApiResponse<Payment>>(`${this.apiUrl}/${id}/confirm`, {})
+      .pipe(
+        catchError((error) => {
+          console.error(`Error confirming payment ${id} in backend, using mock:`, error);
+          // Fallback a mock
+          const payment = this.mockPayments.find((p) => p.id === id);
 
-    if (!payment) {
-      return of({
-        success: false,
-        error: {
-          code: 'PAYMENT_NOT_FOUND',
-          message: 'Pago no encontrado',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+          if (!payment) {
+            return of({
+              success: false,
+              error: {
+                code: 'PAYMENT_NOT_FOUND',
+                message: 'Pago no encontrado',
+              },
+              timestamp: new Date(),
+            });
+          }
 
-    payment.status = PaymentStatus.CONFIRMED;
-    payment.updatedAt = new Date();
+          payment.status = PaymentStatus.CONFIRMED;
+          payment.updatedAt = new Date();
 
-    return of({
-      success: true,
-      data: payment,
-      message: 'Pago confirmado exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 300));
+          return of({
+            success: true,
+            data: payment,
+            message: 'Pago confirmado exitosamente (mock fallback)',
+            timestamp: new Date(),
+          });
+        })
+      );
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch recent payments
+   * GET /payments/recent - Fetch recent payments via backend
    * Lambda: getRecentPayments
    */
   getRecentPayments(
     condominiumId?: string,
     limit = 10
   ): Observable<ApiResponse<PaymentWithDetails[]>> {
-    let payments = [...this.mockPayments].sort(
-      (a, b) => b.paymentDate.getTime() - a.paymentDate.getTime()
-    );
-
+    let params = new HttpParams().set('limit', String(limit));
     if (condominiumId && condominiumId !== 'all') {
-      payments = payments.filter((p) => p.condominiumId === condominiumId);
+      params = params.set('condominiumId', condominiumId);
     }
 
-    payments = payments.slice(0, limit);
+    return this.http
+      .get<ApiResponse<PaymentWithDetails[]>>(`${this.apiUrl}/recent`, { params })
+      .pipe(
+        catchError((error) => {
+          console.error('Error fetching recent payments from backend, using mock:', error);
+          // Fallback a mock
+          let payments = [...this.mockPayments].sort(
+            (a, b) => b.paymentDate.getTime() - a.paymentDate.getTime()
+          );
 
-    return of({
-      success: true,
-      data: payments,
-      message: 'Pagos recientes obtenidos exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 250));
+          if (condominiumId && condominiumId !== 'all') {
+            payments = payments.filter((p) => p.condominiumId === condominiumId);
+          }
+
+          payments = payments.slice(0, limit);
+
+          return of({
+            success: true,
+            data: payments,
+            message: 'Pagos recientes obtenidos exitosamente (mock fallback)',
+            timestamp: new Date(),
+          });
+        })
+      );
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch payment statistics
+   * GET /payments/stats - Fetch payment statistics via backend
    * Lambda: getPaymentStats
    */
   getPaymentStats(
     condominiumId?: string
   ): Observable<ApiResponse<{ total: number; totalAmount: number; byMethod: Record<string, number> }>> {
-    let payments = [...this.mockPayments];
-
+    let params = new HttpParams();
     if (condominiumId && condominiumId !== 'all') {
-      payments = payments.filter((p) => p.condominiumId === condominiumId);
+      params = params.set('condominiumId', condominiumId);
     }
 
-    const byMethod: Record<string, number> = {};
-    payments.forEach((p) => {
-      byMethod[p.paymentMethod] = (byMethod[p.paymentMethod] || 0) + p.amount;
-    });
+    return this.http
+      .get<ApiResponse<{ total: number; totalAmount: number; byMethod: Record<string, number> }>>(
+        `${this.apiUrl}/stats`,
+        { params }
+      )
+      .pipe(
+        catchError((error) => {
+          console.error('Error fetching payment stats from backend, using mock:', error);
+          // Fallback a mock
+          let payments = [...this.mockPayments];
 
-    const stats = {
-      total: payments.length,
-      totalAmount: payments.reduce((sum, p) => sum + p.amount, 0),
-      byMethod,
-    };
+          if (condominiumId && condominiumId !== 'all') {
+            payments = payments.filter((p) => p.condominiumId === condominiumId);
+          }
 
-    return of({
-      success: true,
-      data: stats,
-      message: 'Estadísticas de pagos obtenidas exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 300));
+          const byMethod: Record<string, number> = {};
+          payments.forEach((p) => {
+            byMethod[p.paymentMethod] = (byMethod[p.paymentMethod] || 0) + p.amount;
+          });
+
+          const stats = {
+            total: payments.length,
+            totalAmount: payments.reduce((sum, p) => sum + p.amount, 0),
+            byMethod,
+          };
+
+          return of({
+            success: true,
+            data: stats,
+            message: 'Estadísticas de pagos obtenidas exitosamente (mock fallback)',
+            timestamp: new Date(),
+          });
+        })
+      );
   }
 }
