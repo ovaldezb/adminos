@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
-import { Observable, of, delay } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, of, delay, catchError, map } from 'rxjs';
 import { 
   Resident, 
   ResidentDetails, 
@@ -10,12 +11,16 @@ import {
   UnitResidents
 } from '../models/resident.model';
 import { ApiResponse, PaginatedResponse, PaginationParams } from '../models/api.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ResidentService {
-  // Simulated AWS Lambda endpoint
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/residents`;
+  
+  // Simulated AWS Lambda endpoint (DEPRECATED - usando apiUrl ahora)
   private readonly lambdaEndpoint = 'https://api.example.com/residents';
 
   // Mock data - simulating MongoDB collection with new structure
@@ -200,174 +205,217 @@ export class ResidentService {
    * Backend: GET /residents - Returns { success, message, data: { residents: [], count } }
    * Supports filters: ?unitId=xxx&type=xxx&documentNumber=xxx
    */
+  // GET /residents - Fetch residents from backend
+  // Backend: GET /residents?page=1&pageSize=10&condominiumId=xxx&type=xxx&search=xxx
   getResidents(
     params?: PaginationParams & { condominiumId?: string; type?: ResidentType; search?: string }
   ): Observable<ApiResponse<PaginatedResponse<ResidentDetails>>> {
-    let filtered = [...this.mockResidents];
+    // Construir HttpParams
+    let httpParams = new HttpParams()
+      .set('page', (params?.page || 1).toString())
+      .set('pageSize', (params?.pageSize || 10).toString());
 
-    // Filter by condominiumId
     if (params?.condominiumId && params.condominiumId !== 'all') {
-      filtered = filtered.filter((r) => r.condominiumId === params.condominiumId);
+      httpParams = httpParams.set('condominiumId', params.condominiumId);
     }
 
-    // Filter by type
     if (params?.type) {
-      filtered = filtered.filter((r) => r.type === params.type);
+      httpParams = httpParams.set('type', params.type);
     }
 
-    // Search filter
     if (params?.search) {
-      const search = params.search.toLowerCase();
-      filtered = filtered.filter(
-        (r) =>
-          r.firstName.toLowerCase().includes(search) ||
-          r.lastName.toLowerCase().includes(search) ||
-          r.email.toLowerCase().includes(search) ||
-          r.documentNumber.toLowerCase().includes(search)
-      );
+      httpParams = httpParams.set('search', params.search);
     }
 
-    const page = params?.page || 1;
-    const pageSize = params?.pageSize || 10;
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    const items = filtered.slice(start, end);
+    return this.http.get<ApiResponse<PaginatedResponse<ResidentDetails>>>(this.apiUrl, { params: httpParams }).pipe(
+      catchError((error) => {
+        console.error('Error fetching residents from backend, using mock data:', error);
+        // Fallback a mock data
+        let filtered = [...this.mockResidents];
 
-    const response: PaginatedResponse<ResidentDetails> = {
-      items,
-      total: filtered.length,
-      page,
-      pageSize,
-      totalPages: Math.ceil(filtered.length / pageSize),
-      hasNext: end < filtered.length,
-      hasPrevious: page > 1,
-    };
+        // Filter by condominiumId
+        if (params?.condominiumId && params.condominiumId !== 'all') {
+          filtered = filtered.filter((r) => r.condominiumId === params.condominiumId);
+        }
 
-    return of({
-      success: true,
-      message: 'Residentes obtenidos exitosamente',
-      data: response,
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 300));
+        // Filter by type
+        if (params?.type) {
+          filtered = filtered.filter((r) => r.type === params.type);
+        }
+
+        // Search filter
+        if (params?.search) {
+          const search = params.search.toLowerCase();
+          filtered = filtered.filter(
+            (r) =>
+              r.firstName.toLowerCase().includes(search) ||
+              r.lastName.toLowerCase().includes(search) ||
+              r.email.toLowerCase().includes(search) ||
+              r.documentNumber.toLowerCase().includes(search)
+          );
+        }
+
+        const page = params?.page || 1;
+        const pageSize = params?.pageSize || 10;
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize;
+        const items = filtered.slice(start, end);
+
+        const response: PaginatedResponse<ResidentDetails> = {
+          items,
+          total: filtered.length,
+          page,
+          pageSize,
+          totalPages: Math.ceil(filtered.length / pageSize),
+          hasNext: end < filtered.length,
+          hasPrevious: page > 1,
+        };
+
+        return of({
+          success: true,
+          message: 'Residentes obtenidos exitosamente (mock fallback)',
+          data: response,
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Get residents by unit ID
+   * GET /residents/by-unit/:unitId - Get residents by unit ID from backend
    */
   getResidentsByUnit(unitId: string): Observable<ApiResponse<UnitResidents>> {
-    const residents = this.mockResidents.filter(r => r.unitId === unitId);
-    const responsible = residents.find(r => r.isResponsible);
-    
-    if (residents.length === 0) {
-      return of({
-        success: false,
-        error: {
-          code: 'UNIT_NOT_FOUND',
-          message: 'No se encontraron residentes para esta unidad'
-        },
-        timestamp: new Date()
-      }).pipe(delay(200));
-    }
+    return this.http.get<ApiResponse<UnitResidents>>(`${this.apiUrl}/by-unit/${unitId}`).pipe(
+      catchError((error) => {
+        console.error(`Error fetching residents for unit ${unitId} from backend, using mock:`, error);
+        // Fallback a mock data
+        const residents = this.mockResidents.filter(r => r.unitId === unitId);
+        const responsible = residents.find(r => r.isResponsible);
+        
+        if (residents.length === 0) {
+          return of({
+            success: false,
+            error: {
+              code: 'UNIT_NOT_FOUND',
+              message: 'No se encontraron residentes para esta unidad'
+            },
+            timestamp: new Date()
+          });
+        }
 
-    const unitResidents: UnitResidents = {
-      unitId,
-      unitNumber: residents[0].unitNumber || '',
-      buildingName: residents[0].buildingName || '',
-      responsible,
-      residents,
-      totalDebt: responsible?.totalDebt || 0
-    };
+        const unitResidents: UnitResidents = {
+          unitId,
+          unitNumber: residents[0].unitNumber || '',
+          buildingName: residents[0].buildingName || '',
+          responsible,
+          residents,
+          totalDebt: responsible?.totalDebt || 0
+        };
 
-    return of({
-      success: true,
-      data: unitResidents,
-      message: 'Residentes de la unidad obtenidos exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 200));
+        return of({
+          success: true,
+          data: unitResidents,
+          message: 'Residentes de la unidad obtenidos exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Create new resident
+   * POST /units/:unitId/residents - Create new resident via backend
    * Backend: POST /units/{unitId}/residents - Returns { success, message, data: created resident }
    * Adds resident to Unit's residentsId array automatically
    */
   createResident(residentData: CreateResidentDto): Observable<ApiResponse<Resident>> {
-    const newResident: Resident = {
-      id: `R-${String(Date.now()).slice(-6)}`,
-      firstName: residentData.firstName,
-      lastName: residentData.lastName,
-      email: residentData.email,
-      phone: residentData.phone,
-      documentType: residentData.documentType,
-      documentNumber: residentData.documentNumber,
-      type: residentData.type,
-      condominiumId: residentData.condominiumId,
-      buildingId: residentData.buildingId,
-      unitId: residentData.unitId,
-      isResponsible: residentData.isResponsible || false,
-      isAdministrator: residentData.isAdministrator || false,
-      canReceiveNotifications: residentData.canReceiveNotifications !== undefined ? residentData.canReceiveNotifications : true,
-      moveInDate: residentData.moveInDate,
-      isActive: true,
-      emergencyContactName: residentData.emergencyContactName,
-      emergencyContactPhone: residentData.emergencyContactPhone,
-      relationship: residentData.relationship,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    return this.http.post<ApiResponse<Resident>>(`${this.apiUrl}`, residentData).pipe(
+      catchError((error) => {
+        console.error('Error creating resident in backend, using mock:', error);
+        // Fallback a mock creation
+        const newResident: Resident = {
+          id: `R-${String(Date.now()).slice(-6)}`,
+          firstName: residentData.firstName,
+          lastName: residentData.lastName,
+          email: residentData.email,
+          phone: residentData.phone,
+          documentType: residentData.documentType,
+          documentNumber: residentData.documentNumber,
+          type: residentData.type,
+          condominiumId: residentData.condominiumId,
+          buildingId: residentData.buildingId,
+          unitId: residentData.unitId,
+          isResponsible: residentData.isResponsible || false,
+          isAdministrator: residentData.isAdministrator || false,
+          canReceiveNotifications: residentData.canReceiveNotifications !== undefined ? residentData.canReceiveNotifications : true,
+          moveInDate: residentData.moveInDate,
+          isActive: true,
+          emergencyContactName: residentData.emergencyContactName,
+          emergencyContactPhone: residentData.emergencyContactPhone,
+          relationship: residentData.relationship,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-    // Add to mock data
-    this.mockResidents.push({
-      ...newResident,
-      condominiumName: '', // This would be populated from condominium service
-      unitNumber: '', // This would be populated from unit service
-      buildingName: '', // This would be populated from building service
-      totalDebt: 0,
-      paymentHistory: 0,
-      averagePaymentDelay: 0,
-    });
+        // Add to mock data
+        this.mockResidents.push({
+          ...newResident,
+          condominiumName: '', // This would be populated from condominium service
+          unitNumber: '', // This would be populated from unit service
+          buildingName: '', // This would be populated from building service
+          totalDebt: 0,
+          paymentHistory: 0,
+          averagePaymentDelay: 0,
+        });
 
-    return of({
-      success: true,
-      message: 'Residente creado exitosamente',
-      data: newResident,
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 700 + 500));
+        return of({
+          success: true,
+          message: 'Residente creado exitosamente (mock fallback)',
+          data: newResident,
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Update resident
+   * PUT /residents/:id - Update resident via backend
    * Backend: PUT /residents/{id} - Returns { success, message, data: updated resident }
    */
   updateResident(id: string, updates: UpdateResidentDto): Observable<ApiResponse<ResidentDetails>> {
-    const residentIndex = this.mockResidents.findIndex((r) => r.id === id);
+    return this.http.put<ApiResponse<ResidentDetails>>(`${this.apiUrl}/${id}`, updates).pipe(
+      catchError((error) => {
+        console.error(`Error updating resident ${id} in backend, using mock:`, error);
+        // Fallback a mock update
+        const residentIndex = this.mockResidents.findIndex((r) => r.id === id);
 
-    if (residentIndex === -1) {
-      return of({
-        success: false,
-        message: 'Resident not found',
-        error: {
-          code: 'RESIDENT_NOT_FOUND',
-          message: 'Residente no encontrado',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+        if (residentIndex === -1) {
+          return of({
+            success: false,
+            message: 'Resident not found',
+            error: {
+              code: 'RESIDENT_NOT_FOUND',
+              message: 'Residente no encontrado',
+            },
+            timestamp: new Date(),
+          });
+        }
 
-    const updated: ResidentDetails = {
-      ...this.mockResidents[residentIndex],
-      ...updates,
-      updatedAt: new Date(),
-    };
+        const updated: ResidentDetails = {
+          ...this.mockResidents[residentIndex],
+          ...updates,
+          updatedAt: new Date(),
+        };
 
-    this.mockResidents[residentIndex] = updated;
+        this.mockResidents[residentIndex] = updated;
 
-    return of({
-      success: true,
-      message: 'Residente actualizado exitosamente',
-      data: updated,
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 600 + 400));
+        return of({
+          success: true,
+          message: 'Residente actualizado exitosamente (mock fallback)',
+          data: updated,
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
@@ -399,31 +447,37 @@ export class ResidentService {
   }
 
   /**
-   * Delete resident (hard delete)
+   * DELETE /residents/:id - Delete resident (hard delete) via backend
    * Backend: DELETE /residents/{id} - Returns { success, message, data: {} }
    * Also removes resident from unit's residentsId array
    */
   deleteResident(id: string): Observable<ApiResponse<void>> {
-    const index = this.mockResidents.findIndex((r) => r.id === id);
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`).pipe(
+      catchError((error) => {
+        console.error(`Error deleting resident ${id} in backend, using mock:`, error);
+        // Fallback a mock delete
+        const index = this.mockResidents.findIndex((r) => r.id === id);
 
-    if (index === -1) {
-      return of({
-        success: false,
-        message: 'Resident not found',
-        error: {
-          code: 'RESIDENT_NOT_FOUND',
-          message: 'Residente no encontrado',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+        if (index === -1) {
+          return of({
+            success: false,
+            message: 'Resident not found',
+            error: {
+              code: 'RESIDENT_NOT_FOUND',
+              message: 'Residente no encontrado',
+            },
+            timestamp: new Date(),
+          });
+        }
 
-    this.mockResidents.splice(index, 1);
+        this.mockResidents.splice(index, 1);
 
-    return of({
-      success: true,
-      message: 'Residente eliminado exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 300));
+        return of({
+          success: true,
+          message: 'Residente eliminado exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 }

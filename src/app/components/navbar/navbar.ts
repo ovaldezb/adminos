@@ -1,9 +1,9 @@
-import { Component, signal, output, input, effect } from '@angular/core';
+import { Component, signal, output, input, effect, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CondoSelectorComponent } from '../condo-selector/condo-selector';
-import { Condominium } from '../../models';
-import { CondominiumService } from '../../services';
+import { Condominium, Notification, User } from '../../models';
+import { CondominiumService, AuthService, NotificationService } from '../../services';
 
 @Component({
   selector: 'app-navbar',
@@ -11,67 +11,63 @@ import { CondominiumService } from '../../services';
   templateUrl: './navbar.html',
   styleUrl: './navbar.css'
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit {
   protected readonly toggleSidebar = output<void>();
   protected readonly condoChanged = output<Condominium | null>();
   readonly showCondoSelector = input<boolean>(true);
   protected readonly showNotifications = signal(false);
   protected readonly showProfile = signal(false);
-  protected readonly notificationCount = signal(5);
   
-  protected readonly notifications = signal([
-    { 
-      id: 1, 
-      icon: 'ri-money-dollar-circle-fill', 
-      title: 'Nuevo pago recibido', 
-      message: 'Unidad 304 - $850',
-      time: 'Hace 5 min',
-      unread: true,
-      color: 'text-success'
-    },
-    { 
-      id: 2, 
-      icon: 'ri-alert-fill', 
-      title: 'Pago vencido', 
-      message: 'Unidad 507 - 15 días',
-      time: 'Hace 1 hora',
-      unread: true,
-      color: 'text-warning'
-    },
-    { 
-      id: 3, 
-      icon: 'ri-user-add-fill', 
-      title: 'Nuevo residente', 
-      message: 'Alta en Unidad 508',
-      time: 'Hace 2 horas',
-      unread: true,
-      color: 'text-info'
-    },
-    { 
-      id: 4, 
-      icon: 'ri-file-text-fill', 
-      title: 'Factura generada', 
-      message: 'Factura mensual Torre A',
-      time: 'Hace 3 horas',
-      unread: false,
-      color: 'text-primary'
-    },
-    { 
-      id: 5, 
-      icon: 'ri-message-3-fill', 
-      title: 'Nuevo mensaje', 
-      message: 'Consulta de mantenimiento',
-      time: 'Hace 5 horas',
-      unread: false,
-      color: 'text-secondary'
-    }
-  ]);
+  // User data from AuthService
+  protected readonly currentUser = signal<User | null>(null);
+  
+  // Notifications from NotificationService
+  protected readonly notifications = signal<Notification[]>([]);
+  protected readonly notificationCount = computed(() => 
+    this.notifications().filter(n => !n.isRead).length
+  );
 
-  constructor(private condominiumService: CondominiumService) {
+  constructor(
+    private condominiumService: CondominiumService,
+    private authService: AuthService,
+    private notificationService: NotificationService
+  ) {
     // Sincronizar con el servicio global (si otro componente cambia la selección)
     effect(() => {
       const globalCondo = this.condominiumService.selectedCondominium();
       // Aquí se podría actualizar el selector si es necesario
+    });
+  }
+
+  ngOnInit(): void {
+    this.loadCurrentUser();
+    this.loadNotifications();
+  }
+
+  private loadCurrentUser(): void {
+    this.authService.getCurrentUser().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.currentUser.set(response.data);
+        }
+      },
+      error: (error) => {
+        console.error('Error loading user:', error);
+      }
+    });
+  }
+
+  private loadNotifications(): void {
+    const userId = 'admin-001'; // En producción, obtener del token o del usuario actual
+    this.notificationService.getUserNotifications(userId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.notifications.set(response.data);
+        }
+      },
+      error: (error) => {
+        console.error('Error loading notifications:', error);
+      }
     });
   }
 
@@ -94,14 +90,62 @@ export class NavbarComponent {
   }
 
   markAllAsRead(): void {
-    const updatedNotifications = this.notifications().map(n => ({ ...n, unread: false }));
-    this.notifications.set(updatedNotifications);
-    this.notificationCount.set(0);
+    const userId = this.currentUser()?.id || 'admin-001';
+    this.notificationService.markAllAsRead(userId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          // Actualizar las notificaciones localmente
+          const updated = this.notifications().map(n => ({ ...n, isRead: true, readAt: new Date() }));
+          this.notifications.set(updated);
+        }
+      },
+      error: (error) => {
+        console.error('Error marking notifications as read:', error);
+      }
+    });
   }
 
   clearNotifications(): void {
-    this.notifications.set([]);
-    this.notificationCount.set(0);
+    // Eliminar todas las notificaciones
+    const deletePromises = this.notifications().map(n => 
+      this.notificationService.deleteNotification(n.id).toPromise()
+    );
+    
+    Promise.all(deletePromises).then(() => {
+      this.notifications.set([]);
+    }).catch(error => {
+      console.error('Error clearing notifications:', error);
+    });
+  }
+
+  markNotificationAsRead(notificationId: string): void {
+    this.notificationService.markAsRead(notificationId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          // Actualizar la notificación localmente
+          const updated = this.notifications().map(n => 
+            n.id === notificationId ? { ...n, isRead: true, readAt: new Date() } : n
+          );
+          this.notifications.set(updated);
+        }
+      },
+      error: (error) => {
+        console.error('Error marking notification as read:', error);
+      }
+    });
+  }
+
+  getRelativeTime(date: Date): string {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Justo ahora';
+    if (minutes < 60) return `Hace ${minutes} min`;
+    if (hours < 24) return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
+    return `Hace ${days} día${days > 1 ? 's' : ''}`;
   }
 
   onCondoSelected(condo: Condominium | null): void {

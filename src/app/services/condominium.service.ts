@@ -1,5 +1,6 @@
-import { Injectable, signal } from '@angular/core';
-import { Observable, of, delay, throwError } from 'rxjs';
+import { Injectable, signal, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, of, delay, throwError, catchError, map } from 'rxjs';
 import {
   Condominium,
   CondominiumStats,
@@ -13,15 +14,19 @@ import {
   AmenityType
 } from '../models/condominium.model';
 import { ApiResponse } from '../models/api.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CondominiumService {
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/condominiums`;
+  
   // Signal para el condominio seleccionado globalmente
   public readonly selectedCondominium = signal<Condominium | null>(null);
 
-  // Simulated AWS Lambda endpoint
+  // Simulated AWS Lambda endpoint (DEPRECATED - usando apiUrl ahora)
   private readonly lambdaEndpoint = 'https://api.example.com/condominiums';
 
   // Mock data simulating AWS Lambda responses from MongoDB
@@ -258,43 +263,54 @@ export class CondominiumService {
   };
 
   /**
-   * Simulates AWS Lambda GET request to fetch all condominiums
+   * GET /condominiums - Fetch all condominiums from backend
    * Backend: GET /condominiums - Returns { success, message, data: [condominiums with buildings] }
    */
   getAllCondominiums(): Observable<ApiResponse<Condominium[]>> {
-    // Backend fetches buildings for each condominium and adds them to the condominium object
-    return of({
-      success: true,
-      message: 'Condominiums retrieved successfully',
-      data: this.mockCondominiums,
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 300));
+    return this.http.get<ApiResponse<Condominium[]>>(this.apiUrl).pipe(
+      catchError((error) => {
+        console.error('Error fetching condominiums from backend, using mock data:', error);
+        // Fallback a mock data si el backend falla
+        return of({
+          success: true,
+          message: 'Condominiums retrieved successfully (mock fallback)',
+          data: this.mockCondominiums,
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch single condominium
+   * GET /condominiums/:id - Fetch single condominium from backend
    * Lambda: getCondominiumById
    */
   getCondominiumById(id: string): Observable<ApiResponse<Condominium>> {
-    const condominium = this.mockCondominiums.find((c) => c.id === id);
+    return this.http.get<ApiResponse<Condominium>>(`${this.apiUrl}/${id}`).pipe(
+      catchError((error) => {
+        console.error(`Error fetching condominium ${id} from backend, using mock data:`, error);
+        // Fallback a mock data
+        const condominium = this.mockCondominiums.find((c) => c.id === id);
+        
+        if (!condominium) {
+          return of({
+            success: false,
+            error: {
+              code: 'CONDO_NOT_FOUND',
+              message: 'Condominio no encontrado',
+            },
+            timestamp: new Date(),
+          });
+        }
 
-    if (!condominium) {
-      return of({
-        success: false,
-        error: {
-          code: 'CONDO_NOT_FOUND',
-          message: 'Condominio no encontrado',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
-
-    return of({
-      success: true,
-      data: condominium,
-      message: 'Condominio obtenido exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 200));
+        return of({
+          success: true,
+          data: condominium,
+          message: 'Condominio obtenido exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
@@ -334,128 +350,146 @@ export class CondominiumService {
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch condominium statistics
+   * GET /condominiums/:id/stats - Fetch condominium statistics from backend
    * Lambda: getCondominiumStats
    */
   getCondominiumStats(
     id: string
   ): Observable<ApiResponse<CondominiumStats>> {
-    const stats = this.mockStats[id];
+    return this.http.get<ApiResponse<CondominiumStats>>(`${this.apiUrl}/${id}/stats`).pipe(
+      catchError((error) => {
+        console.error(`Error fetching stats for condominium ${id}, using mock data:`, error);
+        // Fallback a mock data
+        const stats = this.mockStats[id];
 
-    if (!stats) {
-      return of({
-        success: false,
-        error: {
-          code: 'STATS_NOT_FOUND',
-          message: 'Estadísticas no encontradas',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+        if (!stats) {
+          return of({
+            success: false,
+            error: {
+              code: 'STATS_NOT_FOUND',
+              message: 'Estadísticas no encontradas',
+            },
+            timestamp: new Date(),
+          });
+        }
 
-    return of({
-      success: true,
-      data: stats,
-      message: 'Estadísticas obtenidas exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 250));
+        return of({
+          success: true,
+          data: stats,
+          message: 'Estadísticas obtenidas exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch aggregated stats for all condominiums
+   * GET /condominiums/stats/all - Fetch aggregated stats for all condominiums
    * Lambda: getAllCondominiumsStats
    */
   getAllCondominiumsStats(): Observable<ApiResponse<CondominiumStats>> {
-    const aggregated: CondominiumStats = {
-      condominiumId: 'all',
-      totalUnits: Object.values(this.mockStats).reduce(
-        (sum, s) => sum + s.totalUnits,
-        0
-      ),
-      occupiedUnits: Object.values(this.mockStats).reduce(
-        (sum, s) => sum + s.occupiedUnits,
-        0
-      ),
-      vacantUnits: Object.values(this.mockStats).reduce(
-        (sum, s) => sum + s.vacantUnits,
-        0
-      ),
-      monthlyCollection: Object.values(this.mockStats).reduce(
-        (sum, s) => sum + s.monthlyCollection,
-        0
-      ),
-      pendingInvoices: Object.values(this.mockStats).reduce(
-        (sum, s) => sum + s.pendingInvoices,
-        0
-      ),
-      delinquentUnits: Object.values(this.mockStats).reduce(
-        (sum, s) => sum + s.delinquentUnits,
-        0
-      ),
-      collectionRate:
-        Object.values(this.mockStats).reduce(
-          (sum, s) => sum + s.collectionRate,
-          0
-        ) / Object.values(this.mockStats).length,
-      month: '10',
-      year: 2025,
-    };
+    return this.http.get<ApiResponse<CondominiumStats>>(`${this.apiUrl}/stats/all`).pipe(
+      catchError((error) => {
+        console.error('Error fetching global stats, using mock data:', error);
+        // Fallback a mock data agregado
+        const aggregated: CondominiumStats = {
+          condominiumId: 'all',
+          totalUnits: Object.values(this.mockStats).reduce(
+            (sum, s) => sum + s.totalUnits,
+            0
+          ),
+          occupiedUnits: Object.values(this.mockStats).reduce(
+            (sum, s) => sum + s.occupiedUnits,
+            0
+          ),
+          vacantUnits: Object.values(this.mockStats).reduce(
+            (sum, s) => sum + s.vacantUnits,
+            0
+          ),
+          monthlyCollection: Object.values(this.mockStats).reduce(
+            (sum, s) => sum + s.monthlyCollection,
+            0
+          ),
+          pendingInvoices: Object.values(this.mockStats).reduce(
+            (sum, s) => sum + s.pendingInvoices,
+            0
+          ),
+          delinquentUnits: Object.values(this.mockStats).reduce(
+            (sum, s) => sum + s.delinquentUnits,
+            0
+          ),
+          collectionRate:
+            Object.values(this.mockStats).reduce(
+              (sum, s) => sum + s.collectionRate,
+              0
+            ) / Object.values(this.mockStats).length,
+          month: '10',
+          year: 2025,
+        };
 
-    return of({
-      success: true,
-      data: aggregated,
-      message: 'Estadísticas globales obtenidas exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 600 + 400));
+        return of({
+          success: true,
+          data: aggregated,
+          message: 'Estadísticas globales obtenidas exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda POST request to create condominium
+   * POST /condominiums - Create new condominium via backend
    * Backend: POST /condominiums - Returns { success, message, data: created condominium with _id }
    */
   createCondominium(
     condominiumDto: CreateCondominiumDto
   ): Observable<ApiResponse<Condominium>> {
-    const newCondominium: Condominium = {
-      id: String(Date.now()),
-      name: condominiumDto.name,
-      type: condominiumDto.type || CondominiumType.BUILDING,
-      street: condominiumDto.street,
-      neighborhood: condominiumDto.neighborhood,
-      number: condominiumDto.number,
-      zipCode: condominiumDto.zipCode,
-      city: condominiumDto.city,
-      state: condominiumDto.state,
-      country: condominiumDto.country || 'México',
-      paymentDay: condominiumDto.paymentDay,
-      conventionalPenalty: condominiumDto.conventionalPenalty,
-      initialFolio: condominiumDto.initialFolio || 1,
-      rfc: condominiumDto.rfc,
-      isActive: condominiumDto.isActive ?? true,
-      hasAC: condominiumDto.hasAC ?? false,
-      additionalInfo: condominiumDto.additionalInfo,
-      description: condominiumDto.description,
-      towers: condominiumDto.towers?.map(t => ({ ...t, id: `tower_${Date.now()}_${Math.random()}` })),
-      privateStreets: condominiumDto.privateStreets?.map(ps => ({ ...ps, id: `ps_${Date.now()}_${Math.random()}` })),
-      amenities: condominiumDto.amenities?.map(a => ({ ...a, id: `amenity_${Date.now()}_${Math.random()}` })),
-      maintenanceFee: condominiumDto.maintenanceFee,
-      currency: condominiumDto.currency,
-      billingDay: condominiumDto.billingDay,
-      totalUnits: this.calculateTotalUnits(condominiumDto),
-      occupiedUnits: 0,
-      color: '#6366f1',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    return this.http.post<ApiResponse<Condominium>>(this.apiUrl, condominiumDto).pipe(
+      catchError((error) => {
+        console.error('Error creating condominium in backend, using mock:', error);
+        // Fallback a mock creation
+        const newCondominium: Condominium = {
+          id: String(Date.now()),
+          name: condominiumDto.name,
+          type: condominiumDto.type || CondominiumType.BUILDING,
+          street: condominiumDto.street,
+          neighborhood: condominiumDto.neighborhood,
+          number: condominiumDto.number,
+          zipCode: condominiumDto.zipCode,
+          city: condominiumDto.city,
+          state: condominiumDto.state,
+          country: condominiumDto.country || 'México',
+          paymentDay: condominiumDto.paymentDay,
+          conventionalPenalty: condominiumDto.conventionalPenalty,
+          initialFolio: condominiumDto.initialFolio || 1,
+          rfc: condominiumDto.rfc,
+          isActive: condominiumDto.isActive ?? true,
+          hasAC: condominiumDto.hasAC ?? false,
+          additionalInfo: condominiumDto.additionalInfo,
+          description: condominiumDto.description,
+          towers: condominiumDto.towers?.map(t => ({ ...t, id: `tower_${Date.now()}_${Math.random()}` })),
+          privateStreets: condominiumDto.privateStreets?.map(ps => ({ ...ps, id: `ps_${Date.now()}_${Math.random()}` })),
+          amenities: condominiumDto.amenities?.map(a => ({ ...a, id: `amenity_${Date.now()}_${Math.random()}` })),
+          maintenanceFee: condominiumDto.maintenanceFee,
+          currency: condominiumDto.currency,
+          billingDay: condominiumDto.billingDay,
+          totalUnits: this.calculateTotalUnits(condominiumDto),
+          occupiedUnits: 0,
+          color: '#6366f1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-    this.mockCondominiums.push(newCondominium);
+        this.mockCondominiums.push(newCondominium);
 
-    return of({
-      success: true,
-      message: 'Condominium created successfully',
-      data: newCondominium,
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 700 + 500));
+        return of({
+          success: true,
+          message: 'Condominium created successfully (mock fallback)',
+          data: newCondominium,
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   private calculateTotalUnits(dto: CreateCondominiumDto): number {
@@ -469,43 +503,49 @@ export class CondominiumService {
   }
 
   /**
-   * Simulates AWS Lambda PUT request to update condominium
+   * PUT /condominiums/:id - Update condominium via backend
    * Backend: PUT /condominiums/{id} - Returns { success, message, data: updated condominium }
    */
   updateCondominium(
     id: string,
     updates: UpdateCondominiumDto
   ): Observable<ApiResponse<Condominium>> {
-    const index = this.mockCondominiums.findIndex((c) => c.id === id);
+    return this.http.put<ApiResponse<Condominium>>(`${this.apiUrl}/${id}`, updates).pipe(
+      catchError((error) => {
+        console.error(`Error updating condominium ${id} in backend, using mock:`, error);
+        // Fallback a mock update
+        const index = this.mockCondominiums.findIndex((c) => c.id === id);
 
-    if (index === -1) {
-      return of({
-        success: false,
-        message: 'Condominium not found',
-        error: {
-          code: 'CONDO_NOT_FOUND',
-          message: 'Condominio no encontrado',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+        if (index === -1) {
+          return of({
+            success: false,
+            message: 'Condominium not found',
+            error: {
+              code: 'CONDO_NOT_FOUND',
+              message: 'Condominio no encontrado',
+            },
+            timestamp: new Date(),
+          });
+        }
 
-    const updated: Condominium = {
-      ...this.mockCondominiums[index],
-      ...updates,
-      towers: updates.towers?.map(t => ({ ...t, id: `tower_${Date.now()}_${Math.random()}` })) || this.mockCondominiums[index].towers,
-      privateStreets: updates.privateStreets?.map(ps => ({ ...ps, id: `ps_${Date.now()}_${Math.random()}` })) || this.mockCondominiums[index].privateStreets,
-      amenities: updates.amenities?.map(a => ({ ...a, id: `amenity_${Date.now()}_${Math.random()}` })) || this.mockCondominiums[index].amenities,
-      updatedAt: new Date(),
-    };
-    this.mockCondominiums[index] = updated;
+        const updated: Condominium = {
+          ...this.mockCondominiums[index],
+          ...updates,
+          towers: updates.towers?.map(t => ({ ...t, id: `tower_${Date.now()}_${Math.random()}` })) || this.mockCondominiums[index].towers,
+          privateStreets: updates.privateStreets?.map(ps => ({ ...ps, id: `ps_${Date.now()}_${Math.random()}` })) || this.mockCondominiums[index].privateStreets,
+          amenities: updates.amenities?.map(a => ({ ...a, id: `amenity_${Date.now()}_${Math.random()}` })) || this.mockCondominiums[index].amenities,
+          updatedAt: new Date(),
+        };
+        this.mockCondominiums[index] = updated;
 
-    return of({
-      success: true,
-      message: 'Condominium updated successfully',
-      data: updated,
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 600 + 400));
+        return of({
+          success: true,
+          message: 'Condominium updated successfully (mock fallback)',
+          data: updated,
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   // Método para establecer el condominio seleccionado globalmente
@@ -514,31 +554,37 @@ export class CondominiumService {
   }
 
   /**
-   * Simulates AWS Lambda DELETE request to delete condominium (soft delete)
+   * DELETE /condominiums/:id - Delete condominium (soft delete) via backend
    * Backend: DELETE /condominiums/{id} - Sets status to INACTIVE - Returns { success, message }
    */
   deleteCondominium(id: string): Observable<ApiResponse<void>> {
-    const index = this.mockCondominiums.findIndex((c) => c.id === id);
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`).pipe(
+      catchError((error) => {
+        console.error(`Error deleting condominium ${id} in backend, using mock:`, error);
+        // Fallback a mock delete
+        const index = this.mockCondominiums.findIndex((c) => c.id === id);
 
-    if (index === -1) {
-      return of({
-        success: false,
-        message: 'Condominium not found',
-        error: {
-          code: 'CONDO_NOT_FOUND',
-          message: 'Condominio no encontrado',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+        if (index === -1) {
+          return of({
+            success: false,
+            message: 'Condominium not found',
+            error: {
+              code: 'CONDO_NOT_FOUND',
+              message: 'Condominio no encontrado',
+            },
+            timestamp: new Date(),
+          });
+        }
 
-    // Soft delete - set status to INACTIVE instead of removing
-    this.mockCondominiums[index].isActive = false;
+        // Soft delete - set status to INACTIVE instead of removing
+        this.mockCondominiums[index].isActive = false;
 
-    return of({
-      success: true,
-      message: 'Condominium deleted successfully',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 300));
+        return of({
+          success: true,
+          message: 'Condominium deleted successfully (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 }

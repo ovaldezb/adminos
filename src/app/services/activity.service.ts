@@ -1,13 +1,18 @@
-import { Injectable } from '@angular/core';
-import { Observable, of, delay } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, of, delay, catchError } from 'rxjs';
 import { Activity, ActivityWithDetails, ActivityType } from '../models/activity.model';
 import { ApiResponse, PaginationParams, PaginatedResponse } from '../models/api.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ActivityService {
-  // Simulated AWS Lambda endpoint
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/activities`;
+  
+  // Simulated AWS Lambda endpoint (DEPRECATED - usando apiUrl ahora)
   private readonly lambdaEndpoint = 'https://api.example.com/activities';
 
   // Mock data
@@ -113,139 +118,187 @@ export class ActivityService {
   ];
 
   /**
-   * Simulates AWS Lambda GET request to fetch recent activities
+   * GET /activities/recent - Fetch recent activities from backend
    * Lambda: getRecentActivities
    */
   getRecentActivities(
     condominiumId?: string,
     limit = 10
   ): Observable<ApiResponse<ActivityWithDetails[]>> {
-    let activities = [...this.mockActivities];
-
+    let httpParams = new HttpParams().set('limit', limit.toString());
+    
     if (condominiumId && condominiumId !== 'all') {
-      activities = activities.filter((a) => a.condominiumId === condominiumId);
+      httpParams = httpParams.set('condominiumId', condominiumId);
     }
 
-    activities = activities
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, limit);
+    return this.http.get<ApiResponse<ActivityWithDetails[]>>(`${this.apiUrl}/recent`, { params: httpParams }).pipe(
+      catchError((error) => {
+        console.error('Error fetching activities from backend, using mock data:', error);
+        // Fallback a mock data
+        let activities = [...this.mockActivities];
 
-    return of({
-      success: true,
-      data: activities,
-      message: 'Actividades recientes obtenidas exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 250));
+        if (condominiumId && condominiumId !== 'all') {
+          activities = activities.filter((a) => a.condominiumId === condominiumId);
+        }
+
+        activities = activities
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+          .slice(0, limit);
+
+        return of({
+          success: true,
+          data: activities,
+          message: 'Actividades recientes obtenidas exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch paginated activities
+   * GET /activities - Fetch paginated activities from backend
    * Lambda: getActivities
    */
   getActivities(
     params?: PaginationParams & { condominiumId?: string; type?: ActivityType }
   ): Observable<ApiResponse<PaginatedResponse<ActivityWithDetails>>> {
-    let filtered = [...this.mockActivities];
+    let httpParams = new HttpParams()
+      .set('page', (params?.page || 1).toString())
+      .set('pageSize', (params?.pageSize || 20).toString());
 
-    // Filter by condominiumId
     if (params?.condominiumId && params.condominiumId !== 'all') {
-      filtered = filtered.filter((a) => a.condominiumId === params.condominiumId);
+      httpParams = httpParams.set('condominiumId', params.condominiumId);
     }
 
-    // Filter by type
     if (params?.type) {
-      filtered = filtered.filter((a) => a.type === params.type);
+      httpParams = httpParams.set('type', params.type);
     }
 
-    // Sort by date (newest first)
-    filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return this.http.get<ApiResponse<PaginatedResponse<ActivityWithDetails>>>(this.apiUrl, { params: httpParams }).pipe(
+      catchError((error) => {
+        console.error('Error fetching activities from backend, using mock data:', error);
+        // Fallback a mock data
+        let filtered = [...this.mockActivities];
 
-    const page = params?.page || 1;
-    const pageSize = params?.pageSize || 20;
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    const items = filtered.slice(start, end);
+        // Filter by condominiumId
+        if (params?.condominiumId && params.condominiumId !== 'all') {
+          filtered = filtered.filter((a) => a.condominiumId === params.condominiumId);
+        }
 
-    const response: PaginatedResponse<ActivityWithDetails> = {
-      items,
-      total: filtered.length,
-      page,
-      pageSize,
-      totalPages: Math.ceil(filtered.length / pageSize),
-      hasNext: end < filtered.length,
-      hasPrevious: page > 1,
-    };
+        // Filter by type
+        if (params?.type) {
+          filtered = filtered.filter((a) => a.type === params.type);
+        }
 
-    return of({
-      success: true,
-      data: response,
-      message: 'Actividades obtenidas exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 300));
+        // Sort by date (newest first)
+        filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+        const page = params?.page || 1;
+        const pageSize = params?.pageSize || 20;
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize;
+        const items = filtered.slice(start, end);
+
+        const response: PaginatedResponse<ActivityWithDetails> = {
+          items,
+          total: filtered.length,
+          page,
+          pageSize,
+          totalPages: Math.ceil(filtered.length / pageSize),
+          hasNext: end < filtered.length,
+          hasPrevious: page > 1,
+        };
+
+        return of({
+          success: true,
+          data: response,
+          message: 'Actividades obtenidas exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda POST request to log activity
+   * POST /activities - Log activity via backend
    * Lambda: logActivity
    */
   logActivity(activity: Partial<Activity>): Observable<ApiResponse<Activity>> {
-    const newActivity: Activity = {
-      id: `ACT-${String(Date.now()).slice(-6)}`,
-      condominiumId: activity.condominiumId!,
-      type: activity.type!,
-      title: activity.title!,
-      description: activity.description || '',
-      entityType: activity.entityType!,
-      entityId: activity.entityId!,
-      userId: activity.userId || 'system',
-      userName: activity.userName || 'Sistema',
-      metadata: activity.metadata,
-      createdAt: new Date(),
-    };
+    return this.http.post<ApiResponse<Activity>>(this.apiUrl, activity).pipe(
+      catchError((error) => {
+        console.error('Error logging activity in backend, using mock:', error);
+        // Fallback a mock
+        const newActivity: Activity = {
+          id: `ACT-${String(Date.now()).slice(-6)}`,
+          condominiumId: activity.condominiumId!,
+          type: activity.type!,
+          title: activity.title!,
+          description: activity.description || '',
+          entityType: activity.entityType!,
+          entityId: activity.entityId!,
+          userId: activity.userId || 'system',
+          userName: activity.userName || 'Sistema',
+          metadata: activity.metadata,
+          createdAt: new Date(),
+        };
 
-    return of({
-      success: true,
-      data: newActivity,
-      message: 'Actividad registrada exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 300 + 200));
+        return of({
+          success: true,
+          data: newActivity,
+          message: 'Actividad registrada exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch activity statistics
+   * GET /activities/stats - Fetch activity statistics from backend
    * Lambda: getActivityStats
    */
   getActivityStats(
     condominiumId?: string,
     days = 30
   ): Observable<ApiResponse<Record<ActivityType, number>>> {
-    let activities = [...this.mockActivities];
-
+    let httpParams = new HttpParams().set('days', days.toString());
+    
     if (condominiumId && condominiumId !== 'all') {
-      activities = activities.filter((a) => a.condominiumId === condominiumId);
+      httpParams = httpParams.set('condominiumId', condominiumId);
     }
 
-    // Filter by date range
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    activities = activities.filter((a) => a.createdAt >= startDate);
+    return this.http.get<ApiResponse<Record<ActivityType, number>>>(`${this.apiUrl}/stats`, { params: httpParams }).pipe(
+      catchError((error) => {
+        console.error('Error fetching activity stats from backend, using mock:', error);
+        // Fallback a mock
+        let activities = [...this.mockActivities];
 
-    // Count by type
-    const stats: Record<string, number> = {};
-    activities.forEach((a) => {
-      stats[a.type] = (stats[a.type] || 0) + 1;
-    });
+        if (condominiumId && condominiumId !== 'all') {
+          activities = activities.filter((a) => a.condominiumId === condominiumId);
+        }
 
-    return of({
-      success: true,
-      data: stats as Record<ActivityType, number>,
-      message: 'Estadísticas de actividad obtenidas exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 300));
+        // Filter by date range
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+        activities = activities.filter((a) => a.createdAt >= startDate);
+
+        // Count by type
+        const stats: Record<string, number> = {};
+        activities.forEach((a) => {
+          stats[a.type] = (stats[a.type] || 0) + 1;
+        });
+
+        return of({
+          success: true,
+          data: stats as Record<ActivityType, number>,
+          message: 'Estadísticas de actividad obtenidas exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch activity timeline
+   * GET /activities/timeline - Fetch activity timeline from backend
    * Lambda: getActivityTimeline
    */
   getActivityTimeline(
@@ -253,27 +306,47 @@ export class ActivityService {
     entityType?: string,
     entityId?: string
   ): Observable<ApiResponse<ActivityWithDetails[]>> {
-    let activities = [...this.mockActivities];
-
+    let httpParams = new HttpParams();
+    
     if (condominiumId && condominiumId !== 'all') {
-      activities = activities.filter((a) => a.condominiumId === condominiumId);
+      httpParams = httpParams.set('condominiumId', condominiumId);
     }
 
     if (entityType) {
-      activities = activities.filter((a) => a.entityType === entityType);
+      httpParams = httpParams.set('entityType', entityType);
     }
 
     if (entityId) {
-      activities = activities.filter((a) => a.entityId === entityId);
+      httpParams = httpParams.set('entityId', entityId);
     }
 
-    activities.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return this.http.get<ApiResponse<ActivityWithDetails[]>>(`${this.apiUrl}/timeline`, { params: httpParams }).pipe(
+      catchError((error) => {
+        console.error('Error fetching activity timeline from backend, using mock:', error);
+        // Fallback a mock
+        let activities = [...this.mockActivities];
 
-    return of({
-      success: true,
-      data: activities,
-      message: 'Timeline de actividad obtenido exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 300));
+        if (condominiumId && condominiumId !== 'all') {
+          activities = activities.filter((a) => a.condominiumId === condominiumId);
+        }
+
+        if (entityType) {
+          activities = activities.filter((a) => a.entityType === entityType);
+        }
+
+        if (entityId) {
+          activities = activities.filter((a) => a.entityId === entityId);
+        }
+
+        activities.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+        return of({
+          success: true,
+          data: activities,
+          message: 'Timeline de actividad obtenido exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 }

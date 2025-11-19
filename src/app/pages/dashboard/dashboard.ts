@@ -1,9 +1,10 @@
-import { Component, signal, computed, effect } from '@angular/core';
+import { Component, signal, computed, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
 import { Condominium } from '../../models';
+import { CondominiumService, ActivityService } from '../../services';
 
 @Component({
   selector: 'app-dashboard',
@@ -11,63 +12,34 @@ import { Condominium } from '../../models';
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   protected readonly sidebarOpen = signal(false);
   protected readonly userName = signal('Administrador');
   protected readonly selectedCondo = signal<Condominium | null>(null);
   protected readonly isOverviewMode = computed(() => !this.selectedCondo() || this.selectedCondo()?.id === 'all');
   protected readonly isAnimating = signal(false);
+  protected readonly loading = signal(true);
   
-  // Data por condominio
-  private readonly condoData = {
-    'all': {
-      units: 796,
-      collection: '$1,245,680',
-      pending: 87,
-      delinquent: 32
-    },
-    '1': { // Torres del Sol
-      units: 248,
-      collection: '$485,230',
-      pending: 42,
-      delinquent: 15
-    },
-    '2': { // Residencial Las Palmas
-      units: 186,
-      collection: '$298,450',
-      pending: 18,
-      delinquent: 6
-    },
-    '3': { // Conjunto Villa Verde
-      units: 124,
-      collection: '$186,920',
-      pending: 12,
-      delinquent: 5
-    },
-    '4': { // Edificio Mirador
-      units: 96,
-      collection: '$142,380',
-      pending: 8,
-      delinquent: 3
-    },
-    '5': { // Terrazas del Parque
-      units: 142,
-      collection: '$132,700',
-      pending: 7,
-      delinquent: 3
-    }
-  };
+  // Stats from backend services
+  protected readonly condoStats = signal<any>(null);
 
-  // Estadísticas principales (computed)
+  // Estadísticas principales (computed from backend data)
   protected readonly stats = computed(() => {
-    const condoId = this.selectedCondo()?.id || 'all';
-    const data = this.condoData[condoId as keyof typeof this.condoData] || this.condoData['all'];
+    const stats = this.condoStats();
+    if (!stats) {
+      return [
+        { icon: 'ri-home-4-fill', label: 'Cargando...', value: '-', change: '', changeLabel: '', color: 'text-primary', bgColor: 'from-primary/20 to-sky-400/20' },
+        { icon: 'ri-money-dollar-circle-fill', label: 'Cargando...', value: '-', change: '', changeLabel: '', color: 'text-success', bgColor: 'from-success/20 to-green-400/20' },
+        { icon: 'ri-bill-fill', label: 'Cargando...', value: '-', change: '', changeLabel: '', color: 'text-warning', bgColor: 'from-warning/20 to-yellow-400/20' },
+        { icon: 'ri-user-follow-fill', label: 'Cargando...', value: '-', change: '', changeLabel: '', color: 'text-error', bgColor: 'from-error/20 to-red-400/20' }
+      ];
+    }
     
     return [
       { 
         icon: 'ri-home-4-fill', 
         label: this.isOverviewMode() ? 'Total de Unidades' : 'Unidades en Este Condominio', 
-        value: data.units.toString(), 
+        value: stats.totalUnits?.toString() || '0', 
         change: '+12',
         changeLabel: 'este mes',
         color: 'text-primary',
@@ -76,7 +48,7 @@ export class DashboardComponent {
       { 
         icon: 'ri-money-dollar-circle-fill', 
         label: 'Cobranza del Mes', 
-        value: data.collection, 
+        value: `$${stats.monthlyCollection?.toLocaleString() || '0'}`, 
         change: '+18.5%',
         changeLabel: 'vs mes anterior',
         color: 'text-success',
@@ -85,7 +57,7 @@ export class DashboardComponent {
       { 
         icon: 'ri-bill-fill', 
         label: 'Facturas Pendientes', 
-        value: data.pending.toString(), 
+        value: stats.pendingInvoices?.toString() || '0', 
         change: '-8',
         changeLabel: 'esta semana',
         color: 'text-warning',
@@ -94,7 +66,7 @@ export class DashboardComponent {
       { 
         icon: 'ri-user-follow-fill', 
         label: 'Morosos', 
-        value: data.delinquent.toString(), 
+        value: stats.delinquentUnits?.toString() || '0', 
         change: '-3',
         changeLabel: 'vs mes anterior',
         color: 'text-error',
@@ -103,7 +75,7 @@ export class DashboardComponent {
     ];
   });
 
-  // Actividad reciente
+  // Actividad reciente (mock data - no hay endpoint backend aún)
   protected readonly recentActivity = signal([
     { 
       icon: 'ri-money-dollar-circle-fill', 
@@ -139,7 +111,7 @@ export class DashboardComponent {
     }
   ]);
 
-  // Unidades con pagos pendientes
+  // Unidades con pagos pendientes (mock data - no hay endpoint backend aún)
   protected readonly pendingPayments = signal([
     { id: '304', tower: 'A', owner: 'Juan Pérez', amount: '$850', days: 5, status: 'warning' },
     { id: '507', tower: 'B', owner: 'María García', amount: '$850', days: 15, status: 'error' },
@@ -180,7 +152,50 @@ export class DashboardComponent {
     }
   ]);
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private condominiumService: CondominiumService,
+    private activityService: ActivityService
+  ) {}
+
+  ngOnInit(): void {
+    this.loadDashboardStats();
+  }
+
+  private loadDashboardStats(): void {
+    this.loading.set(true);
+    const condoId = this.selectedCondo()?.id;
+    
+    if (!condoId || condoId === 'all') {
+      // Cargar stats globales
+      this.condominiumService.getAllCondominiumsStats().subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.condoStats.set(response.data);
+          }
+          this.loading.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading dashboard stats:', error);
+          this.loading.set(false);
+        }
+      });
+    } else {
+      // Cargar stats de condominio específico
+      this.condominiumService.getCondominiumStats(condoId).subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.condoStats.set(response.data);
+          }
+          this.loading.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading condominium stats:', error);
+          this.loading.set(false);
+        }
+      });
+    }
+  }
 
   toggleSidebar(): void {
     this.sidebarOpen.set(!this.sidebarOpen());
@@ -194,6 +209,9 @@ export class DashboardComponent {
     
     // Update selected condo
     this.selectedCondo.set(condo);
+    
+    // Cargar datos del backend
+    this.loadDashboardStats();
     
     // Simular actualización de datos con delay para efecto visual
     setTimeout(() => {

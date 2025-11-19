@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
-import { Observable, of, delay } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, of, delay, catchError, map } from 'rxjs';
 import { 
   Provider, 
   ProviderDetails, 
@@ -9,12 +10,16 @@ import {
   ProviderStatistics
 } from '../models/provider.model';
 import { ApiResponse, PaginatedResponse, PaginationParams } from '../models/api.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProviderService {
-  // Simulated AWS Lambda endpoint
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/providers`;
+  
+  // Simulated AWS Lambda endpoint (DEPRECATED - usando apiUrl ahora)
   private readonly lambdaEndpoint = 'https://api.example.com/providers';
 
   // Mock data - simulating MongoDB collection

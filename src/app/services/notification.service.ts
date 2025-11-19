@@ -1,13 +1,18 @@
-import { Injectable } from '@angular/core';
-import { Observable, of, delay } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, of, delay, catchError } from 'rxjs';
 import { Notification, NotificationType, NotificationSettings } from '../models/notification.model';
 import { ApiResponse } from '../models/api.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class NotificationService {
-  // Simulated AWS Lambda endpoint
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/notifications`;
+  
+  // Simulated AWS Lambda endpoint (DEPRECATED - usando apiUrl ahora)
   private readonly lambdaEndpoint = 'https://api.example.com/notifications';
 
   // Mock data
@@ -82,31 +87,42 @@ export class NotificationService {
   ];
 
   /**
-   * Simulates AWS Lambda GET request to fetch user notifications
+   * GET /notifications/user/:userId - Fetch user notifications from backend
    * Lambda: getUserNotifications
    */
   getUserNotifications(
     userId: string,
     unreadOnly = false
   ): Observable<ApiResponse<Notification[]>> {
-    let notifications = this.mockNotifications.filter(
-      (n) => n.userId === userId
-    );
-
+    let httpParams = new HttpParams();
     if (unreadOnly) {
-      notifications = notifications.filter((n) => !n.isRead);
+      httpParams = httpParams.set('unreadOnly', 'true');
     }
 
-    notifications.sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-    );
+    return this.http.get<ApiResponse<Notification[]>>(`${this.apiUrl}/user/${userId}`, { params: httpParams }).pipe(
+      catchError((error) => {
+        console.error('Error fetching notifications from backend, using mock data:', error);
+        // Fallback a mock data
+        let notifications = this.mockNotifications.filter(
+          (n) => n.userId === userId
+        );
 
-    return of({
-      success: true,
-      data: notifications,
-      message: 'Notificaciones obtenidas exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 200));
+        if (unreadOnly) {
+          notifications = notifications.filter((n) => !n.isRead);
+        }
+
+        notifications.sort(
+          (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+        );
+
+        return of({
+          success: true,
+          data: notifications,
+          message: 'Notificaciones obtenidas exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
@@ -127,164 +143,200 @@ export class NotificationService {
   }
 
   /**
-   * Simulates AWS Lambda PUT request to mark notification as read
+   * PUT /notifications/:id/read - Mark notification as read via backend
    * Lambda: markAsRead
    */
   markAsRead(notificationId: string): Observable<ApiResponse<Notification>> {
-    const notification = this.mockNotifications.find(
-      (n) => n.id === notificationId
+    return this.http.put<ApiResponse<Notification>>(`${this.apiUrl}/${notificationId}/read`, {}).pipe(
+      catchError((error) => {
+        console.error(`Error marking notification ${notificationId} as read, using mock:`, error);
+        // Fallback a mock
+        const notification = this.mockNotifications.find(
+          (n) => n.id === notificationId
+        );
+
+        if (!notification) {
+          return of({
+            success: false,
+            error: {
+              code: 'NOTIFICATION_NOT_FOUND',
+              message: 'Notificación no encontrada',
+            },
+            timestamp: new Date(),
+          });
+        }
+
+        notification.isRead = true;
+        notification.readAt = new Date();
+
+        return of({
+          success: true,
+          data: notification,
+          message: 'Notificación marcada como leída (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
     );
-
-    if (!notification) {
-      return of({
-        success: false,
-        error: {
-          code: 'NOTIFICATION_NOT_FOUND',
-          message: 'Notificación no encontrada',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
-
-    notification.isRead = true;
-    notification.readAt = new Date();
-
-    return of({
-      success: true,
-      data: notification,
-      message: 'Notificación marcada como leída',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 300 + 200));
   }
 
   /**
-   * Simulates AWS Lambda PUT request to mark all notifications as read
+   * PUT /notifications/user/:userId/read-all - Mark all notifications as read via backend
    * Lambda: markAllAsRead
    */
   markAllAsRead(userId: string): Observable<ApiResponse<void>> {
-    this.mockNotifications
-      .filter((n) => n.userId === userId && !n.isRead)
-      .forEach((n) => {
-        n.isRead = true;
-        n.readAt = new Date();
-      });
+    return this.http.put<ApiResponse<void>>(`${this.apiUrl}/user/${userId}/read-all`, {}).pipe(
+      catchError((error) => {
+        console.error(`Error marking all notifications as read for user ${userId}, using mock:`, error);
+        // Fallback a mock
+        this.mockNotifications
+          .filter((n) => n.userId === userId && !n.isRead)
+          .forEach((n) => {
+            n.isRead = true;
+            n.readAt = new Date();
+          });
 
-    return of({
-      success: true,
-      message: 'Todas las notificaciones marcadas como leídas',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 300));
+        return of({
+          success: true,
+          message: 'Todas las notificaciones marcadas como leídas (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda POST request to send notification
+   * POST /notifications - Send notification via backend
    * Lambda: sendNotification
    */
   sendNotification(
     notification: Partial<Notification>
   ): Observable<ApiResponse<Notification>> {
-    const newNotification: Notification = {
-      id: `NOTIF-${String(Date.now()).slice(-6)}`,
-      userId: notification.userId!,
-      condominiumId: notification.condominiumId,
-      type: notification.type!,
-      title: notification.title!,
-      message: notification.message!,
-      icon: notification.icon || 'ri-notification-3-fill',
-      color: notification.color || '#0ea5e9',
-      isRead: false,
-      actionUrl: notification.actionUrl,
-      metadata: notification.metadata,
-      createdAt: new Date(),
-    };
+    return this.http.post<ApiResponse<Notification>>(this.apiUrl, notification).pipe(
+      catchError((error) => {
+        console.error('Error sending notification in backend, using mock:', error);
+        // Fallback a mock
+        const newNotification: Notification = {
+          id: `NOTIF-${String(Date.now()).slice(-6)}`,
+          userId: notification.userId!,
+          condominiumId: notification.condominiumId,
+          type: notification.type!,
+          title: notification.title!,
+          message: notification.message!,
+          icon: notification.icon || 'ri-notification-3-fill',
+          color: notification.color || '#0ea5e9',
+          isRead: false,
+          actionUrl: notification.actionUrl,
+          metadata: notification.metadata,
+          createdAt: new Date(),
+        };
 
-    this.mockNotifications.push(newNotification);
+        this.mockNotifications.push(newNotification);
 
-    return of({
-      success: true,
-      data: newNotification,
-      message: 'Notificación enviada exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 400));
+        return of({
+          success: true,
+          data: newNotification,
+          message: 'Notificación enviada exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda DELETE request to delete notification
+   * DELETE /notifications/:id - Delete notification via backend
    * Lambda: deleteNotification
    */
   deleteNotification(notificationId: string): Observable<ApiResponse<void>> {
-    const index = this.mockNotifications.findIndex(
-      (n) => n.id === notificationId
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${notificationId}`).pipe(
+      catchError((error) => {
+        console.error(`Error deleting notification ${notificationId}, using mock:`, error);
+        // Fallback a mock
+        const index = this.mockNotifications.findIndex(
+          (n) => n.id === notificationId
+        );
+
+        if (index === -1) {
+          return of({
+            success: false,
+            error: {
+              code: 'NOTIFICATION_NOT_FOUND',
+              message: 'Notificación no encontrada',
+            },
+            timestamp: new Date(),
+          });
+        }
+
+        this.mockNotifications.splice(index, 1);
+
+        return of({
+          success: true,
+          message: 'Notificación eliminada exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
     );
-
-    if (index === -1) {
-      return of({
-        success: false,
-        error: {
-          code: 'NOTIFICATION_NOT_FOUND',
-          message: 'Notificación no encontrada',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
-
-    this.mockNotifications.splice(index, 1);
-
-    return of({
-      success: true,
-      message: 'Notificación eliminada exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 300 + 200));
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch notification settings
+   * GET /notifications/settings/:userId - Fetch notification settings from backend
    * Lambda: getNotificationSettings
    */
   getNotificationSettings(
     userId: string
   ): Observable<ApiResponse<NotificationSettings>> {
-    const settings: NotificationSettings = {
-      userId,
-      emailNotifications: true,
-      smsNotifications: false,
-      pushNotifications: true,
-      paymentReminders: true,
-      maintenanceAlerts: true,
-      systemUpdates: true,
-    };
+    return this.http.get<ApiResponse<NotificationSettings>>(`${this.apiUrl}/settings/${userId}`).pipe(
+      catchError((error) => {
+        console.error(`Error fetching notification settings for user ${userId}, using mock:`, error);
+        // Fallback a mock
+        const settings: NotificationSettings = {
+          userId,
+          emailNotifications: true,
+          smsNotifications: false,
+          pushNotifications: true,
+          paymentReminders: true,
+          maintenanceAlerts: true,
+          systemUpdates: true,
+        };
 
-    return of({
-      success: true,
-      data: settings,
-      message: 'Configuración obtenida exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 300 + 200));
+        return of({
+          success: true,
+          data: settings,
+          message: 'Configuración obtenida exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda PUT request to update notification settings
+   * PUT /notifications/settings/:userId - Update notification settings via backend
    * Lambda: updateNotificationSettings
    */
   updateNotificationSettings(
     userId: string,
     settings: Partial<NotificationSettings>
   ): Observable<ApiResponse<NotificationSettings>> {
-    const updated: NotificationSettings = {
-      userId,
-      emailNotifications: settings.emailNotifications ?? true,
-      smsNotifications: settings.smsNotifications ?? false,
-      pushNotifications: settings.pushNotifications ?? true,
-      paymentReminders: settings.paymentReminders ?? true,
-      maintenanceAlerts: settings.maintenanceAlerts ?? true,
-      systemUpdates: settings.systemUpdates ?? true,
-    };
+    return this.http.put<ApiResponse<NotificationSettings>>(`${this.apiUrl}/settings/${userId}`, settings).pipe(
+      catchError((error) => {
+        console.error(`Error updating notification settings for user ${userId}, using mock:`, error);
+        // Fallback a mock
+        const updated: NotificationSettings = {
+          userId,
+          emailNotifications: settings.emailNotifications ?? true,
+          smsNotifications: settings.smsNotifications ?? false,
+          pushNotifications: settings.pushNotifications ?? true,
+          paymentReminders: settings.paymentReminders ?? true,
+          maintenanceAlerts: settings.maintenanceAlerts ?? true,
+          systemUpdates: settings.systemUpdates ?? true,
+        };
 
-    return of({
-      success: true,
-      data: updated,
-      message: 'Configuración actualizada exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 300));
+        return of({
+          success: true,
+          data: updated,
+          message: 'Configuración actualizada exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 }

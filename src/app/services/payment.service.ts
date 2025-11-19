@@ -1,13 +1,18 @@
-import { Injectable } from '@angular/core';
-import { Observable, of, delay } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, of, delay, catchError, map } from 'rxjs';
 import { Payment, PaymentWithDetails, PaymentMethod, PaymentStatus } from '../models/payment.model';
 import { ApiResponse, PaginatedResponse, PaginationParams } from '../models/api.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PaymentService {
-  // Simulated AWS Lambda endpoint
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/payments`;
+  
+  // Simulated AWS Lambda endpoint (DEPRECATED - usando apiUrl ahora)
   private readonly lambdaEndpoint = 'https://api.example.com/payments';
 
   // Mock data

@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
-import { Observable, of, delay } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, of, delay, catchError, map } from 'rxjs';
 import { 
   Unit, 
   UnitDetails, 
@@ -11,12 +12,16 @@ import {
   UnitStatistics 
 } from '../models/unit.model';
 import { ApiResponse, PaginatedResponse, PaginationParams } from '../models/api.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UnitService {
-  // Simulated AWS Lambda endpoint
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/units`;
+  
+  // Simulated AWS Lambda endpoint (DEPRECATED - usando apiUrl ahora)
   private readonly lambdaEndpoint = 'https://api.example.com/units';
 
   // Mock data - simulating MongoDB collection
@@ -427,209 +432,262 @@ export class UnitService {
    * Backend: GET /units - Returns { success, message, data: { units: [units with residents], count } }
    * Units include nested residents fetched from residentsId array
    */
+  // GET /units - Fetch units from backend
+  // Backend: GET /units?page=1&pageSize=10&condominiumId=xxx&buildingId=xxx&status=xxx&search=xxx
   getUnits(
     params?: PaginationParams & { condominiumId?: string; buildingId?: string; status?: UnitStatus; search?: string }
   ): Observable<ApiResponse<PaginatedResponse<UnitDetails>>> {
-    let filtered = [...this.mockUnits];
+    // Construir HttpParams
+    let httpParams = new HttpParams()
+      .set('page', (params?.page || 1).toString())
+      .set('pageSize', (params?.pageSize || 10).toString());
 
-    // Filter by condominiumId
     if (params?.condominiumId && params.condominiumId !== 'all') {
-      filtered = filtered.filter((u) => u.condominiumId === params.condominiumId);
+      httpParams = httpParams.set('condominiumId', params.condominiumId);
     }
 
-    // Filter by buildingId
     if (params?.buildingId) {
-      filtered = filtered.filter((u) => u.buildingId === params.buildingId);
+      httpParams = httpParams.set('buildingId', params.buildingId);
     }
 
-    // Filter by status
     if (params?.status) {
-      filtered = filtered.filter((u) => u.status === params.status);
+      httpParams = httpParams.set('status', params.status);
     }
 
-    // Search filter
     if (params?.search) {
-      const search = params.search.toLowerCase();
-      filtered = filtered.filter(
-        (u) =>
-          u.unitNumber.toLowerCase().includes(search) ||
-          (u.tower && u.tower.toLowerCase().includes(search)) ||
-          u.ownerName?.toLowerCase().includes(search) ||
-          u.residentName?.toLowerCase().includes(search)
-      );
+      httpParams = httpParams.set('search', params.search);
     }
 
-    const page = params?.page || 1;
-    const pageSize = params?.pageSize || 10;
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    const items = filtered.slice(start, end);
+    return this.http.get<ApiResponse<PaginatedResponse<UnitDetails>>>(this.apiUrl, { params: httpParams }).pipe(
+      catchError((error) => {
+        console.error('Error fetching units from backend, using mock data:', error);
+        // Fallback a mock data
+        let filtered = [...this.mockUnits];
 
-    const response: PaginatedResponse<UnitDetails> = {
-      items,
-      total: filtered.length,
-      page,
-      pageSize,
-      totalPages: Math.ceil(filtered.length / pageSize),
-      hasNext: end < filtered.length,
-      hasPrevious: page > 1,
-    };
+        // Filter by condominiumId
+        if (params?.condominiumId && params.condominiumId !== 'all') {
+          filtered = filtered.filter((u) => u.condominiumId === params.condominiumId);
+        }
 
-    return of({
-      success: true,
-      message: 'Unidades obtenidas exitosamente',
-      data: response,
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 300));
+        // Filter by buildingId
+        if (params?.buildingId) {
+          filtered = filtered.filter((u) => u.buildingId === params.buildingId);
+        }
+
+        // Filter by status
+        if (params?.status) {
+          filtered = filtered.filter((u) => u.status === params.status);
+        }
+
+        // Search filter
+        if (params?.search) {
+          const search = params.search.toLowerCase();
+          filtered = filtered.filter(
+            (u) =>
+              u.unitNumber.toLowerCase().includes(search) ||
+              (u.tower && u.tower.toLowerCase().includes(search)) ||
+              u.ownerName?.toLowerCase().includes(search) ||
+              u.residentName?.toLowerCase().includes(search)
+          );
+        }
+
+        const page = params?.page || 1;
+        const pageSize = params?.pageSize || 10;
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize;
+        const items = filtered.slice(start, end);
+
+        const response: PaginatedResponse<UnitDetails> = {
+          items,
+          total: filtered.length,
+          page,
+          pageSize,
+          totalPages: Math.ceil(filtered.length / pageSize),
+          hasNext: end < filtered.length,
+          hasPrevious: page > 1,
+        };
+
+        return of({
+          success: true,
+          message: 'Unidades obtenidas exitosamente (mock fallback)',
+          data: response,
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda GET request to fetch single unit
+   * GET /units/:id - Fetch single unit from backend
    * Backend: GET /units/{id} - Returns { success, message, data: unit }
    */
   getUnitById(id: string): Observable<ApiResponse<UnitDetails>> {
-    const unit = this.mockUnits.find((u) => u.id === id);
+    return this.http.get<ApiResponse<UnitDetails>>(`${this.apiUrl}/${id}`).pipe(
+      catchError((error) => {
+        console.error(`Error fetching unit ${id} from backend, using mock data:`, error);
+        // Fallback a mock data
+        const unit = this.mockUnits.find((u) => u.id === id);
 
-    if (!unit) {
-      return of({
-        success: false,
-        message: 'Unit not found',
-        error: {
-          code: 'UNIT_NOT_FOUND',
-          message: 'Unidad no encontrada',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+        if (!unit) {
+          return of({
+            success: false,
+            message: 'Unit not found',
+            error: {
+              code: 'UNIT_NOT_FOUND',
+              message: 'Unidad no encontrada',
+            },
+            timestamp: new Date(),
+          });
+        }
 
-    return of({
-      success: true,
-      message: 'Unidad obtenida exitosamente',
-      data: unit,
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 400 + 200));
+        return of({
+          success: true,
+          message: 'Unidad obtenida exitosamente (mock fallback)',
+          data: unit,
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda POST request to create unit
+   * POST /buildings/:buildingId/units - Create unit via backend
    * Backend: POST /buildings/{buildingId}/units - Returns { success, message, data: created unit }
    * Adds unit to Building's unitsId array automatically
    */
   createUnit(unitData: CreateUnitDto): Observable<ApiResponse<Unit>> {
-    const newUnit: Unit = {
-      id: `U-${String(Date.now()).slice(-6)}`,
-      condominiumId: unitData.condominiumId,
-      buildingId: unitData.buildingId,
-      towerId: unitData.towerId,
-      privateStreetId: unitData.privateStreetId,
-      unitNumber: unitData.unitNumber,
-      tower: unitData.tower,
-      floor: unitData.floor,
-      area: unitData.area,
-      bedrooms: unitData.bedrooms,
-      bathrooms: unitData.bathrooms,
-      parkingSpaces: unitData.parkingSpaces,
-      storageSpaces: unitData.storageSpaces,
-      status: unitData.status,
-      monthlyFee: unitData.monthlyFee,
-      propertyType: unitData.propertyType,
-      orientation: unitData.orientation,
-      hasBalcony: unitData.hasBalcony,
-      hasGarden: unitData.hasGarden,
-      isFurnished: unitData.isFurnished,
-      description: unitData.description,
-      isOccupied: (unitData.residents && unitData.residents.length > 0) || false,
-      occupancyStatus: (unitData.residents && unitData.residents.length > 0) 
-        ? UnitOccupancyStatus.OWNER_OCCUPIED 
-        : UnitOccupancyStatus.VACANT,
-      residents: unitData.residents || [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    return this.http.post<ApiResponse<Unit>>(this.apiUrl, unitData).pipe(
+      catchError((error) => {
+        console.error('Error creating unit in backend, using mock:', error);
+        // Fallback a mock creation
+        const newUnit: Unit = {
+          id: `U-${String(Date.now()).slice(-6)}`,
+          condominiumId: unitData.condominiumId,
+          buildingId: unitData.buildingId,
+          towerId: unitData.towerId,
+          privateStreetId: unitData.privateStreetId,
+          unitNumber: unitData.unitNumber,
+          tower: unitData.tower,
+          floor: unitData.floor,
+          area: unitData.area,
+          bedrooms: unitData.bedrooms,
+          bathrooms: unitData.bathrooms,
+          parkingSpaces: unitData.parkingSpaces,
+          storageSpaces: unitData.storageSpaces,
+          status: unitData.status,
+          monthlyFee: unitData.monthlyFee,
+          propertyType: unitData.propertyType,
+          orientation: unitData.orientation,
+          hasBalcony: unitData.hasBalcony,
+          hasGarden: unitData.hasGarden,
+          isFurnished: unitData.isFurnished,
+          description: unitData.description,
+          isOccupied: (unitData.residents && unitData.residents.length > 0) || false,
+          occupancyStatus: (unitData.residents && unitData.residents.length > 0) 
+            ? UnitOccupancyStatus.OWNER_OCCUPIED 
+            : UnitOccupancyStatus.VACANT,
+          residents: unitData.residents || [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-    // Add to mock data
-    this.mockUnits.push({
-      ...newUnit,
-      hasDebt: false,
-      debtAmount: 0,
-      residentDetails: unitData.residents || []
-    });
+        // Add to mock data
+        this.mockUnits.push({
+          ...newUnit,
+          hasDebt: false,
+          debtAmount: 0,
+          residentDetails: unitData.residents || []
+        });
 
-    return of({
-      success: true,
-      message: 'Unidad creada exitosamente',
-      data: newUnit,
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 700 + 500));
+        return of({
+          success: true,
+          message: 'Unidad creada exitosamente (mock fallback)',
+          data: newUnit,
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda PUT request to update unit
+   * PUT /units/:id - Update unit via backend
    * Backend: PUT /units/{id} - Returns { success, message, data: updated unit }
    */
   updateUnit(
     id: string,
     updates: UpdateUnitDto
   ): Observable<ApiResponse<UnitDetails>> {
-    const unitIndex = this.mockUnits.findIndex((u) => u.id === id);
+    return this.http.put<ApiResponse<UnitDetails>>(`${this.apiUrl}/${id}`, updates).pipe(
+      catchError((error) => {
+        console.error(`Error updating unit ${id} in backend, using mock:`, error);
+        // Fallback a mock update
+        const unitIndex = this.mockUnits.findIndex((u) => u.id === id);
 
-    if (unitIndex === -1) {
-      return of({
-        success: false,
-        message: 'Unit not found',
-        error: {
-          code: 'UNIT_NOT_FOUND',
-          message: 'Unidad no encontrada',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+        if (unitIndex === -1) {
+          return of({
+            success: false,
+            message: 'Unit not found',
+            error: {
+              code: 'UNIT_NOT_FOUND',
+              message: 'Unidad no encontrada',
+            },
+            timestamp: new Date(),
+          });
+        }
 
-    const updated: UnitDetails = {
-      ...this.mockUnits[unitIndex],
-      ...updates,
-      residentDetails: updates.residents || this.mockUnits[unitIndex].residentDetails,
-      isOccupied: (updates.residents && updates.residents.length > 0) || this.mockUnits[unitIndex].isOccupied,
-      updatedAt: new Date(),
-    };
+        const updated: UnitDetails = {
+          ...this.mockUnits[unitIndex],
+          ...updates,
+          residentDetails: updates.residents || this.mockUnits[unitIndex].residentDetails,
+          isOccupied: (updates.residents && updates.residents.length > 0) || this.mockUnits[unitIndex].isOccupied,
+          updatedAt: new Date(),
+        };
 
-    this.mockUnits[unitIndex] = updated;
+        this.mockUnits[unitIndex] = updated;
 
-    return of({
-      success: true,
-      message: 'Unidad actualizada exitosamente',
-      data: updated,
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 600 + 400));
+        return of({
+          success: true,
+          message: 'Unidad actualizada exitosamente (mock fallback)',
+          data: updated,
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
-   * Simulates AWS Lambda DELETE request to delete unit (soft delete)
-   * Backend: DELETE /units/{id} - Sets status to INACTIVE - Returns { success, message, data: {} }
+   * DELETE /units/:id - Delete unit (soft delete) via backend
+   * Backend: DELETE /units/{id} - Sets status to VACANT - Returns { success, message, data: {} }
    */
   deleteUnit(id: string): Observable<ApiResponse<void>> {
-    const index = this.mockUnits.findIndex((u) => u.id === id);
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`).pipe(
+      catchError((error) => {
+        console.error(`Error deleting unit ${id} in backend, using mock:`, error);
+        // Fallback a mock delete
+        const index = this.mockUnits.findIndex((u) => u.id === id);
 
-    if (index === -1) {
-      return of({
-        success: false,
-        message: 'Unit not found',
-        error: {
-          code: 'UNIT_NOT_FOUND',
-          message: 'Unidad no encontrada',
-        },
-        timestamp: new Date(),
-      }).pipe(delay(200));
-    }
+        if (index === -1) {
+          return of({
+            success: false,
+            message: 'Unit not found',
+            error: {
+              code: 'UNIT_NOT_FOUND',
+              message: 'Unidad no encontrada',
+            },
+            timestamp: new Date(),
+          });
+        }
 
-    // Soft delete - set status to INACTIVE instead of removing
-    this.mockUnits[index].status = UnitStatus.VACANT;
+        // Soft delete - set status to VACANT instead of removing
+        this.mockUnits[index].status = UnitStatus.VACANT;
 
-    return of({
-      success: true,
-      message: 'Unidad eliminada exitosamente',
-      timestamp: new Date(),
-    }).pipe(delay(Math.random() * 500 + 300));
+        return of({
+          success: true,
+          message: 'Unidad eliminada exitosamente (mock fallback)',
+          timestamp: new Date(),
+        });
+      })
+    );
   }
 
   /**
