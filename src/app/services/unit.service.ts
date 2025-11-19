@@ -424,7 +424,8 @@ export class UnitService {
 
   /**
    * Simulates AWS Lambda GET request to fetch all units
-   * Lambda: getUnits
+   * Backend: GET /units - Returns { success, message, data: { units: [units with residents], count } }
+   * Units include nested residents fetched from residentsId array
    */
   getUnits(
     params?: PaginationParams & { condominiumId?: string; buildingId?: string; status?: UnitStatus; search?: string }
@@ -476,15 +477,15 @@ export class UnitService {
 
     return of({
       success: true,
-      data: response,
       message: 'Unidades obtenidas exitosamente',
+      data: response,
       timestamp: new Date(),
     }).pipe(delay(Math.random() * 500 + 300));
   }
 
   /**
    * Simulates AWS Lambda GET request to fetch single unit
-   * Lambda: getUnitById
+   * Backend: GET /units/{id} - Returns { success, message, data: unit }
    */
   getUnitById(id: string): Observable<ApiResponse<UnitDetails>> {
     const unit = this.mockUnits.find((u) => u.id === id);
@@ -492,6 +493,7 @@ export class UnitService {
     if (!unit) {
       return of({
         success: false,
+        message: 'Unit not found',
         error: {
           code: 'UNIT_NOT_FOUND',
           message: 'Unidad no encontrada',
@@ -502,15 +504,16 @@ export class UnitService {
 
     return of({
       success: true,
-      data: unit,
       message: 'Unidad obtenida exitosamente',
+      data: unit,
       timestamp: new Date(),
     }).pipe(delay(Math.random() * 400 + 200));
   }
 
   /**
    * Simulates AWS Lambda POST request to create unit
-   * Lambda: createUnit
+   * Backend: POST /buildings/{buildingId}/units - Returns { success, message, data: created unit }
+   * Adds unit to Building's unitsId array automatically
    */
   createUnit(unitData: CreateUnitDto): Observable<ApiResponse<Unit>> {
     const newUnit: Unit = {
@@ -554,15 +557,15 @@ export class UnitService {
 
     return of({
       success: true,
-      data: newUnit,
       message: 'Unidad creada exitosamente',
+      data: newUnit,
       timestamp: new Date(),
     }).pipe(delay(Math.random() * 700 + 500));
   }
 
   /**
    * Simulates AWS Lambda PUT request to update unit
-   * Lambda: updateUnit
+   * Backend: PUT /units/{id} - Returns { success, message, data: updated unit }
    */
   updateUnit(
     id: string,
@@ -573,6 +576,7 @@ export class UnitService {
     if (unitIndex === -1) {
       return of({
         success: false,
+        message: 'Unit not found',
         error: {
           code: 'UNIT_NOT_FOUND',
           message: 'Unidad no encontrada',
@@ -593,15 +597,15 @@ export class UnitService {
 
     return of({
       success: true,
-      data: updated,
       message: 'Unidad actualizada exitosamente',
+      data: updated,
       timestamp: new Date(),
     }).pipe(delay(Math.random() * 600 + 400));
   }
 
   /**
-   * Simulates AWS Lambda DELETE request to delete unit
-   * Lambda: deleteUnit
+   * Simulates AWS Lambda DELETE request to delete unit (soft delete)
+   * Backend: DELETE /units/{id} - Sets status to INACTIVE - Returns { success, message, data: {} }
    */
   deleteUnit(id: string): Observable<ApiResponse<void>> {
     const index = this.mockUnits.findIndex((u) => u.id === id);
@@ -609,6 +613,7 @@ export class UnitService {
     if (index === -1) {
       return of({
         success: false,
+        message: 'Unit not found',
         error: {
           code: 'UNIT_NOT_FOUND',
           message: 'Unidad no encontrada',
@@ -617,7 +622,8 @@ export class UnitService {
       }).pipe(delay(200));
     }
 
-    this.mockUnits.splice(index, 1);
+    // Soft delete - set status to INACTIVE instead of removing
+    this.mockUnits[index].status = UnitStatus.VACANT;
 
     return of({
       success: true,

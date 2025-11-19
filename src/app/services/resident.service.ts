@@ -197,7 +197,8 @@ export class ResidentService {
 
   /**
    * Simulates AWS Lambda GET request to fetch all residents
-   * Lambda: getResidents
+   * Backend: GET /residents - Returns { success, message, data: { residents: [], count } }
+   * Supports filters: ?unitId=xxx&type=xxx&documentNumber=xxx
    */
   getResidents(
     params?: PaginationParams & { condominiumId?: string; type?: ResidentType; search?: string }
@@ -244,8 +245,8 @@ export class ResidentService {
 
     return of({
       success: true,
-      data: response,
       message: 'Residentes obtenidos exitosamente',
+      data: response,
       timestamp: new Date(),
     }).pipe(delay(Math.random() * 500 + 300));
   }
@@ -287,6 +288,8 @@ export class ResidentService {
 
   /**
    * Create new resident
+   * Backend: POST /units/{unitId}/residents - Returns { success, message, data: created resident }
+   * Adds resident to Unit's residentsId array automatically
    */
   createResident(residentData: CreateResidentDto): Observable<ApiResponse<Resident>> {
     const newResident: Resident = {
@@ -326,14 +329,15 @@ export class ResidentService {
 
     return of({
       success: true,
-      data: newResident,
       message: 'Residente creado exitosamente',
+      data: newResident,
       timestamp: new Date(),
     }).pipe(delay(Math.random() * 700 + 500));
   }
 
   /**
    * Update resident
+   * Backend: PUT /residents/{id} - Returns { success, message, data: updated resident }
    */
   updateResident(id: string, updates: UpdateResidentDto): Observable<ApiResponse<ResidentDetails>> {
     const residentIndex = this.mockResidents.findIndex((r) => r.id === id);
@@ -341,6 +345,7 @@ export class ResidentService {
     if (residentIndex === -1) {
       return of({
         success: false,
+        message: 'Resident not found',
         error: {
           code: 'RESIDENT_NOT_FOUND',
           message: 'Residente no encontrado',
@@ -359,8 +364,8 @@ export class ResidentService {
 
     return of({
       success: true,
-      data: updated,
       message: 'Residente actualizado exitosamente',
+      data: updated,
       timestamp: new Date(),
     }).pipe(delay(Math.random() * 600 + 400));
   }
@@ -374,6 +379,7 @@ export class ResidentService {
     if (residentIndex === -1) {
       return of({
         success: false,
+        message: 'Resident not found',
         error: {
           code: 'RESIDENT_NOT_FOUND',
           message: 'Residente no encontrado',
@@ -393,7 +399,9 @@ export class ResidentService {
   }
 
   /**
-   * Delete resident
+   * Delete resident (hard delete)
+   * Backend: DELETE /residents/{id} - Returns { success, message, data: {} }
+   * Also removes resident from unit's residentsId array
    */
   deleteResident(id: string): Observable<ApiResponse<void>> {
     const index = this.mockResidents.findIndex((r) => r.id === id);
@@ -401,6 +409,7 @@ export class ResidentService {
     if (index === -1) {
       return of({
         success: false,
+        message: 'Resident not found',
         error: {
           code: 'RESIDENT_NOT_FOUND',
           message: 'Residente no encontrado',

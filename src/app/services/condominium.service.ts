@@ -259,14 +259,14 @@ export class CondominiumService {
 
   /**
    * Simulates AWS Lambda GET request to fetch all condominiums
-   * Lambda: getCondominiums
+   * Backend: GET /condominiums - Returns { success, message, data: [condominiums with buildings] }
    */
   getAllCondominiums(): Observable<ApiResponse<Condominium[]>> {
-    // Simulate API delay (300-800ms)
+    // Backend fetches buildings for each condominium and adds them to the condominium object
     return of({
       success: true,
+      message: 'Condominiums retrieved successfully',
       data: this.mockCondominiums,
-      message: 'Condominios obtenidos exitosamente',
       timestamp: new Date(),
     }).pipe(delay(Math.random() * 500 + 300));
   }
@@ -411,7 +411,7 @@ export class CondominiumService {
 
   /**
    * Simulates AWS Lambda POST request to create condominium
-   * Lambda: createCondominium
+   * Backend: POST /condominiums - Returns { success, message, data: created condominium with _id }
    */
   createCondominium(
     condominiumDto: CreateCondominiumDto
@@ -452,8 +452,8 @@ export class CondominiumService {
 
     return of({
       success: true,
+      message: 'Condominium created successfully',
       data: newCondominium,
-      message: 'Condominio creado exitosamente',
       timestamp: new Date(),
     }).pipe(delay(Math.random() * 700 + 500));
   }
@@ -470,7 +470,7 @@ export class CondominiumService {
 
   /**
    * Simulates AWS Lambda PUT request to update condominium
-   * Lambda: updateCondominium
+   * Backend: PUT /condominiums/{id} - Returns { success, message, data: updated condominium }
    */
   updateCondominium(
     id: string,
@@ -481,6 +481,7 @@ export class CondominiumService {
     if (index === -1) {
       return of({
         success: false,
+        message: 'Condominium not found',
         error: {
           code: 'CONDO_NOT_FOUND',
           message: 'Condominio no encontrado',
@@ -501,8 +502,8 @@ export class CondominiumService {
 
     return of({
       success: true,
+      message: 'Condominium updated successfully',
       data: updated,
-      message: 'Condominio actualizado exitosamente',
       timestamp: new Date(),
     }).pipe(delay(Math.random() * 600 + 400));
   }
@@ -513,8 +514,8 @@ export class CondominiumService {
   }
 
   /**
-   * Simulates AWS Lambda DELETE request to delete condominium
-   * Lambda: deleteCondominium
+   * Simulates AWS Lambda DELETE request to delete condominium (soft delete)
+   * Backend: DELETE /condominiums/{id} - Sets status to INACTIVE - Returns { success, message }
    */
   deleteCondominium(id: string): Observable<ApiResponse<void>> {
     const index = this.mockCondominiums.findIndex((c) => c.id === id);
@@ -522,6 +523,7 @@ export class CondominiumService {
     if (index === -1) {
       return of({
         success: false,
+        message: 'Condominium not found',
         error: {
           code: 'CONDO_NOT_FOUND',
           message: 'Condominio no encontrado',
@@ -530,11 +532,12 @@ export class CondominiumService {
       }).pipe(delay(200));
     }
 
-    this.mockCondominiums.splice(index, 1);
+    // Soft delete - set status to INACTIVE instead of removing
+    this.mockCondominiums[index].isActive = false;
 
     return of({
       success: true,
-      message: 'Condominio eliminado exitosamente',
+      message: 'Condominium deleted successfully',
       timestamp: new Date(),
     }).pipe(delay(Math.random() * 500 + 300));
   }

@@ -160,6 +160,7 @@ export class BuildingService {
   constructor() {}
 
   // Get all buildings with pagination and filters
+  // Backend: GET /buildings - Returns { success, message, data: { buildings: [], count } }
   getBuildings(params: GetBuildingsParams = {}): Observable<ApiResponse<PaginatedResponse<BuildingDetails>>> {
     const {
       page = 1,
@@ -203,6 +204,7 @@ export class BuildingService {
 
     const response: ApiResponse<PaginatedResponse<BuildingDetails>> = {
       success: true,
+      message: 'Building list',
       data: {
         items,
         total,
@@ -219,12 +221,14 @@ export class BuildingService {
   }
 
   // Get building by ID
+  // Backend: GET /buildings/{id} - Returns { success, message, data: building }
   getBuildingById(id: string): Observable<ApiResponse<BuildingDetails>> {
     const building = this.buildings().find(b => b.id === id);
 
     if (building) {
       return of({
         success: true,
+        message: 'Building retrieved successfully',
         data: building,
         timestamp: new Date()
       }).pipe(delay(200));
@@ -232,6 +236,7 @@ export class BuildingService {
 
     return of({
       success: false,
+      message: 'Building not found',
       error: {
         code: 'NOT_FOUND',
         message: 'Edificio no encontrado'
@@ -241,6 +246,7 @@ export class BuildingService {
   }
 
   // Create new building
+  // Backend: POST /condominiums/{condominiumId}/buildings - Returns created building with _id
   createBuilding(dto: CreateBuildingDto): Observable<ApiResponse<BuildingDetails>> {
     const newBuilding: BuildingDetails = {
       id: `bld-${Date.now()}`,
@@ -257,18 +263,21 @@ export class BuildingService {
 
     return of({
       success: true,
+      message: 'Building created successfully',
       data: newBuilding,
       timestamp: new Date()
     }).pipe(delay(500));
   }
 
   // Update building
+  // Backend: PUT /buildings/{id} - Returns { success, message, data: updated building }
   updateBuilding(id: string, dto: UpdateBuildingDto): Observable<ApiResponse<BuildingDetails>> {
     const index = this.buildings().findIndex(b => b.id === id);
 
     if (index === -1) {
       return of({
         success: false,
+        message: 'Building not found',
         error: {
           code: 'NOT_FOUND',
           message: 'Edificio no encontrado'
@@ -291,18 +300,21 @@ export class BuildingService {
 
     return of({
       success: true,
+      message: 'Building updated successfully',
       data: updatedBuilding,
       timestamp: new Date()
     }).pipe(delay(500));
   }
 
-  // Delete building
+  // Delete building (soft delete - sets status to INACTIVE)
+  // Backend: DELETE /buildings/{id} - Returns { success, message, data: {} }
   deleteBuilding(id: string): Observable<ApiResponse<void>> {
     const index = this.buildings().findIndex(b => b.id === id);
 
     if (index === -1) {
       return of({
         success: false,
+        message: 'Building not found',
         error: {
           code: 'NOT_FOUND',
           message: 'Edificio no encontrado'
@@ -311,10 +323,16 @@ export class BuildingService {
       }).pipe(delay(300));
     }
 
-    this.buildings.update(buildings => buildings.filter(b => b.id !== id));
+    // Soft delete - set status to INACTIVE instead of removing
+    this.buildings.update(buildings => {
+      const newBuildings = [...buildings];
+      newBuildings[index] = { ...newBuildings[index], status: BuildingStatus.INACTIVE };
+      return newBuildings;
+    });
 
     return of({
       success: true,
+      message: 'Building deleted successfully',
       timestamp: new Date()
     }).pipe(delay(500));
   }
