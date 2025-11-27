@@ -14,7 +14,9 @@ import {
   UpdateBuildingDto,
   ApiResponse,
   Condominium,
-  CreateCondominiumDto
+  CreateCondominiumDto,
+  CondominiumType,
+  CondominiumStatus
 } from '../../models';
 
 @Component({
@@ -73,20 +75,26 @@ export class BuildingsComponent {
   // Condominium form data
   protected readonly condoFormData = signal<Partial<CreateCondominiumDto>>({
     name: '',
-    street: '',
+    type: CondominiumType.TOWER,
+    streetAddress: '',
     neighborhood: '',
-    number: '',
-    zipCode: '',
     city: '',
+    zipCode: '',
     state: '',
     country: 'México',
-    paymentDay: 1,
     conventionalPenalty: 0,
-    initialFolio: 1,
-    rfc: '',
+    initialFolioNumber: 1,
     isActive: true,
     hasAC: false,
     additionalInfo: '',
+    buildingsId: [],
+    buildings: [],
+    privateStreets: [],
+    amenities: [],
+    // Legacy para compatibilidad
+    number: '',
+    paymentDay: 1,
+    rfc: '',
     description: ''
   });
   
@@ -529,20 +537,26 @@ export class BuildingsComponent {
   openCondoModal(): void {
     this.condoFormData.set({
       name: '',
-      street: '',
+      type: CondominiumType.TOWER,
+      streetAddress: '',
       neighborhood: '',
-      number: '',
-      zipCode: '',
       city: '',
+      zipCode: '',
       state: '',
       country: 'México',
-      paymentDay: 1,
       conventionalPenalty: 0,
-      initialFolio: 1,
-      rfc: '',
+      initialFolioNumber: 1,
       isActive: true,
       hasAC: false,
       additionalInfo: '',
+      buildingsId: [],
+      buildings: [],
+      privateStreets: [],
+      amenities: [],
+      // Legacy para compatibilidad
+      number: '',
+      paymentDay: 1,
+      rfc: '',
       description: ''
     });
     this.condoError.set(null);
@@ -569,6 +583,12 @@ export class BuildingsComponent {
     if (!this.validateCondoForm(data)) {
       return;
     }
+
+    // Agregar campos requeridos por la lambda (solo para creación)
+    const now = new Date();
+    data.createdAt = now;
+    data.updatedAt = now;
+    data.status = CondominiumStatus.ACTIVE;
 
     this.condoLoading.set(true);
     this.condoError.set(null);
@@ -598,8 +618,8 @@ export class BuildingsComponent {
   }
 
   private validateCondoForm(data: Partial<CreateCondominiumDto>): boolean {
-    if (!data.name || !data.street || !data.neighborhood || !data.number || 
-        !data.zipCode || !data.city) {
+    if (!data.name || !data.streetAddress || !data.neighborhood || 
+        !data.zipCode || !data.city || !data.state || !data.country) {
       this.condoError.set('Por favor complete todos los campos obligatorios');
       return false;
     }

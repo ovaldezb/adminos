@@ -1,6 +1,6 @@
 import { Component, signal, output, HostListener, ElementRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Condominium, CondominiumType } from '../../models';
+import { Condominium, CondominiumType, CondominiumStatus } from '../../models';
 import { CondominiumService } from '../../services';
 
 @Component({
@@ -42,26 +42,32 @@ export class CondoSelectorComponent {
           const allOption: Condominium = {
             id: 'all',
             name: 'Todos los Condominios',
-            type: CondominiumType.BUILDING,
-            street: 'Vista General',
+            type: CondominiumType.TOWER,
+            streetAddress: 'Vista General',
             neighborhood: 'Global',
-            number: '0',
-            zipCode: '00000',
             city: 'Global',
+            zipCode: '00000',
             state: 'Global',
             country: 'Global',
-            paymentDay: 1,
             conventionalPenalty: 0,
-            initialFolio: 1,
-            rfc: 'XAXX010101000',
+            initialFolioNumber: 1,
             isActive: true,
             hasAC: false,
+            buildingsId: [],
+            buildings: [],
+            privateStreets: [],
+            amenities: [],
+            status: CondominiumStatus.ACTIVE,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            // Legacy para compatibilidad
+            number: '0',
+            paymentDay: 1,
+            rfc: 'XAXX010101000',
             totalUnits: 0,
             occupiedUnits: 0,
             color: 'from-neutral-600 to-neutral-400',
-            description: 'Vista general de todos los condominios',
-            createdAt: new Date(),
-            updatedAt: new Date()
+            description: 'Vista general de todos los condominios'
           };
           
           this.condominiums.set([allOption, ...response.data]);
@@ -135,7 +141,7 @@ export class CondoSelectorComponent {
     if (condo.id === 'all') {
       return 'Vista general de todos los condominios';
     }
-    return `${condo.street} #${condo.number}, ${condo.neighborhood}, ${condo.city}`;
+    return `${condo.streetAddress}, ${condo.neighborhood}, ${condo.city}`;
   }
 
   getCondoUnits(condo: Condominium): number {

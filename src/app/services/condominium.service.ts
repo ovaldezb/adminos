@@ -21,17 +21,17 @@ import { environment } from '../../environments/environment';
 })
 export class CondominiumService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = `${environment.apiUrl}condominium`;
+  private readonly baseUrl = environment.apiUrl;
   
   // Signal para el condominio seleccionado globalmente
   public readonly selectedCondominium = signal<Condominium | null>(null);
 
   /**
-   * GET /condominiums - Fetch all condominiums from backend
-   * Backend: GET /condominiums - Returns { success, message, data: [condominiums with buildings] }
+   * GET /condominium - Fetch all condominiums from backend
+   * Backend: GET /condominium - Returns { success, message, data: [condominiums with buildings] }
    */
   getAllCondominiums(): Observable<ApiResponse<Condominium[]>> {
-    return this.http.get<ApiResponse<Condominium[]>>(this.apiUrl).pipe(
+    return this.http.get<ApiResponse<Condominium[]>>(`${this.baseUrl}condominium`).pipe(
       catchError((error) => {
         console.error('Error fetching condominiums from backend:', error);
         return of({
@@ -51,7 +51,7 @@ export class CondominiumService {
    * Lambda: getCondominiumById
    */
   getCondominiumById(id: string): Observable<ApiResponse<Condominium>> {
-    return this.http.get<ApiResponse<Condominium>>(`${this.apiUrl}/${id}`).pipe(
+    return this.http.get<ApiResponse<Condominium>>(`${this.baseUrl}condominium/${id}`).pipe(
       catchError((error) => {
         console.error(`Error fetching condominium ${id} from backend:`, error);
         return of({
@@ -73,7 +73,7 @@ export class CondominiumService {
   getCondominiumDetails(
     id: string
   ): Observable<ApiResponse<CondominiumDetails>> {
-    return this.http.get<ApiResponse<CondominiumDetails>>(`${this.apiUrl}/${id}/details`).pipe(
+    return this.http.get<ApiResponse<CondominiumDetails>>(`${this.baseUrl}condominium/${id}/details`).pipe(
       catchError((error) => {
         console.error(`Error fetching condominium details for ${id}:`, error);
         return of({
@@ -95,7 +95,7 @@ export class CondominiumService {
   getCondominiumStats(
     id: string
   ): Observable<ApiResponse<CondominiumStats>> {
-    return this.http.get<ApiResponse<CondominiumStats>>(`${this.apiUrl}/${id}/stats`).pipe(
+    return this.http.get<ApiResponse<CondominiumStats>>(`${this.baseUrl}condominium/${id}/stats`).pipe(
       catchError((error) => {
         console.error(`Error fetching stats for condominium ${id}:`, error);
         return of({
@@ -115,7 +115,7 @@ export class CondominiumService {
    * Lambda: getAllCondominiumsStats
    */
   getAllCondominiumsStats(): Observable<ApiResponse<CondominiumStats>> {
-    return this.http.get<ApiResponse<CondominiumStats>>(`${this.apiUrl}/stats/all`).pipe(
+    return this.http.get<ApiResponse<CondominiumStats>>(`${this.baseUrl}condominium/stats/all`).pipe(
       catchError((error) => {
         console.error('Error fetching global stats:', error);
         return of({
@@ -137,7 +137,7 @@ export class CondominiumService {
   createCondominium(
     condominiumDto: CreateCondominiumDto
   ): Observable<ApiResponse<Condominium>> {
-    return this.http.post<ApiResponse<Condominium>>(this.apiUrl, condominiumDto).pipe(
+    return this.http.post<ApiResponse<Condominium>>(`${this.baseUrl}condominium`, condominiumDto).pipe(
       catchError((error) => {
         console.error('Error creating condominium in backend:', error);
         return of({
@@ -160,7 +160,7 @@ export class CondominiumService {
     id: string,
     updates: UpdateCondominiumDto
   ): Observable<ApiResponse<Condominium>> {
-    return this.http.put<ApiResponse<Condominium>>(`${this.apiUrl}/${id}`, updates).pipe(
+    return this.http.put<ApiResponse<Condominium>>(`${this.baseUrl}condominium/${id}`, updates).pipe(
       catchError((error) => {
         console.error(`Error updating condominium ${id} in backend:`, error);
         return of({
@@ -185,7 +185,7 @@ export class CondominiumService {
    * Backend: DELETE /condominiums/{id} - Sets status to INACTIVE - Returns { success, message }
    */
   deleteCondominium(id: string): Observable<ApiResponse<void>> {
-    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`).pipe(
+    return this.http.delete<ApiResponse<void>>(`${this.baseUrl}condominium/${id}`).pipe(
       catchError((error) => {
         console.error(`Error deleting condominium ${id} in backend:`, error);
         return of({

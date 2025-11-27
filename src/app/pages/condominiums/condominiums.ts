@@ -9,6 +9,8 @@ import {
   Condominium,
   CreateCondominiumDto,
   UpdateCondominiumDto,
+  CondominiumType,
+  CondominiumStatus,
   ApiResponse
 } from '../../models';
 
@@ -62,23 +64,29 @@ export class CondominiumsComponent implements OnInit {
   protected readonly condoToDelete = signal<Condominium | null>(null);
   protected readonly isDeleting = signal(false);
   
-  // Form data
+  // Form data (nombres coinciden con lambda)
   protected readonly formData = signal<Partial<CreateCondominiumDto>>({
     name: '',
-    street: '',
+    type: CondominiumType.TOWER,
+    streetAddress: '',
     neighborhood: '',
-    number: '',
-    zipCode: '',
     city: '',
+    zipCode: '',
     state: '',
     country: 'México',
-    paymentDay: 1,
     conventionalPenalty: 0,
-    initialFolio: 1,
-    rfc: '',
+    initialFolioNumber: 1,
     isActive: true,
     hasAC: false,
-    additionalInfo: ''
+    additionalInfo: '',
+    buildingsId: [],
+    buildings: [],
+    privateStreets: [],
+    amenities: [],
+    // Legacy para compatibilidad
+    number: '',
+    paymentDay: 1,
+    rfc: ''
   });
   
   // Computed filtered condominiums
@@ -91,7 +99,7 @@ export class CondominiumsComponent implements OnInit {
         c.name.toLowerCase().includes(search) ||
         c.city?.toLowerCase().includes(search) ||
         c.neighborhood?.toLowerCase().includes(search) ||
-        c.rfc?.toLowerCase().includes(search)
+        c.streetAddress?.toLowerCase().includes(search)
       );
     }
     
@@ -158,43 +166,57 @@ export class CondominiumsComponent implements OnInit {
     this.selectedCondominium.set(null);
     this.formData.set({
       name: '',
-      street: '',
+      type: CondominiumType.TOWER,
+      streetAddress: '',
       neighborhood: '',
-      number: '',
-      zipCode: '',
       city: '',
+      zipCode: '',
       state: '',
       country: 'México',
-      paymentDay: 1,
       conventionalPenalty: 0,
-      initialFolio: 1,
-      rfc: '',
+      initialFolioNumber: 1,
       isActive: true,
       hasAC: false,
-      additionalInfo: ''
+      additionalInfo: '',
+      buildingsId: [],
+      buildings: [],
+      privateStreets: [],
+      amenities: [],
+      // Legacy para compatibilidad
+      number: '',
+      paymentDay: 1,
+      rfc: ''
     });
     this.showModal.set(true);
   }
 
   openEditModal(condo: Condominium): void {
+    console.log('🔧 openEditModal called with condo:', condo);
+    console.log('🆔 Condo ID:', condo?.id);
     this.modalMode.set('edit');
     this.selectedCondominium.set(condo);
     this.formData.set({
       name: condo.name,
-      street: condo.street,
-      neighborhood: condo.neighborhood,
-      number: condo.number,
-      zipCode: condo.zipCode,
-      city: condo.city,
-      state: condo.state,
+      type: condo.type,
+      streetAddress: condo.streetAddress || '',
+      neighborhood: condo.neighborhood || '',
+      city: condo.city || '',
+      zipCode: condo.zipCode || '',
+      state: condo.state || '',
       country: condo.country || 'México',
-      paymentDay: condo.paymentDay,
-      conventionalPenalty: condo.conventionalPenalty,
-      initialFolio: condo.initialFolio,
-      rfc: condo.rfc,
-      isActive: condo.isActive,
-      hasAC: condo.hasAC,
-      additionalInfo: condo.additionalInfo
+      conventionalPenalty: condo.conventionalPenalty || 0,
+      initialFolioNumber: condo.initialFolioNumber || 1,
+      isActive: condo.isActive !== undefined ? condo.isActive : true,
+      hasAC: condo.hasAC !== undefined ? condo.hasAC : false,
+      additionalInfo: condo.additionalInfo || '',
+      buildingsId: condo.buildingsId || [],
+      buildings: condo.buildings || [],
+      privateStreets: condo.privateStreets || [],
+      amenities: condo.amenities || [],
+      // Legacy para compatibilidad
+      number: condo.number || '',
+      paymentDay: condo.paymentDay || 1,
+      rfc: condo.rfc || ''
     });
     this.showModal.set(true);
   }
@@ -211,20 +233,29 @@ export class CondominiumsComponent implements OnInit {
   }
 
   saveCondominium(): void {
+    console.log('🔄 saveCondominium called, modalMode:', this.modalMode());
     const data = this.formData();
+    console.log('📋 Form data:', data);
     
     if (!this.validateForm(data)) {
+      console.log('❌ Validation failed');
       return;
     }
 
-    // Si initialFolio está vacío, usar 1
-    if (!data.initialFolio || data.initialFolio < 1) {
-      data.initialFolio = 1;
+    // Si initialFolioNumber está vacío, usar 1
+    if (!data.initialFolioNumber || data.initialFolioNumber < 1) {
+      data.initialFolioNumber = 1;
     }
 
     this.loading.set(true);
 
     if (this.modalMode() === 'create') {
+      // Agregar campos requeridos por la lambda SOLO en creación
+      const now = new Date();
+      data.createdAt = now;
+      data.updatedAt = now;
+      data.status = CondominiumStatus.ACTIVE;
+
       this.condominiumService.createCondominium(data as CreateCondominiumDto).subscribe({
         next: (response) => {
           if (response.success) {
@@ -243,8 +274,20 @@ export class CondominiumsComponent implements OnInit {
         }
       });
     } else if (this.modalMode() === 'edit') {
-      const condoId = this.selectedCondominium()?.id;
-      if (!condoId) return;
+      const condoId = this.getCondoId(this.selectedCondominium());
+      console.log('✏️ Edit mode - condoId:', condoId);
+      
+      // Para edición, solo actualizar updatedAt y mantener los campos existentes
+      const selectedCondo = this.selectedCondominium();
+      data.updatedAt = new Date();
+      data.createdAt = selectedCondo?.createdAt || new Date();
+      data.status = selectedCondo?.status || CondominiumStatus.ACTIVE;
+      
+      console.log('📤 Sending data:', data);
+      if (!condoId) {
+        console.log('❌ No condoId found');
+        return;
+      }
 
       this.condominiumService.updateCondominium(condoId, data as UpdateCondominiumDto).subscribe({
         next: (response) => {
@@ -281,9 +324,12 @@ export class CondominiumsComponent implements OnInit {
     const condo = this.condoToDelete();
     if (!condo) return;
 
+    const condoId = this.getCondoId(condo);
+    if (!condoId) return;
+
     this.isDeleting.set(true);
 
-    this.condominiumService.deleteCondominium(condo.id).subscribe({
+    this.condominiumService.deleteCondominium(condoId).subscribe({
       next: (response) => {
         if (response.success) {
           this.showToastMessage('Condominio eliminado exitosamente', 'success');
@@ -311,6 +357,26 @@ export class CondominiumsComponent implements OnInit {
     });
   }
 
+  // Helper para obtener el ID correcto (maneja tanto id como _id)
+  private getCondoId(condo: Condominium | null): string | undefined {
+    if (!condo) return undefined;
+    return condo.id || (condo as any)._id;
+  }
+
+  // Helper para mostrar el tipo de condominio
+  getCondominiumTypeLabel(type: any): string {
+    switch (type) {
+      case 'TOWER':
+        return 'Edificio con Torres';
+      case 'HOUSE':
+        return 'Fraccionamiento/Casas';
+      case 'COMPLEX':
+        return 'Conjunto Habitacional';
+      default:
+        return 'No especificado';
+    }
+  }
+
   private showToastMessage(message: string, type: 'success' | 'error' | 'info'): void {
     this.toastMessage.set(message);
     this.toastType.set(type);
@@ -323,19 +389,19 @@ export class CondominiumsComponent implements OnInit {
   }
 
   private validateForm(data: Partial<CreateCondominiumDto>): boolean {
-    if (!data.name || !data.street || !data.neighborhood || !data.number || 
-        !data.zipCode || !data.city) {
+    if (!data.name || !data.streetAddress || !data.neighborhood || 
+        !data.zipCode || !data.city || !data.state || !data.country) {
       this.error.set('Por favor complete todos los campos obligatorios');
       return false;
     }
-    
-    if (data.paymentDay! < 1 || data.paymentDay! > 31) {
-      this.error.set('El día de pago debe estar entre 1 y 31');
+
+    if (data.conventionalPenalty! < 0) {
+      this.error.set('La pena convencional no puede ser negativa');
       return false;
     }
 
-    if (data.conventionalPenalty! < 0 || data.conventionalPenalty! > 100) {
-      this.error.set('La pena convencional debe estar entre 0 y 100%');
+    if (data.initialFolioNumber! < 1) {
+      this.error.set('El folio inicial debe ser mayor a 0');
       return false;
     }
     
@@ -386,12 +452,30 @@ export class CondominiumsComponent implements OnInit {
   }
 
   // Utility methods
-  getStatusBadgeClass(isActive: boolean): string {
-    return isActive ? 'badge-success' : 'badge-error';
+  getStatusBadgeClass(status: string): string {
+    switch (status) {
+      case 'ACTIVE':
+        return 'badge-success';
+      case 'INACTIVE':
+        return 'badge-error';
+      case 'ARCHIVED':
+        return 'badge-warning';
+      default:
+        return 'badge-neutral';
+    }
   }
 
-  getStatusLabel(isActive: boolean): string {
-    return isActive ? 'Activo' : 'Inactivo';
+  getStatusLabel(status: string): string {
+    switch (status) {
+      case 'ACTIVE':
+        return 'Activo';
+      case 'INACTIVE':
+        return 'Inactivo';
+      case 'ARCHIVED':
+        return 'Archivado';
+      default:
+        return 'Desconocido';
+    }
   }
 
   formatDate(date: Date | undefined): string {
@@ -408,6 +492,6 @@ export class CondominiumsComponent implements OnInit {
   }
 
   getFullAddress(condo: Condominium): string {
-    return `${condo.street} #${condo.number}, Col. ${condo.neighborhood}, ${condo.city}`;
+    return `${condo.streetAddress}, Col. ${condo.neighborhood}, ${condo.city}`;
   }
 }

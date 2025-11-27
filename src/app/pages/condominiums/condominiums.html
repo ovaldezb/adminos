@@ -179,7 +179,7 @@
                       </div>
                     </td>
                     <td>
-                      <p class="text-sm text-neutral-800">{{ condo.street }} #{{ condo.number }}</p>
+                      <p class="text-sm text-neutral-800">{{ condo.streetAddress }}</p>
                       <p class="text-xs text-neutral-600">Col. {{ condo.neighborhood }}, CP {{ condo.zipCode }}</p>
                     </td>
                     <td>
@@ -201,7 +201,7 @@
                     </td>
                     <td>
                       <div class="text-center">
-                        <p class="text-sm text-neutral-800">{{ condo.initialFolio }}</p>
+                        <p class="text-sm text-neutral-800">{{ condo.initialFolioNumber }}</p>
                       </div>
                     </td>
                     <td>
@@ -218,8 +218,8 @@
                       }
                     </td>
                     <td>
-                      <span class="badge rounded-lg text-xs" [class]="getStatusBadgeClass(condo.isActive)">
-                        {{ getStatusLabel(condo.isActive) }}
+                      <span class="badge rounded-lg text-xs" [class]="getStatusBadgeClass(condo.status)">
+                        {{ getStatusLabel(condo.status) }}
                       </span>
                     </td>
                     <td>
@@ -313,16 +313,21 @@
               <p class="text-neutral-900">{{ selectedCondominium()!.name }}</p>
             </div>
 
+            <div class="form-control">
+              <label class="label"><span class="label-text text-neutral-900 font-semibold">Tipo de Condominio</span></label>
+              <p class="text-neutral-900">{{ getCondominiumTypeLabel(selectedCondominium()!.type) }}</p>
+            </div>
+
             <div class="divider text-neutral-600">Dirección</div>
 
             <div class="grid grid-cols-2 gap-4">
               <div class="form-control">
                 <label class="label"><span class="label-text text-neutral-900 font-semibold">Calle</span></label>
-                <p class="text-neutral-900">{{ selectedCondominium()!.street }}</p>
+                <p class="text-neutral-900">{{ selectedCondominium()!.streetAddress }}</p>
               </div>
               <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-900 font-semibold">Número</span></label>
-                <p class="text-neutral-900">{{ selectedCondominium()!.number }}</p>
+                <label class="label"><span class="label-text text-neutral-900 font-semibold">País</span></label>
+                <p class="text-neutral-900">{{ selectedCondominium()!.country || 'México' }}</p>
               </div>
             </div>
 
@@ -361,7 +366,7 @@
               </div>
               <div>
                 <label class="label"><span class="label-text text-neutral-900 font-semibold">Folio Inicial</span></label>
-                <p class="text-neutral-900">{{ selectedCondominium()!.initialFolio }}</p>
+                <p class="text-neutral-900">{{ selectedCondominium()!.initialFolioNumber }}</p>
               </div>
             </div>
 
@@ -379,8 +384,8 @@
             <div class="grid grid-cols-2 gap-4">
               <div class="form-control">
                 <label class="label"><span class="label-text text-neutral-900 font-semibold">Estado</span></label>
-                <span class="badge rounded-lg" [class]="getStatusBadgeClass(selectedCondominium()!.isActive)">
-                  {{ getStatusLabel(selectedCondominium()!.isActive) }}
+                <span class="badge rounded-lg" [class]="getStatusBadgeClass(selectedCondominium()!.status)">
+                  {{ getStatusLabel(selectedCondominium()!.status) }}
                 </span>
               </div>
               <div class="form-control">
@@ -411,28 +416,42 @@
               />
             </div>
 
+            <div class="form-control">
+              <label class="label"><span class="label-text text-neutral-900 font-semibold">Tipo de Condominio <span class="text-error">*</span></span></label>
+              <select
+                [value]="formData().type"
+                (change)="updateFormField('type', $any($event.target).value)"
+                class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
+              >
+                <option value="">Seleccione el tipo</option>
+                <option value="TOWER">Edificio con Torres</option>
+                <option value="HOUSE">Fraccionamiento/Casas</option>
+                <option value="COMPLEX">Conjunto Habitacional</option>
+              </select>
+            </div>
+
             <div class="divider text-neutral-600">Dirección</div>
 
             <div class="grid grid-cols-2 gap-4">
               <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-900 font-semibold">Calle <span class="text-error">*</span></span></label>
+                <label class="label"><span class="label-text text-neutral-900 font-semibold">Dirección <span class="text-error">*</span></span></label>
                 <input
                   type="text"
-                  [value]="formData().street"
-                  (input)="updateFormField('street', $any($event.target).value)"
+                  [value]="formData().streetAddress"
+                  (input)="updateFormField('streetAddress', $any($event.target).value)"
                   class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                  placeholder="Ej: Av. Constitución"
+                  placeholder="Ej: Av. Constitución 1234"
                 />
               </div>
 
               <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-900 font-semibold">Número <span class="text-error">*</span></span></label>
+                <label class="label"><span class="label-text text-neutral-900 font-semibold">Estado <span class="text-error">*</span></span></label>
                 <input
                   type="text"
-                  [value]="formData().number"
-                  (input)="updateFormField('number', $any($event.target).value)"
+                  [value]="formData().state"
+                  (input)="updateFormField('state', $any($event.target).value)"
                   class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                  placeholder="Ej: 1234"
+                  placeholder="Ej: Jalisco"
                 />
               </div>
             </div>
@@ -474,44 +493,30 @@
               </div>
 
               <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-900 font-semibold">Estado</span></label>
+                <label class="label"><span class="label-text text-neutral-900 font-semibold">País <span class="text-error">*</span></span></label>
                 <input
                   type="text"
-                  [value]="formData().state"
-                  (input)="updateFormField('state', $any($event.target).value)"
+                  [value]="formData().country"
+                  (input)="updateFormField('country', $any($event.target).value)"
                   class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                  placeholder="Ej: Jalisco"
+                  placeholder="México"
                 />
               </div>
             </div>
 
-            <div class="divider text-neutral-600">Configuración de Pagos</div>
+            <div class="divider text-neutral-600">Configuración</div>
 
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-2 gap-4">
               <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-900 font-semibold">Día de Pago <span class="text-error">*</span></span></label>
-                <input
-                  type="number"
-                  [value]="formData().paymentDay"
-                  (input)="updateFormField('paymentDay', +$any($event.target).value)"
-                  class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                  min="1"
-                  max="31"
-                  placeholder="1-31"
-                />
-              </div>
-
-              <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-900 font-semibold">Pena Convencional (%) <span class="text-error">*</span></span></label>
+                <label class="label"><span class="label-text text-neutral-900 font-semibold">Pena Convencional</span></label>
                 <input
                   type="number"
                   [value]="formData().conventionalPenalty"
                   (input)="updateFormField('conventionalPenalty', +$any($event.target).value)"
                   class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
                   min="0"
-                  max="100"
-                  step="0.1"
-                  placeholder="0-100"
+                  step="0.01"
+                  placeholder="0.00"
                 />
               </div>
 
@@ -519,52 +524,45 @@
                 <label class="label"><span class="label-text text-neutral-900 font-semibold">Folio Inicial</span></label>
                 <input
                   type="number"
-                  [value]="formData().initialFolio"
-                  (input)="updateFormField('initialFolio', +$any($event.target).value)"
+                  [value]="formData().initialFolioNumber"
+                  (input)="updateFormField('initialFolioNumber', +$any($event.target).value)"
                   class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
                   min="1"
-                  placeholder="1 (si se deja vacío)"
+                  placeholder="1"
                 />
               </div>
             </div>
 
-            <div class="form-control">
-              <label class="label"><span class="label-text text-neutral-900 font-semibold">RFC</span></label>
-              <input
-                type="text"
-                [value]="formData().rfc"
-                (input)="updateFormField('rfc', $any($event.target).value.toUpperCase())"
-                class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 font-mono"
-                placeholder="Ej: XAXX010101000 (opcional)"
-                maxlength="13"
-              />
-            </div>
+            <div class="divider text-neutral-600">Estado</div>
 
-            <div class="divider text-neutral-600">Estado y Servicios</div>
-
-            <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-3">
               <div class="form-control">
-                <label class="label cursor-pointer justify-start gap-3">
+                <label class="label cursor-pointer justify-start gap-3 p-3 rounded-xl bg-gradient-to-r from-success/5 to-success/10 border border-success/20 hover:border-success/30 transition-colors">
                   <input
                     type="checkbox"
                     [checked]="formData().isActive"
                     (change)="updateFormField('isActive', $any($event.target).checked)"
                     class="checkbox checkbox-success"
                   />
-                  <span class="label-text text-neutral-900 font-semibold">¿Está Activo?</span>
+                  <div class="flex-1">
+                    <span class="label-text text-neutral-900 font-semibold">Condominio Activo</span>
+                    <p class="text-xs text-neutral-600 mt-1">Permite el acceso de usuarios y procesamiento de pagos</p>
+                  </div>
                 </label>
-                <p class="text-xs text-neutral-600 ml-9">Cuando está inactivo, se bloquean usuarios y funcionalidades</p>
               </div>
 
               <div class="form-control">
-                <label class="label cursor-pointer justify-start gap-3">
+                <label class="label cursor-pointer justify-start gap-3 p-3 rounded-xl bg-gradient-to-r from-info/5 to-info/10 border border-info/20 hover:border-info/30 transition-colors">
                   <input
                     type="checkbox"
                     [checked]="formData().hasAC"
                     (change)="updateFormField('hasAC', $any($event.target).checked)"
                     class="checkbox checkbox-info"
                   />
-                  <span class="label-text text-neutral-900 font-semibold">¿Es Asociación Civil?</span>
+                  <div class="flex-1">
+                    <span class="label-text text-neutral-900 font-semibold">Asociación Civil</span>
+                    <p class="text-xs text-neutral-600 mt-1">Opera bajo la figura jurídica de Asociación Civil</p>
+                  </div>
                 </label>
               </div>
             </div>

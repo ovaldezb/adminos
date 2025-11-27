@@ -1,8 +1,14 @@
 // Enums
 export enum CondominiumType {
-  BUILDING = 'BUILDING',           // Edificio con torres
-  RESIDENTIAL_COMPLEX = 'RESIDENTIAL_COMPLEX',  // Fraccionamiento
-  GATED_COMMUNITY = 'GATED_COMMUNITY'          // Conjunto habitacional
+  TOWER = 'TOWER',           // Edificio con torres
+  HOUSE = 'HOUSE',           // Fraccionamiento/Casas
+  COMPLEX = 'COMPLEX'        // Conjunto habitacional/Complejo
+}
+
+export enum CondominiumStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  ARCHIVED = 'ARCHIVED'
 }
 
 export enum AmenityType {
@@ -45,91 +51,102 @@ export interface PrivateStreet {
 
 // Condominium Interface
 export interface Condominium {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   type: CondominiumType;
   
-  // Dirección completa
-  street: string;
+  // Dirección completa (nombres coinciden con lambda)
+  streetAddress: string;
   neighborhood: string; // colonia
-  number: string;
-  zipCode: string;
   city: string;
-  state?: string;
-  country?: string;
+  zipCode: string;
+  state: string;
+  country: string;
   
-  // Configuración de pagos
-  paymentDay: number; // Día de pago (1-31)
-  conventionalPenalty: number; // Pena convencional en porcentaje
-  initialFolio: number; // Folio inicial para facturas/recibos
-  rfc?: string; // Registro Federal de Contribuyentes (opcional)
+  // Configuración de pagos (nombres coinciden con lambda)
+  conventionalPenalty: number; // Pena convencional
+  initialFolioNumber: number; // Folio inicial para facturas/recibos
   
-  // Estados
+  // Estados (nombres coinciden con lambda)
   isActive: boolean; // Para bloquear usuarios o funcionalidades
   hasAC: boolean; // Es Asociación Civil
   
   // Información adicional
   additionalInfo?: string;
   
-  // Para edificios con torres
-  towers?: Tower[];
+  // Referencias y datos relacionados (nombres coinciden con lambda)
+  buildingsId: string[]; // IDs de edificios asociados
+  buildings: any[]; // Array de edificios (usar Building[] cuando esté definido)
+  privateStreets: string[]; // Calles privadas
+  amenities: string[]; // Amenidades
   
-  // Para fraccionamientos/conjuntos
-  privateStreets?: PrivateStreet[];
-  
-  // Amenidades
-  amenities?: Amenity[];
+  // Timestamps (nombres coinciden con lambda) - REQUERIDOS
+  createdAt: Date;
+  updatedAt: Date;
+  status: CondominiumStatus;
   
   // Configuración legacy (mantener compatibilidad)
   maintenanceFee?: number;
   currency?: string;
   billingDay?: number;
+  paymentDay?: number;
+  rfc?: string;
+  number?: string;
   
   // Metadata
-  units?: number; // Mantener para compatibilidad
+  units?: number;
   totalUnits?: number;
   occupiedUnits?: number;
   avatar?: string;
   color?: string;
   description?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  towers?: Tower[];
 }
 
-// Create Condominium DTO
+// Create Condominium DTO (nombres coinciden con lambda)
 export interface CreateCondominiumDto {
   name: string;
+  type: CondominiumType;
   
-  // Dirección
-  street: string;
-  neighborhood: string; // colonia
-  number: string;
-  zipCode: string;
+  // Dirección (nombres exactos de lambda)
+  streetAddress: string;
+  neighborhood: string;
   city: string;
-  state?: string;
-  country?: string;
+  zipCode: string;
+  state: string;
+  country: string;
   
-  // Configuración de pagos
-  paymentDay: number;
+  // Configuración (nombres exactos de lambda)
   conventionalPenalty: number;
-  initialFolio?: number; // Opcional, default 1
-  rfc?: string; // Opcional
+  initialFolioNumber?: number; // Opcional, default 1
   
-  // Estados
+  // Estados (nombres exactos de lambda)
   isActive?: boolean; // Default true
   hasAC?: boolean; // Default false (Asociación Civil)
   
   // Información adicional
   additionalInfo?: string;
   
-  // Legacy fields (optional)
-  type?: CondominiumType;
+  // Arrays (nombres exactos de lambda)
+  buildingsId?: string[];
+  buildings?: any[];
+  privateStreets?: string[];
+  amenities?: string[];
+  
+  // Campos que serán generados por el backend (opcionales en el DTO)
+  createdAt?: Date;
+  updatedAt?: Date;
+  status?: CondominiumStatus;
+  
+  // Legacy fields para compatibilidad
   towers?: Omit<Tower, 'id'>[];
-  privateStreets?: Omit<PrivateStreet, 'id'>[];
-  amenities?: Omit<Amenity, 'id'>[];
   maintenanceFee?: number;
   currency?: string;
   billingDay?: number;
+  paymentDay?: number;
+  rfc?: string;
+  number?: string;
   description?: string;
 }
 
