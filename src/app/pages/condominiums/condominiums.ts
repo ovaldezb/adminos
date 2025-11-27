@@ -1,4 +1,4 @@
-import { Component, signal, computed, effect } from '@angular/core';
+import { Component, signal, computed, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -17,7 +17,16 @@ import {
   imports: [CommonModule, FormsModule, NavbarComponent, SideMenuComponent],
   templateUrl: './condominiums.html'
 })
-export class CondominiumsComponent {
+export class CondominiumsComponent implements OnInit {
+  constructor(
+    private readonly router: Router,
+    private readonly condominiumService: CondominiumService
+  ) {
+    // Load condominiums on component init
+  }
+  ngOnInit(): void {
+    this.loadCondominiums();
+  }
   protected readonly sidebarOpen = signal(window.innerWidth >= 1024);
   protected readonly userName = signal('Administrador');
   protected readonly selectedCondo = signal<Condominium | null>(null);
@@ -108,12 +117,7 @@ export class CondominiumsComponent {
     return condos.reduce((sum, c) => sum + (c.conventionalPenalty || 0), 0) / condos.length;
   });
 
-  constructor(
-    private router: Router,
-    private condominiumService: CondominiumService
-  ) {
-    this.loadCondominiums();
-  }
+  
 
   toggleSidebar(): void {
     this.sidebarOpen.set(!this.sidebarOpen());
@@ -130,6 +134,7 @@ export class CondominiumsComponent {
     
     this.condominiumService.getAllCondominiums().subscribe({
       next: (response) => {
+        console.log('Condominiums loaded:', response);
         if (response.success && response.data) {
           this.condominiums.set(response.data);
           this.calculatePagination();

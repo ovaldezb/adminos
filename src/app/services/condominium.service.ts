@@ -21,13 +21,10 @@ import { environment } from '../../environments/environment';
 })
 export class CondominiumService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = `${environment.apiUrl}/condominiums`;
+  private readonly apiUrl = `${environment.apiUrl}condominium`;
   
   // Signal para el condominio seleccionado globalmente
   public readonly selectedCondominium = signal<Condominium | null>(null);
-
-  // Simulated AWS Lambda endpoint (DEPRECATED - usando apiUrl ahora)
-  private readonly lambdaEndpoint = 'https://api.example.com/condominiums';
 
   // Mock data simulating AWS Lambda responses from MongoDB
   private mockCondominiums: Condominium[] = [
