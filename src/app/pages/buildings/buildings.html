@@ -156,38 +156,76 @@
         </div>
       </div>
 
-      <!-- Buildings Table -->
-      <div class="glass rounded-2xl shadow-lg overflow-hidden border border-white/20">
-        <div class="overflow-x-auto">
-          <table class="table w-full">
-            <thead class="bg-white/50 backdrop-blur-sm">
-              <tr class="border-b border-neutral-200">
-                <th class="text-neutral-900 font-semibold">Edificio</th>
-                <th class="text-neutral-900 font-semibold">Tipo</th>
-                <th class="text-neutral-900 font-semibold">Dirección Principal</th>
-                <th class="text-neutral-900 font-semibold">Viviendas</th>
-                <th class="text-neutral-900 font-semibold">Ocupación</th>
-                <th class="text-neutral-900 font-semibold">Áreas Comunes</th>
-                <th class="text-neutral-900 font-semibold">Estado</th>
-                <th class="text-neutral-900 font-semibold">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              @if (loading()) {
-                <tr>
-                  <td colspan="8" class="text-center py-12">
-                    <span class="loading loading-spinner loading-lg text-primary"></span>
-                    <p class="text-neutral-600 mt-2">Cargando edificios...</p>
-                  </td>
+      <!-- Message when no condominium selected -->
+      @if (needsCondoSelection()) {
+        <div class="glass rounded-2xl shadow-lg p-12 border border-white/20 text-center">
+          <div class="flex flex-col items-center gap-4 max-w-md mx-auto">
+            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-warning/20 to-warning/10 flex items-center justify-center">
+              <i class="ri-building-2-line text-5xl text-warning"></i>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-neutral-900 mb-2">Selecciona un Condominio</h3>
+              <p class="text-neutral-600 mb-4">
+                Para visualizar y gestionar edificios, por favor selecciona un condominio desde el selector en la barra superior.
+              </p>
+            </div>
+            <div class="flex items-center gap-2 text-sm text-neutral-500">
+              <i class="ri-information-line text-base"></i>
+              <span>Puedes seleccionar "Todos los Condominios" para ver una vista general</span>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <!-- Buildings Table -->
+        <div class="glass rounded-2xl shadow-lg overflow-hidden border border-white/20">
+          <div class="overflow-x-auto">
+            <table class="table w-full">
+              <thead class="bg-white/50 backdrop-blur-sm">
+                <tr class="border-b border-neutral-200">
+                  <th class="text-neutral-900 font-semibold">Edificio</th>
+                  <th class="text-neutral-900 font-semibold">Tipo</th>
+                  <th class="text-neutral-900 font-semibold">Dirección Principal</th>
+                  <th class="text-neutral-900 font-semibold">Viviendas</th>
+                  <th class="text-neutral-900 font-semibold">Ocupación</th>
+                  <th class="text-neutral-900 font-semibold">Áreas Comunes</th>
+                  <th class="text-neutral-900 font-semibold">Estado</th>
+                  <th class="text-neutral-900 font-semibold">Acciones</th>
                 </tr>
-              } @else if (filteredBuildings().length === 0) {
-                <tr>
-                  <td colspan="8" class="text-center py-12">
-                    <i class="ri-building-line text-5xl text-neutral-300 mb-2"></i>
-                    <p class="text-neutral-600">No se encontraron edificios</p>
-                  </td>
-                </tr>
-              } @else {
+              </thead>
+              <tbody>
+                @if (loading()) {
+                  <tr>
+                    <td colspan="8" class="text-center py-12">
+                      <span class="loading loading-spinner loading-lg text-primary"></span>
+                      <p class="text-neutral-600 mt-2">Cargando edificios...</p>
+                    </td>
+                  </tr>
+                } @else if (error()) {
+                  <tr>
+                    <td colspan="8" class="text-center py-12">
+                      <div class="flex flex-col items-center gap-4">
+                        <i class="ri-error-warning-line text-5xl text-error"></i>
+                        <div class="max-w-md">
+                          <p class="text-neutral-900 font-semibold mb-2">Error al cargar edificios</p>
+                          <p class="text-neutral-600 text-sm">{{ error() }}</p>
+                          <button 
+                            (click)="loadBuildings()" 
+                            class="btn btn-primary btn-sm rounded-xl mt-4">
+                            <i class="ri-refresh-line text-base"></i>
+                            Reintentar
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                } @else if (filteredBuildings().length === 0) {
+                  <tr>
+                    <td colspan="8" class="text-center py-12">
+                      <i class="ri-building-line text-5xl text-neutral-300 mb-2"></i>
+                      <p class="text-neutral-600">No se encontraron edificios</p>
+                    </td>
+                  </tr>
+                } @else {
                 @for (building of filteredBuildings(); track building.id) {
                   <tr class="hover:bg-white/30 transition-colors border-b border-neutral-100">
                     <td>
@@ -197,8 +235,8 @@
                         </div>
                         <div>
                           <p class="font-semibold text-neutral-900">{{ building.name }}</p>
-                          @if (building.floors) {
-                            <p class="text-xs text-neutral-600">{{ building.floors }} pisos</p>
+                          @if (building.num_floors) {
+                            <p class="text-xs text-neutral-600">{{ building.num_floors }} pisos</p>
                           }
                         </div>
                       </div>
@@ -313,6 +351,7 @@
           </div>
         }
       </div>
+      }
     </main>
   </div>
 
@@ -355,10 +394,10 @@
                 <label class="label"><span class="label-text text-neutral-700 font-medium">Total Viviendas</span></label>
                 <p class="text-neutral-900">{{ selectedBuilding()!.totalUnits }}</p>
               </div>
-              @if (selectedBuilding()!.floors) {
+              @if (selectedBuilding()!.num_floors) {
                 <div>
                   <label class="label"><span class="label-text text-neutral-700 font-medium">Pisos</span></label>
-                  <p class="text-neutral-900">{{ selectedBuilding()!.floors }}</p>
+                  <p class="text-neutral-900">{{ selectedBuilding()!.num_floors }}</p>
                 </div>
               }
               <div>
@@ -494,8 +533,8 @@
                 <label class="label"><span class="label-text text-neutral-700 font-medium">Pisos</span></label>
                 <input
                   type="number"
-                  [value]="formData().floors"
-                  (input)="updateFormField('floors', +$any($event.target).value)"
+                  [value]="formData().num_floors"
+                  (input)="updateFormField('num_floors', +$any($event.target).value)"
                   class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
                   min="1"
                 />

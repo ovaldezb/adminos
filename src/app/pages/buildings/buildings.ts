@@ -28,7 +28,7 @@ export class BuildingsComponent {
   protected readonly sidebarOpen = signal(window.innerWidth >= 1024); // Abierto solo en desktop
   protected readonly userName = signal('Administrador');
   protected readonly selectedCondo = signal<Condominium | null>(null);
-  protected readonly isOverviewMode = computed(() => !this.selectedCondo() || this.selectedCondo()?.id === 'all');
+  protected readonly isOverviewMode = computed(() => !this.selectedCondo() || this.getCondoId(this.selectedCondo()) === 'all');
   
   // Expose Math for template
   protected readonly Math = Math;
@@ -40,6 +40,7 @@ export class BuildingsComponent {
   protected readonly buildings = signal<BuildingDetails[]>([]);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
+  protected readonly needsCondoSelection = signal(false);
   
   // Pagination
   protected readonly currentPage = signal(1);
@@ -105,7 +106,7 @@ export class BuildingsComponent {
     type: BuildingType.BUILDING,
     mainEntranceAddress: '',
     totalUnits: 0,
-    floors: 1,
+    num_floors: 1,
     hasCommonAreas: false,
     commonAreasDescription: '',
     commonAreaRentalRate: 0,
@@ -128,7 +129,8 @@ export class BuildingsComponent {
   
   // Computed filtered buildings
   protected readonly filteredBuildings = computed(() => {
-    let filtered = this.buildings();
+    const buildings = this.buildings() || [];
+    let filtered = [...buildings];
     
     const search = this.searchTerm().toLowerCase();
     if (search) {
@@ -153,20 +155,23 @@ export class BuildingsComponent {
   });
 
   // Computed statistics
-  protected readonly totalActive = computed(() => 
-    this.filteredBuildings().filter(b => b.status === BuildingStatus.ACTIVE).length
-  );
+  protected readonly totalActive = computed(() => {
+    const buildings = this.filteredBuildings() || [];
+    return buildings.filter(b => b.status === BuildingStatus.ACTIVE).length;
+  });
 
-  protected readonly totalUnits = computed(() => 
-    this.filteredBuildings().reduce((sum, b) => sum + b.totalUnits, 0)
-  );
+  protected readonly totalUnits = computed(() => {
+    const buildings = this.filteredBuildings() || [];
+    return buildings.reduce((sum, b) => sum + b.totalUnits, 0);
+  });
 
-  protected readonly totalWithCommonAreas = computed(() => 
-    this.filteredBuildings().filter(b => b.hasCommonAreas).length
-  );
+  protected readonly totalWithCommonAreas = computed(() => {
+    const buildings = this.filteredBuildings() || [];
+    return buildings.filter(b => b.hasCommonAreas).length;
+  });
 
   protected readonly averageOccupancy = computed(() => {
-    const buildings = this.filteredBuildings();
+    const buildings = this.filteredBuildings() || [];
     if (buildings.length === 0) return 0;
     return buildings.reduce((sum, b) => sum + b.occupancyRate, 0) / buildings.length;
   });
@@ -209,15 +214,34 @@ export class BuildingsComponent {
   }
 
   loadBuildings(): void {
+    const selectedCondo = this.selectedCondo();
+    const condoId = this.getCondoId(selectedCondo);
+    
+    // Si no hay condominio seleccionado, marcar que se necesita selección
+    if (!selectedCondo) {
+      this.needsCondoSelection.set(true);
+      this.buildings.set([]);
+      this.loading.set(false);
+      this.error.set(null);
+      console.log('⚠️ No condominium selected - waiting for selection');
+      return;
+    }
+    
+    this.needsCondoSelection.set(false);
     this.loading.set(true);
     this.error.set(null);
     
-    const condoId = this.selectedCondo()?.id;
+    // No enviar condominiumId si es 'all' (todos los condominios)
+    const filterCondoId = condoId === 'all' ? undefined : condoId;
+    
+    console.log('🏗️ Loading buildings - selectedCondo:', selectedCondo?.name);
+    console.log('🏗️ Original condoId:', condoId);
+    console.log('🏗️ Filter condoId:', filterCondoId);
     
     this.buildingService.getBuildings({
       page: this.currentPage(),
       pageSize: this.pageSize(),
-      condominiumId: condoId,
+      condominiumId: filterCondoId,
       search: this.searchTerm() || undefined,
       type: this.typeFilter() || undefined,
       status: this.statusFilter() || undefined
@@ -231,8 +255,30 @@ export class BuildingsComponent {
         this.loading.set(false);
       },
       error: (err) => {
-        console.error('Error loading buildings:', err);
-        this.error.set('Error al cargar los edificios');
+        console.error('❌ Error loading buildings:', err);
+        
+        // Detectar errores específicos del backend
+        let errorMessage = 'Error al cargar los edificios';
+        
+        if (err.status === 500) {
+          const backendError = err.error?.message?.message || err.error?.data?.error?.message;
+          
+          if (backendError?.includes('MongoClient')) {
+            errorMessage = 'Error de conexión con la base de datos. Por favor, contacta al administrador del sistema.';
+            console.error('🔴 MongoDB connection error detected:', backendError);
+          } else if (backendError) {
+            errorMessage = `Error del servidor: ${backendError}`;
+          } else {
+            errorMessage = 'Error interno del servidor (500)';
+          }
+        } else if (err.status === 404) {
+          errorMessage = 'No se encontraron edificios';
+        } else if (err.status === 0) {
+          errorMessage = 'No se puede conectar con el servidor';
+        }
+        
+        this.error.set(errorMessage);
+        this.buildings.set([]);
         this.loading.set(false);
       }
     });
@@ -243,7 +289,7 @@ export class BuildingsComponent {
     this.selectedBuilding.set(null);
     
     // Si hay un condominio específico seleccionado, lo usamos; si no, dejamos que el usuario seleccione
-    const selectedCondoId = this.selectedCondo()?.id;
+    const selectedCondoId = this.getCondoId(this.selectedCondo());
     const defaultCondoId = selectedCondoId === 'all' ? '' : selectedCondoId || '';
     
     this.formData.set({
@@ -252,7 +298,7 @@ export class BuildingsComponent {
       type: BuildingType.BUILDING,
       mainEntranceAddress: '',
       totalUnits: 0,
-      floors: 1,
+      num_floors: 1,
       hasCommonAreas: false,
       commonAreasDescription: '',
       commonAreaRentalRate: 0,
@@ -276,7 +322,7 @@ export class BuildingsComponent {
       type: building.type,
       mainEntranceAddress: building.mainEntranceAddress,
       totalUnits: building.totalUnits,
-      floors: building.floors,
+      num_floors: building.num_floors,
       hasCommonAreas: building.hasCommonAreas,
       commonAreasDescription: building.commonAreasDescription,
       commonAreaRentalRate: building.commonAreaRentalRate,
@@ -531,6 +577,12 @@ export class BuildingsComponent {
 
   onLogout(): void {
     this.router.navigate(['/login']);
+  }
+
+  // Helper para obtener el ID correcto (maneja tanto id como _id)
+  private getCondoId(condo: Condominium | null): string | undefined {
+    if (!condo) return undefined;
+    return condo.id || (condo as any)._id;
   }
 
   // Condominium Modal Methods

@@ -6,7 +6,7 @@ export interface Building {
   type: BuildingType;
   mainEntranceAddress: string; // Dirección de caseta o acceso principal
   totalUnits: number; // Número de viviendas
-  floors?: number; // Número de pisos (opcional para privadas)
+  num_floors?: number; // Número de pisos (opcional para privadas)
   hasCommonAreas: boolean; // Si tiene áreas comunes para rentar
   commonAreasDescription?: string; // Descripción de áreas comunes
   commonAreaRentalRate?: number; // Tarifa de renta de áreas comunes (por hora/día)
@@ -54,7 +54,7 @@ export interface CreateBuildingDto {
   type: BuildingType;
   mainEntranceAddress: string;
   totalUnits: number;
-  floors?: number;
+  num_floors?: number;
   hasCommonAreas: boolean;
   commonAreasDescription?: string;
   commonAreaRentalRate?: number;

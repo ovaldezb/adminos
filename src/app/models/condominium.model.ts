@@ -38,7 +38,7 @@ export interface Amenity {
 export interface Tower {
   id: string;
   name: string;
-  floors: number;
+  num_floors: number;
   unitsPerFloor: number;
   totalUnits: number;
 }
