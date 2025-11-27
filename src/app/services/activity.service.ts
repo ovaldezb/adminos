@@ -12,107 +12,7 @@ export class ActivityService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/activities`;
 
-  // Mock data
-  private mockActivities: ActivityWithDetails[] = [
-    {
-      id: 'ACT-001',
-      condominiumId: '1',
-      condominiumName: 'Torres del Parque',
-      type: ActivityType.PAYMENT_RECEIVED,
-      title: 'Pago recibido',
-      description: 'Juan Pérez - Unidad 101',
-      entityType: 'payment' as any,
-      entityId: 'PAY-002',
-      userId: 'admin-001',
-      userName: 'Admin Principal',
-      icon: 'ri-money-dollar-circle-fill',
-      color: '#10b981',
-      amount: 'S/. 1,500.00',
-      timeAgo: 'Hace 2 horas',
-      createdAt: new Date('2025-10-22T14:30:00'),
-    },
-    {
-      id: 'ACT-002',
-      condominiumId: '1',
-      condominiumName: 'Torres del Parque',
-      type: ActivityType.REMINDER_SENT,
-      title: 'Recordatorio enviado',
-      description: 'María García - Unidad 102',
-      entityType: 'invoice' as any,
-      entityId: 'INV-002',
-      userId: 'admin-001',
-      userName: 'Admin Principal',
-      icon: 'ri-mail-send-fill',
-      color: '#f59e0b',
-      timeAgo: 'Hace 4 horas',
-      createdAt: new Date('2025-10-22T12:30:00'),
-    },
-    {
-      id: 'ACT-003',
-      condominiumId: '2',
-      condominiumName: 'Vista Hermosa',
-      type: ActivityType.INVOICE_GENERATED,
-      title: 'Factura generada',
-      description: 'Factura mensual - Octubre 2025',
-      entityType: 'invoice' as any,
-      entityId: 'INV-045',
-      userId: 'system',
-      userName: 'Sistema',
-      icon: 'ri-file-text-fill',
-      color: '#0ea5e9',
-      timeAgo: 'Hace 1 día',
-      createdAt: new Date('2025-10-21T09:00:00'),
-    },
-    {
-      id: 'ACT-004',
-      condominiumId: '3',
-      condominiumName: 'Sunset Boulevard',
-      type: ActivityType.RESIDENT_ADDED,
-      title: 'Nuevo residente',
-      description: 'Ana Martínez - Unidad 305',
-      entityType: 'resident' as any,
-      entityId: 'R-125',
-      userId: 'admin-002',
-      userName: 'Gerente Operaciones',
-      icon: 'ri-user-add-fill',
-      color: '#8b5cf6',
-      timeAgo: 'Hace 2 días',
-      createdAt: new Date('2025-10-20T15:45:00'),
-    },
-    {
-      id: 'ACT-005',
-      condominiumId: '1',
-      condominiumName: 'Torres del Parque',
-      type: ActivityType.MAINTENANCE_SCHEDULED,
-      title: 'Mantenimiento programado',
-      description: 'Limpieza de tanques de agua',
-      entityType: 'maintenance' as any,
-      entityId: 'MAINT-089',
-      userId: 'admin-001',
-      userName: 'Admin Principal',
-      icon: 'ri-tools-fill',
-      color: '#6366f1',
-      timeAgo: 'Hace 3 días',
-      createdAt: new Date('2025-10-19T11:20:00'),
-    },
-    {
-      id: 'ACT-006',
-      condominiumId: '2',
-      condominiumName: 'Vista Hermosa',
-      type: ActivityType.PAYMENT_RECEIVED,
-      title: 'Pago recibido',
-      description: 'Carlos Rodríguez - Unidad 201',
-      entityType: 'payment' as any,
-      entityId: 'PAY-001',
-      userId: 'admin-001',
-      userName: 'Admin Principal',
-      icon: 'ri-money-dollar-circle-fill',
-      color: '#10b981',
-      amount: 'S/. 1,800.00',
-      timeAgo: 'Hace 19 días',
-      createdAt: new Date('2025-10-03T10:15:00'),
-    },
-  ];
+  
 
   /**
    * GET /activities/recent - Fetch recent activities from backend
@@ -130,22 +30,13 @@ export class ActivityService {
 
     return this.http.get<ApiResponse<ActivityWithDetails[]>>(`${this.apiUrl}/recent`, { params: httpParams }).pipe(
       catchError((error) => {
-        console.error('Error fetching activities from backend, using mock data:', error);
-        // Fallback a mock data
-        let activities = [...this.mockActivities];
-
-        if (condominiumId && condominiumId !== 'all') {
-          activities = activities.filter((a) => a.condominiumId === condominiumId);
-        }
-
-        activities = activities
-          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-          .slice(0, limit);
-
+        console.error('Error fetching activities from backend:', error);
         return of({
-          success: true,
-          data: activities,
-          message: 'Actividades recientes obtenidas exitosamente (mock fallback)',
+          success: false,
+          error: {
+            code: 'BACKEND_ERROR',
+            message: 'Error al obtener las actividades del servidor',
+          },
           timestamp: new Date(),
         });
       })
@@ -173,43 +64,13 @@ export class ActivityService {
 
     return this.http.get<ApiResponse<PaginatedResponse<ActivityWithDetails>>>(this.apiUrl, { params: httpParams }).pipe(
       catchError((error) => {
-        console.error('Error fetching activities from backend, using mock data:', error);
-        // Fallback a mock data
-        let filtered = [...this.mockActivities];
-
-        // Filter by condominiumId
-        if (params?.condominiumId && params.condominiumId !== 'all') {
-          filtered = filtered.filter((a) => a.condominiumId === params.condominiumId);
-        }
-
-        // Filter by type
-        if (params?.type) {
-          filtered = filtered.filter((a) => a.type === params.type);
-        }
-
-        // Sort by date (newest first)
-        filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-
-        const page = params?.page || 1;
-        const pageSize = params?.pageSize || 20;
-        const start = (page - 1) * pageSize;
-        const end = start + pageSize;
-        const items = filtered.slice(start, end);
-
-        const response: PaginatedResponse<ActivityWithDetails> = {
-          items,
-          total: filtered.length,
-          page,
-          pageSize,
-          totalPages: Math.ceil(filtered.length / pageSize),
-          hasNext: end < filtered.length,
-          hasPrevious: page > 1,
-        };
-
+        console.error('Error fetching activities from backend:', error);
         return of({
-          success: true,
-          data: response,
-          message: 'Actividades obtenidas exitosamente (mock fallback)',
+          success: false,
+          error: {
+            code: 'BACKEND_ERROR',
+            message: 'Error al obtener las actividades del servidor',
+          },
           timestamp: new Date(),
         });
       })
@@ -223,26 +84,13 @@ export class ActivityService {
   logActivity(activity: Partial<Activity>): Observable<ApiResponse<Activity>> {
     return this.http.post<ApiResponse<Activity>>(this.apiUrl, activity).pipe(
       catchError((error) => {
-        console.error('Error logging activity in backend, using mock:', error);
-        // Fallback a mock
-        const newActivity: Activity = {
-          id: `ACT-${String(Date.now()).slice(-6)}`,
-          condominiumId: activity.condominiumId!,
-          type: activity.type!,
-          title: activity.title!,
-          description: activity.description || '',
-          entityType: activity.entityType!,
-          entityId: activity.entityId!,
-          userId: activity.userId || 'system',
-          userName: activity.userName || 'Sistema',
-          metadata: activity.metadata,
-          createdAt: new Date(),
-        };
-
+        console.error('Error logging activity in backend:', error);
         return of({
-          success: true,
-          data: newActivity,
-          message: 'Actividad registrada exitosamente (mock fallback)',
+          success: false,
+          error: {
+            code: 'BACKEND_ERROR',
+            message: 'Error al registrar la actividad en el servidor',
+          },
           timestamp: new Date(),
         });
       })
@@ -265,29 +113,13 @@ export class ActivityService {
 
     return this.http.get<ApiResponse<Record<ActivityType, number>>>(`${this.apiUrl}/stats`, { params: httpParams }).pipe(
       catchError((error) => {
-        console.error('Error fetching activity stats from backend, using mock:', error);
-        // Fallback a mock
-        let activities = [...this.mockActivities];
-
-        if (condominiumId && condominiumId !== 'all') {
-          activities = activities.filter((a) => a.condominiumId === condominiumId);
-        }
-
-        // Filter by date range
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - days);
-        activities = activities.filter((a) => a.createdAt >= startDate);
-
-        // Count by type
-        const stats: Record<string, number> = {};
-        activities.forEach((a) => {
-          stats[a.type] = (stats[a.type] || 0) + 1;
-        });
-
+        console.error('Error fetching activity stats from backend:', error);
         return of({
-          success: true,
-          data: stats as Record<ActivityType, number>,
-          message: 'Estadísticas de actividad obtenidas exitosamente (mock fallback)',
+          success: false,
+          error: {
+            code: 'BACKEND_ERROR',
+            message: 'Error al obtener las estadísticas de actividades del servidor',
+          },
           timestamp: new Date(),
         });
       })
@@ -319,28 +151,13 @@ export class ActivityService {
 
     return this.http.get<ApiResponse<ActivityWithDetails[]>>(`${this.apiUrl}/timeline`, { params: httpParams }).pipe(
       catchError((error) => {
-        console.error('Error fetching activity timeline from backend, using mock:', error);
-        // Fallback a mock
-        let activities = [...this.mockActivities];
-
-        if (condominiumId && condominiumId !== 'all') {
-          activities = activities.filter((a) => a.condominiumId === condominiumId);
-        }
-
-        if (entityType) {
-          activities = activities.filter((a) => a.entityType === entityType);
-        }
-
-        if (entityId) {
-          activities = activities.filter((a) => a.entityId === entityId);
-        }
-
-        activities.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-
+        console.error('Error fetching activity timeline from backend:', error);
         return of({
-          success: true,
-          data: activities,
-          message: 'Timeline de actividad obtenido exitosamente (mock fallback)',
+          success: false,
+          error: {
+            code: 'BACKEND_ERROR',
+            message: 'Error al obtener la cronología de actividades del servidor',
+          },
           timestamp: new Date(),
         });
       })
