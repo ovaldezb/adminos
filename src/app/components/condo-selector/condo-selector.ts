@@ -91,7 +91,6 @@ export class CondoSelectorComponent {
     // Si el click fue fuera del componente, cerrar el selector
     const clickedInside = this.elementRef.nativeElement.contains(event.target);
     if (!clickedInside && this.showSelector()) {
-      console.log('Click fuera detectado - cerrando dropdown');
       this.showSelector.set(false);
     }
   }
@@ -100,13 +99,11 @@ export class CondoSelectorComponent {
     event.stopPropagation();
     const newState = !this.showSelector();
     this.showSelector.set(newState);
-    console.log('Dropdown toggled:', newState ? 'ABIERTO' : 'CERRADO');
   }
 
   selectCondo(condo: Condominium, event: Event): void {
     event.stopPropagation();
     event.preventDefault();
-    console.log('✅ Condominio seleccionado:', condo.name);
     this.selectedCondo.set(condo);
     this.showSelector.set(false);
     

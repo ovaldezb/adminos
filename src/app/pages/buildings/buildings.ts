@@ -183,7 +183,6 @@ export class BuildingsComponent {
   }
 
   onCondoSelected(condo: Condominium | null): void {
-    console.log('Buildings recibió selección:', condo?.name);
     this.selectedCondo.set(condo);
     this.currentPage.set(1);
     this.loadBuildings();

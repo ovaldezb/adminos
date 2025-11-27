@@ -148,7 +148,6 @@ export class PaymentsComponent {
   }
 
   onCondoSelected(condo: Condominium | null): void {
-    console.log('Payments recibió selección:', condo?.name);
     this.selectedCondo.set(condo);
     this.currentPage.set(1);
     this.loadPayments();

@@ -11,9 +11,6 @@ import { environment } from '../../environments/environment';
 export class InvoiceService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/invoices`;
-  
-  // Simulated AWS Lambda endpoint (DEPRECATED - usando apiUrl ahora)
-  private readonly lambdaEndpoint = 'https://api.example.com/invoices';
 
   // Mock data
   private mockInvoices: InvoiceWithDetails[] = [

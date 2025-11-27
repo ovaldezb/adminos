@@ -202,7 +202,6 @@ export class DashboardComponent implements OnInit {
   }
 
   onCondoSelected(condo: Condominium | null): void {
-    console.log('Dashboard recibió selección:', condo?.name);
     
     // Trigger animation
     this.isAnimating.set(true);

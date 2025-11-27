@@ -18,9 +18,6 @@ import { environment } from '../../environments/environment';
 export class ProviderService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/providers`;
-  
-  // Simulated AWS Lambda endpoint (DEPRECATED - usando apiUrl ahora)
-  private readonly lambdaEndpoint = 'https://api.example.com/providers';
 
   // Mock data - simulating MongoDB collection
   private mockProviders: ProviderDetails[] = [

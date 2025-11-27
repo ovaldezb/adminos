@@ -20,9 +20,6 @@ import { environment } from '../../environments/environment';
 export class UnitService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/unit`;
-  
-  // Simulated AWS Lambda endpoint (DEPRECATED - usando apiUrl ahora)
-  private readonly lambdaEndpoint = 'https://api.example.com/units';
 
   // Mock data - simulating MongoDB collection
   private mockUnits: UnitDetails[] = [

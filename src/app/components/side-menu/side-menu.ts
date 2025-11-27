@@ -116,17 +116,8 @@ export class SideMenuComponent {
   }
 
   onMenuClick(item: MenuItem): void {
-    console.log('===== MENU CLICK DEBUG =====');
-    console.log('Item clicked:', item);
-    console.log('Label:', item.label);
-    console.log('Route:', item.route);
-    console.log('Current URL:', this.router.url);
-    console.log('============================');
-    
-    // Forzar navegación
-    this.router.navigate([item.route]).then(success => {
-      console.log('Navigation success:', success, 'to', item.route);
-    });
+    // Navigate to the selected menu item
+    this.router.navigate([item.route]);
   }
 
   getCondoInfo() {

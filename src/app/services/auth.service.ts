@@ -7,9 +7,6 @@ import { ApiResponse } from '../models/api.model';
   providedIn: 'root',
 })
 export class AuthService {
-  // Simulated AWS Lambda endpoint
-  private readonly lambdaEndpoint = 'https://api.example.com/auth';
-
   // Mock user data
   private mockUser: User = {
     id: 'admin-001',

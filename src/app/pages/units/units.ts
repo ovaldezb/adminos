@@ -159,7 +159,6 @@ export class UnitsComponent {
   }
 
   onCondoSelected(condo: Condominium | null): void {
-    console.log('Units recibió selección:', condo?.name);
     this.selectedCondo.set(condo);
     this.currentPage.set(1);
     this.loadUnits();

@@ -11,9 +11,6 @@ import { environment } from '../../environments/environment';
 export class NotificationService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/notifications`;
-  
-  // Simulated AWS Lambda endpoint (DEPRECATED - usando apiUrl ahora)
-  private readonly lambdaEndpoint = 'https://api.example.com/notifications';
 
   // Mock data
   private mockNotifications: Notification[] = [

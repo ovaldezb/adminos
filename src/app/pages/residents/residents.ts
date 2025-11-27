@@ -225,7 +225,6 @@ export class ResidentsComponent {
   }
 
   onCondoSelected(condo: Condominium | null): void {
-    console.log('Residents recibió selección:', condo?.name);
     this.selectedCondo.set(condo);
     this.currentPage.set(1);
     this.loadResidents();

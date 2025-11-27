@@ -134,7 +134,6 @@ export class CondominiumsComponent implements OnInit {
     
     this.condominiumService.getAllCondominiums().subscribe({
       next: (response) => {
-        console.log('Condominiums loaded:', response);
         if (response.success && response.data) {
           this.condominiums.set(response.data);
           this.calculatePagination();
