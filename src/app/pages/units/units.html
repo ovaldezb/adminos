@@ -82,6 +82,18 @@
               <option [value]="PropertyType.LOFT">Loft</option>
               <option [value]="PropertyType.TOWNHOUSE">Casa</option>
             </select>
+
+            <!-- Building Filter -->
+            <select
+              class="select select-bordered w-full sm:w-auto text-sm font-medium"
+              [value]="buildingFilter()"
+              (change)="onBuildingFilterChange($event)"
+            >
+              <option value="">Todos los edificios</option>
+              @for (building of availableBuildings(); track building.id || building._id) {
+                <option [value]="building.id || building._id">{{ building.name }}</option>
+              }
+            </select>
           </div>
 
           <div class="flex gap-2 w-full sm:w-auto">
@@ -548,7 +560,7 @@
                       Seleccione un edificio
                     }
                   </option>
-                  @for (building of availableBuildings(); track building.id) {
+                  @for (building of availableBuildings(); track building.id || building._id) {
                     <option [value]="building.id">{{ building.name }} ({{ getTypeLabel(building.type) }})</option>
                   }
                 </select>

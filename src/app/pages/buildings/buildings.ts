@@ -206,6 +206,12 @@ export class BuildingsComponent {
     this.condominiumService.getAllCondominiums().subscribe({
       next: (response) => {
         if (response.success && response.data) {
+          console.log('🏘️ Condominiums loaded:', response.data);
+          console.log('🔑 Condominium IDs:', response.data.map((c: any) => ({ 
+            _id: c._id, 
+            id: c.id, 
+            name: c.name 
+          })));
           this.availableCondominiums.set(response.data);
         }
       },
@@ -238,14 +244,8 @@ export class BuildingsComponent {
     console.log('🏗️ Original condoId:', condoId);
     console.log('🏗️ Filter condoId:', filterCondoId);
     
-    this.buildingService.getBuildings({
-      page: this.currentPage(),
-      pageSize: this.pageSize(),
-      condominiumId: filterCondoId,
-      search: this.searchTerm() || undefined,
-      type: this.typeFilter() || undefined,
-      status: this.statusFilter() || undefined
-    }).subscribe({
+    // Llamar al servicio SIN PARÁMETROS (la Lambda no los acepta todavía)
+    this.buildingService.getBuildings().subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.buildings.set(response.data.items);

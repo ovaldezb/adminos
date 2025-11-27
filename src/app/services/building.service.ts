@@ -32,68 +32,37 @@ export class BuildingService {
 
   constructor() {}
 
-  // Get all buildings with pagination and filters
+  // Get all buildings - SIMPLE VERSION (sin paginación por ahora)
   // Backend: GET /buildings - Returns { success, message, data: { buildings: [], count } }
-  // GET /buildings - Fetch buildings from backend
-  // Backend: GET /buildings?condominiumId=xxx&page=1&pageSize=10&search=xxx&type=xxx&status=xxx
   getBuildings(params: GetBuildingsParams = {}): Observable<ApiResponse<PaginatedResponse<BuildingDetails>>> {
-    const {
-      page = 1,
-      pageSize = 10,
-      condominiumId,
-      search,
-      type,
-      status
-    } = params;
+    console.log('🔍 Building Service - Calling GET /building (sin parámetros)');
 
-    // Validar parámetros antes de enviar
-    if (page < 1) {
-      console.warn('⚠️ Invalid page number:', page, '- Setting to 1');
-    }
-    if (pageSize < 1 || pageSize > 100) {
-      console.warn('⚠️ Invalid pageSize:', pageSize, '- Setting to 10');
-    }
-    if (condominiumId) {
-      console.log('🏢 CondominiumId received:', {
-        value: condominiumId,
-        type: typeof condominiumId,
-        length: condominiumId.length,
-        isValid: /^[a-zA-Z0-9_-]+$/.test(condominiumId)
-      });
-    }
-
-    // Construir HttpParams para la petición
-    let httpParams = new HttpParams()
-      .set('page', page.toString())
-      .set('pageSize', pageSize.toString());
-
-    // Validar y agregar condominiumId solo si es válido
-    if (condominiumId && condominiumId !== 'all' && condominiumId.trim() !== '') {
-      httpParams = httpParams.set('condominiumId', condominiumId.trim());
-    }
-
-    if (search) {
-      httpParams = httpParams.set('search', search);
-    }
-
-    if (type) {
-      httpParams = httpParams.set('type', type);
-    }
-
-    if (status) {
-      httpParams = httpParams.set('status', status);
-    }
-
-    console.log('🔍 Building Service - Request:', {
-      url: this.apiUrl,
-      params: httpParams.toString(),
-      fullUrl: `${this.apiUrl}?${httpParams.toString()}`
-    });
-
-    return this.http.get<ApiResponse<PaginatedResponse<BuildingDetails>>>(this.apiUrl, { params: httpParams }).pipe(
+    return this.http.get<any>(this.apiUrl).pipe(
       map(response => {
-        console.log('✅ Building Service - Success:', response);
-        return response;
+        console.log('✅ Building Service - Raw response:', response);
+        
+        // La Lambda retorna { success, message, data: { buildings: [], count } }
+        // Necesitamos transformarlo a formato PaginatedResponse
+        const buildings = response.data?.buildings || [];
+        const total = response.data?.count || 0;
+        
+        const paginatedResponse: ApiResponse<PaginatedResponse<BuildingDetails>> = {
+          success: response.success,
+          message: response.message,
+          data: {
+            items: buildings,
+            total: total,
+            page: 1,
+            pageSize: total,
+            totalPages: 1,
+            hasNext: false,
+            hasPrevious: false
+          },
+          timestamp: response.timestamp || new Date()
+        };
+        
+        console.log('✅ Transformed response:', paginatedResponse);
+        return paginatedResponse;
       }),
       catchError((error) => {
         console.error('❌ Building Service - Error:', {

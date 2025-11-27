@@ -1,6 +1,7 @@
 // Building Interface - Edificios, Torres o Privadas
 export interface Building {
   id: string;
+  _id?: string; // MongoDB ObjectId (opcional, viene del backend)
   condominiumId: string;
   name: string; // Nombre del edificio/torre/privada (ej: "Torre A", "Privada Los Pinos")
   type: BuildingType;

@@ -249,7 +249,7 @@ export class ResidentsComponent {
       return;
     }
 
-    this.buildingService.getBuildings({ condominiumId }).subscribe({
+    this.buildingService.getBuildings().subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.availableBuildings.set(response.data.items);

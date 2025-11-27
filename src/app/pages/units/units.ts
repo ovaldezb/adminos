@@ -52,6 +52,7 @@ export class UnitsComponent {
   protected readonly searchTerm = signal('');
   protected readonly statusFilter = signal<UnitStatus | ''>('');
   protected readonly propertyTypeFilter = signal<PropertyType | ''>('');
+  protected readonly buildingFilter = signal<string>(''); // Filtro por edificio
   
   // Modal state
   protected readonly showModal = signal(false);
@@ -158,9 +159,49 @@ export class UnitsComponent {
     this.sidebarOpen.set(!this.sidebarOpen());
   }
 
+  // Load buildings for dropdown, matching buildings component logic
+  loadBuildingsForDropdown(): void {
+    const condoId = this.selectedCondo()?.id;
+    // If 'all' or no condo selected, load all buildings
+    if (!condoId || condoId === 'all') {
+      this.buildingService.getBuildings().subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            // Filter out buildings with missing or empty id
+            const validBuildings = (response.data.items || []).filter(b => b.id || b._id);
+            this.availableBuildings.set(validBuildings);
+          } else {
+            this.availableBuildings.set([]);
+          }
+        },
+        error: (err) => {
+          console.error('Error loading buildings:', err);
+          this.availableBuildings.set([]);
+        }
+      });
+    } else {
+      this.buildingService.getBuildings({ condominiumId: condoId }).subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            const validBuildings = (response.data.items || []).filter(b => b.id || b._id);
+            this.availableBuildings.set(validBuildings);
+          } else {
+            this.availableBuildings.set([]);
+          }
+        },
+        error: (err) => {
+          console.error('Error loading buildings:', err);
+          this.availableBuildings.set([]);
+        }
+      });
+    }
+  }
+
+  // Update building dropdown when condo changes
   onCondoSelected(condo: Condominium | null): void {
     this.selectedCondo.set(condo);
     this.currentPage.set(1);
+    this.loadBuildingsForDropdown();
     this.loadUnits();
   }
 
@@ -182,11 +223,7 @@ export class UnitsComponent {
       return;
     }
 
-    this.buildingService.getBuildings({ 
-      page: 1,
-      pageSize: 1000,
-      condominiumId 
-    }).subscribe({
+    this.buildingService.getBuildings().subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.availableBuildings.set(response.data.items);
@@ -222,26 +259,39 @@ export class UnitsComponent {
     this.loading.set(true);
     this.error.set(null);
     
-    const condoId = this.selectedCondo()?.id;
-    
+    let condoId = this.selectedCondo()?.id;
+    const buildingId = this.buildingFilter() || undefined;
+    // If buildingId is set, always send it, and only send condoId if not 'all'
+    if (buildingId && condoId === 'all') {
+      condoId = undefined;
+    }
+    console.log('[Units] loadUnits params:', { buildingId, condominiumId: condoId });
     this.unitService.getUnits({
       page: this.currentPage(),
       pageSize: this.pageSize(),
       condominiumId: condoId,
+      buildingId: buildingId,
       search: this.searchTerm() || undefined,
       status: this.statusFilter() || undefined
     }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.units.set(response.data.items);
+          this.units.set(response.data.items || []);
           this.totalPages.set(response.data.totalPages);
           this.totalItems.set(response.data.total);
+        } else {
+          this.units.set([]);
+          this.totalPages.set(1);
+          this.totalItems.set(0);
         }
         this.loading.set(false);
       },
       error: (err) => {
         console.error('Error loading units:', err);
         this.error.set('Error al cargar las unidades');
+        this.units.set([]);
+        this.totalPages.set(1);
+        this.totalItems.set(0);
         this.loading.set(false);
       }
     });
@@ -495,6 +545,19 @@ export class UnitsComponent {
     const value = (event.target as HTMLSelectElement).value as PropertyType | '';
     this.propertyTypeFilter.set(value);
     this.currentPage.set(1);
+    this.loadUnits();
+  }
+
+  onBuildingFilterChange(event: Event): void {
+    const buildingId = (event.target as HTMLSelectElement).value;
+    this.buildingFilter.set(buildingId);
+    // Debug: log current condo and building selection
+    console.log('[Units] Building filter changed:', {
+      buildingId,
+      selectedCondo: this.selectedCondo()?.id
+    });
+    this.currentPage.set(1);
+    // Always fetch units when building changes
     this.loadUnits();
   }
 

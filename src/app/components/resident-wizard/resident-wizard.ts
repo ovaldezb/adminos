@@ -429,11 +429,7 @@ export class ResidentWizardComponent implements OnInit {
   private loadBuildings(): void {
     this.loadingBuildings.set(true);
     
-    this.buildingService.getBuildings({ 
-      page: 1,
-      condominiumId: this.condominiumId,
-      pageSize: 1000 
-    }).subscribe({
+    this.buildingService.getBuildings().subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.availableBuildings.set(response.data.items);

@@ -226,7 +226,7 @@
                     </td>
                   </tr>
                 } @else {
-                @for (building of filteredBuildings(); track building.id) {
+                @for (building of filteredBuildings(); track building._id || building.id || $index) {
                   <tr class="hover:bg-white/30 transition-colors border-b border-neutral-100">
                     <td>
                       <div class="flex items-center gap-3">
@@ -258,10 +258,10 @@
                     <td>
                       <div class="flex items-center gap-2">
                         <div class="radial-progress text-primary text-xs" 
-                             [style.--value]="building.occupancyRate" 
+                             [style.--value]="building.occupancyRate || 0" 
                              [style.--size]="'2.5rem'"
                              [style.--thickness]="'3px'">
-                          {{ building.occupancyRate.toFixed(0) }}%
+                          {{ (building.occupancyRate || 0).toFixed(0) }}%
                         </div>
                       </div>
                     </td>
@@ -458,8 +458,8 @@
                   (change)="updateFormField('condominiumId', $any($event.target).value)"
                   class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 flex-1">
                   <option value="">Seleccionar condominio...</option>
-                  @for (condo of availableCondominiums(); track condo.id) {
-                    <option [value]="condo.id">{{ condo.name }}</option>
+                  @for (condo of availableCondominiums(); track condo._id || condo.id || $index) {
+                    <option [value]="condo._id || condo.id">{{ condo.name }}</option>
                   }
                 </select>
                 <button
