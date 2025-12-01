@@ -220,7 +220,11 @@ export class UnitService {
     const backendData = {
       ...unitData,
       parkingSlots: unitData.parkingSpaces,
-      storageSlots: unitData.storageSpaces
+      storageSlots: unitData.storageSpaces,
+      // Map status to backend format (uppercase)
+      status: this.mapFrontendStatusToBackend(unitData.status),
+      // Map propertyType to backend format (uppercase)
+      propertyType: this.mapFrontendPropertyTypeToBackend(unitData.propertyType)
     };
     
     // Remove frontend field names
@@ -268,7 +272,11 @@ export class UnitService {
     const backendData = {
       ...updates,
       parkingSlots: updates.parkingSpaces,
-      storageSlots: updates.storageSpaces
+      storageSlots: updates.storageSpaces,
+      // Map status to backend format (uppercase)
+      status: updates.status ? this.mapFrontendStatusToBackend(updates.status) : 'VACANT',
+      // Map propertyType to backend format (uppercase)
+      propertyType: updates.propertyType ? this.mapFrontendPropertyTypeToBackend(updates.propertyType) : 'APARTMENT'
     };
     
     // Remove frontend field names
@@ -299,6 +307,37 @@ export class UnitService {
         });
       })
     );
+  }
+
+  /**
+   * Maps frontend status values to backend format (uppercase)
+   */
+  private mapFrontendStatusToBackend(frontendStatus: UnitStatus): string {
+    const statusMap: Record<UnitStatus, string> = {
+      [UnitStatus.OCCUPIED]: 'OCCUPIED',
+      [UnitStatus.VACANT]: 'VACANT',
+      [UnitStatus.UNDER_MAINTENANCE]: 'MAINTENANCE',
+      [UnitStatus.FOR_SALE]: 'ACTIVE',
+      [UnitStatus.FOR_RENT]: 'ACTIVE',
+    };
+    
+    return statusMap[frontendStatus] || 'VACANT';
+  }
+
+  /**
+   * Maps frontend propertyType values to backend format (uppercase)
+   */
+  private mapFrontendPropertyTypeToBackend(frontendPropertyType: PropertyType): string {
+    const typeMap: Record<PropertyType, string> = {
+      [PropertyType.APARTMENT]: 'APARTMENT',
+      [PropertyType.PENTHOUSE]: 'PENTHOUSE',
+      [PropertyType.DUPLEX]: 'DUPLEX',
+      [PropertyType.STUDIO]: 'STUDIO',
+      [PropertyType.LOFT]: 'STUDIO', // Backend no tiene LOFT, usar STUDIO
+      [PropertyType.TOWNHOUSE]: 'HOUSE',
+    };
+    
+    return typeMap[frontendPropertyType] || 'APARTMENT';
   }
 
   /**

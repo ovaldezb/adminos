@@ -519,7 +519,7 @@
           </div>
         } @else {
           <!-- Create/Edit Form -->
-          <form (submit)="$event.preventDefault(); saveUnit()">
+          <form (ngSubmit)="saveUnit()">
             <div class="grid grid-cols-2 gap-4">
               <!-- Condominio Dropdown -->
               <div class="form-control">

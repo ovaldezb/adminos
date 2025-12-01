@@ -387,6 +387,7 @@ export class UnitsComponent implements OnInit {
 
   openEditModal(unit: UnitDetails): void {
     console.log('[Units] openEditModal - unit:', unit);
+    
     this.modalMode.set('edit');
     this.selectedUnit.set(unit);
     
@@ -394,20 +395,16 @@ export class UnitsComponent implements OnInit {
     const existingResidents = unit.residents || unit.residentDetails || [];
     this.unitResidents.set([...existingResidents]);
     
-    // Determinar condominiumId: usar selectedCondo o el de la unidad
-    let condominiumId = unit.condominiumId;
-    if (!condominiumId || condominiumId === 'undefined') {
-      // Si no tiene condominiumId, usar el condominio seleccionado
-      const selected = this.selectedCondo();
-      if (selected && selected.id && selected.id !== 'all') {
-        condominiumId = selected.id;
-      }
+    // Para editar solo necesitamos buildingId
+    if (!unit.buildingId) {
+      this.error.set('Error: La unidad no tiene un edificio asignado.');
+      return;
     }
     
-    // Set form data con todos los campos
+    // Set form data con todos los campos (condominiumId puede estar vacío en edit)
     this.formData.set({
-      condominiumId: condominiumId || '',
-      buildingId: unit.buildingId || '',
+      condominiumId: unit.condominiumId || '',
+      buildingId: unit.buildingId,
       unitNumber: unit.unitNumber || '',
       tower: unit.tower || '',
       floor: unit.floor || 1,
@@ -426,9 +423,11 @@ export class UnitsComponent implements OnInit {
       description: unit.description || ''
     });
     
-    // Cargar edificios del condominio si existe
-    if (condominiumId && condominiumId !== 'undefined') {
-      this.loadBuildingsByCondominium(condominiumId);
+    console.log('[Units] openEditModal - formData set:', this.formData());
+    
+    // Cargar edificios para el dropdown (si hay condominiumId)
+    if (unit.condominiumId && unit.condominiumId !== 'undefined') {
+      this.loadBuildingsByCondominium(unit.condominiumId);
     }
     
     this.showModal.set(true);
@@ -492,10 +491,12 @@ export class UnitsComponent implements OnInit {
   }
 
   saveUnit(): void {
-    console.log('[Units] saveUnit - Starting...');
+    console.log('==========================================');
+    console.log('[Units] saveUnit - CALLED!');
     console.log('[Units] saveUnit - modalMode:', this.modalMode());
     console.log('[Units] saveUnit - formData:', this.formData());
     console.log('[Units] saveUnit - unitResidents:', this.unitResidents());
+    console.log('==========================================');
     
     const data = {
       ...this.formData(),
@@ -506,10 +507,13 @@ export class UnitsComponent implements OnInit {
     
     if (!this.validateForm(data)) {
       console.warn('[Units] saveUnit - Validation failed');
+      console.log('[Units] saveUnit - error message:', this.error());
       return;
     }
 
+    console.log('[Units] saveUnit - Validation PASSED, setting loading...');
     this.loading.set(true);
+    console.log('[Units] saveUnit - loading set to:', this.loading());
 
     if (this.modalMode() === 'create') {
       console.log('[Units] saveUnit - Creating unit...');
@@ -532,18 +536,26 @@ export class UnitsComponent implements OnInit {
       });
     } else if (this.modalMode() === 'edit') {
       const unitId = this.selectedUnit()?.id;
+      const selectedUnit = this.selectedUnit();
       console.log('[Units] saveUnit - Editing unit with ID:', unitId);
-      console.log('[Units] saveUnit - Selected unit:', this.selectedUnit());
+      console.log('[Units] saveUnit - Selected unit:', selectedUnit);
       
-      if (!unitId) {
+      if (!unitId || !selectedUnit) {
         console.error('[Units] saveUnit - No unit ID found!');
         this.showToastMessage('Error: No se encontró el ID de la unidad', 'error');
         this.loading.set(false);
         return;
       }
 
+      // Agregar createdAt desde la unidad original
+      const updateData = {
+        ...data,
+        createdAt: selectedUnit.createdAt || new Date()
+      };
+
       console.log('[Units] saveUnit - Calling updateUnit service...');
-      this.unitService.updateUnit(unitId, data as UpdateUnitDto).subscribe({
+      console.log('[Units] saveUnit - Update data with createdAt:', updateData);
+      this.unitService.updateUnit(unitId, updateData as UpdateUnitDto).subscribe({
         next: (response) => {
           console.log('[Units] saveUnit - Update response:', response);
           if (response.success) {
@@ -612,9 +624,18 @@ export class UnitsComponent implements OnInit {
   }
 
   private validateForm(data: Partial<CreateUnitDto>): boolean {
-    if (!data.condominiumId || !data.buildingId || !data.unitNumber) {
-      this.error.set('Por favor complete todos los campos obligatorios (Condominio, Edificio, Número de Unidad)');
-      return false;
+    // En modo create, condominiumId es obligatorio
+    // En modo edit, solo buildingId es obligatorio
+    if (this.modalMode() === 'create') {
+      if (!data.condominiumId || !data.buildingId || !data.unitNumber) {
+        this.error.set('Por favor complete todos los campos obligatorios (Condominio, Edificio, Número de Unidad)');
+        return false;
+      }
+    } else {
+      if (!data.buildingId || !data.unitNumber) {
+        this.error.set('Por favor complete todos los campos obligatorios (Edificio, Número de Unidad)');
+        return false;
+      }
     }
     
     if (!data.area || data.area <= 0) {
