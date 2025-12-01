@@ -524,13 +524,12 @@
               <!-- Condominio Dropdown -->
               <div class="form-control">
                 <label class="label">
-                  <span class="label-text font-semibold">Condominio *</span>
+                  <span class="label-text font-semibold">Condominio</span>
                 </label>
                 <select
                   class="select select-bordered"
                   (change)="onCondominiumChange($event)"
                   name="condominiumId"
-                  required
                 >
                   <option value="" [selected]="!formData().condominiumId">Seleccione un condominio</option>
                   @for (condo of availableCondominiums(); track condo.id) {
@@ -548,15 +547,10 @@
                   class="select select-bordered"
                   (change)="onBuildingChange($event)"
                   name="buildingId"
-                  [disabled]="!formData().condominiumId"
                   required
                 >
                   <option value="" [selected]="!formData().buildingId">
-                    @if (!formData().condominiumId) {
-                      Primero seleccione un condominio
-                    } @else {
-                      Seleccione un edificio
-                    }
+                    Seleccione un edificio
                   </option>
                   @for (building of availableBuildings(); track building.id || building._id) {
                     <option [value]="building.id || building._id" [selected]="formData().buildingId === (building.id || building._id)">

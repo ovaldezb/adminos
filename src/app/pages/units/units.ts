@@ -377,10 +377,8 @@ export class UnitsComponent implements OnInit {
     // Reset residents list
     this.unitResidents.set([]);
     
-    // Si hay un condominio seleccionado, cargar sus edificios
-    if (selectedCondoId) {
-      this.loadBuildingsByCondominium(selectedCondoId);
-    }
+    // Cargar edificios (si hay condo seleccionado carga de ese condo, si no carga todos)
+    this.loadBuildingsForDropdown();
     
     this.showModal.set(true);
   }
@@ -624,18 +622,10 @@ export class UnitsComponent implements OnInit {
   }
 
   private validateForm(data: Partial<CreateUnitDto>): boolean {
-    // En modo create, condominiumId es obligatorio
-    // En modo edit, solo buildingId es obligatorio
-    if (this.modalMode() === 'create') {
-      if (!data.condominiumId || !data.buildingId || !data.unitNumber) {
-        this.error.set('Por favor complete todos los campos obligatorios (Condominio, Edificio, Número de Unidad)');
-        return false;
-      }
-    } else {
-      if (!data.buildingId || !data.unitNumber) {
-        this.error.set('Por favor complete todos los campos obligatorios (Edificio, Número de Unidad)');
-        return false;
-      }
+    // Tanto en create como en edit, solo buildingId y unitNumber son obligatorios
+    if (!data.buildingId || !data.unitNumber) {
+      this.error.set('Por favor complete todos los campos obligatorios (Edificio, Número de Unidad)');
+      return false;
     }
     
     if (!data.area || data.area <= 0) {
