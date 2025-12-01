@@ -258,82 +258,34 @@ export class BuildingsComponent {
   }
 
   loadBuildings(): void {
-    const condoId = this.condominiumId();
-    
-    // Si no hay condominio seleccionado, marcar que se necesita selección
-    if (!condoId) {
-      this.needsCondoSelection.set(true);
-      this.buildings.set([]);
-      this.loading.set(false);
-      this.error.set(null);
-      console.log('⚠️ No condominium ID from route - waiting');
-      return;
-    }
-    
-    this.needsCondoSelection.set(false);
     this.loading.set(true);
     this.error.set(null);
     
+    const condoId = this.condominiumId();
+    
     console.log('🏗️ Loading buildings for condoId:', condoId);
     
-    // Llamar al servicio para obtener TODOS los edificios
-    this.buildingService.getBuildings().subscribe({
+    this.buildingService.getBuildings({
+      page: this.currentPage(),
+      pageSize: this.pageSize(),
+      condominiumId: condoId || undefined,
+      search: this.searchTerm() || undefined,
+      type: this.typeFilter() || undefined,
+      status: this.statusFilter() || undefined
+    }).subscribe({
       next: (response) => {
         console.log('🏗️ Buildings response:', response);
         
         if (response.success && response.data) {
-          const allBuildings = response.data.items || [];
-          console.log('🏗️ Total buildings from API:', allBuildings.length);
-          console.log('🏗️ All buildings:', allBuildings);
-          
-          // Filtrar por condominiumId (considerando diferentes campos posibles)
-          const filteredBuildings = allBuildings.filter((b: any) => {
-            const buildingCondoId = b.condominiumId || b.condominium_id || (b.condominium as any)?._id || (b.condominium as any)?.id;
-            const matches = buildingCondoId === condoId;
-            
-            if (matches) {
-              console.log('✅ Building matched:', b.name, 'condoId:', buildingCondoId);
-            }
-            
-            return matches;
-          });
-          
-          console.log('🏗️ Filtered buildings for condoId', condoId, ':', filteredBuildings.length);
-          
-          this.buildings.set(filteredBuildings);
-          this.totalPages.set(Math.ceil(filteredBuildings.length / this.pageSize()));
-          this.totalItems.set(filteredBuildings.length);
-        } else {
-          console.warn('🏗️ No data in buildings response');
-          this.buildings.set([]);
+          this.buildings.set(response.data.items);
+          this.totalPages.set(response.data.totalPages);
+          this.totalItems.set(response.data.total);
         }
         this.loading.set(false);
       },
       error: (err) => {
-        console.error('❌ Error loading buildings:', err);
-        
-        // Detectar errores específicos del backend
-        let errorMessage = 'Error al cargar los edificios';
-        
-        if (err.status === 500) {
-          const backendError = err.error?.message?.message || err.error?.data?.error?.message;
-          
-          if (backendError?.includes('MongoClient')) {
-            errorMessage = 'Error de conexión con la base de datos. Por favor, contacta al administrador del sistema.';
-            console.error('🔴 MongoDB connection error detected:', backendError);
-          } else if (backendError) {
-            errorMessage = `Error del servidor: ${backendError}`;
-          } else {
-            errorMessage = 'Error interno del servidor (500)';
-          }
-        } else if (err.status === 404) {
-          errorMessage = 'No se encontraron edificios';
-        } else if (err.status === 0) {
-          errorMessage = 'No se puede conectar con el servidor';
-        }
-        
-        this.error.set(errorMessage);
-        this.buildings.set([]);
+        console.error('Error loading buildings:', err);
+        this.error.set('Error al cargar los edificios');
         this.loading.set(false);
       }
     });

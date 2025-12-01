@@ -313,41 +313,34 @@ export class UnitsComponent implements OnInit {
 
   loadUnits(): void {
     console.log('[Units] loadUnits - Starting...');
-    
-    const buildingId = this.buildingId();
-    
-    // Si no hay buildingId desde la ruta, no cargar
-    if (!buildingId) {
-      console.log('⚠️ No building ID from route - waiting');
-      this.units.set([]);
-      this.loading.set(false);
-      return;
-    }
-    
     this.loading.set(true);
     this.error.set(null);
     
-    console.log('[Units] loadUnits - Building ID:', buildingId);
+    const condoId = this.condominiumId() || this.selectedCondo()?.id;
+    const buildingId = this.buildingId();
     
-    // Llamar al servicio SIN PARÁMETROS y filtrar localmente
-    this.unitService.getUnits({ page: 1, pageSize: 1000 }).subscribe({
+    console.log('[Units] loadUnits - condoId:', condoId, 'buildingId:', buildingId);
+    
+    const params = {
+      page: this.currentPage(),
+      pageSize: this.pageSize(),
+      condominiumId: condoId && condoId !== 'all' ? condoId : undefined,
+      buildingId: buildingId || undefined,
+      search: this.searchTerm() || undefined,
+      status: this.statusFilter() || undefined
+    };
+    
+    console.log('[Units] loadUnits - Request params:', params);
+    
+    this.unitService.getUnits(params).subscribe({
       next: (response) => {
         console.log('[Units] loadUnits - Response received:', response);
         if (response.success && response.data) {
-          const allUnits = response.data.items || [];
-          
-          // Filter units by buildingId
-          const filteredUnits = allUnits.filter((u: UnitDetails) => {
-            const unitBuildingId = u.buildingId || (u as any).building_id;
-            return unitBuildingId === buildingId;
-          });
-          
-          console.log('[Units] Total units:', allUnits.length);
-          console.log('[Units] Filtered units for buildingId:', buildingId, '->', filteredUnits.length);
-          
-          this.units.set(filteredUnits);
-          this.totalPages.set(Math.ceil(filteredUnits.length / this.pageSize()));
-          this.totalItems.set(filteredUnits.length);
+          const items = response.data.items || [];
+          console.log('[Units] loadUnits - Units loaded:', items.length);
+          this.units.set(items);
+          this.totalPages.set(response.data.totalPages || 1);
+          this.totalItems.set(response.data.total || 0);
         } else {
           console.warn('[Units] loadUnits - No data in response or error:', response.error);
           this.units.set([]);
