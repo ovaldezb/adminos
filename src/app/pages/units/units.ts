@@ -408,33 +408,74 @@ export class UnitsComponent implements OnInit {
       return;
     }
     
-    // Set form data con todos los campos (condominiumId puede estar vacío en edit)
-    this.formData.set({
-      condominiumId: unit.condominiumId || '',
-      buildingId: unit.buildingId,
-      unitNumber: unit.unitNumber || '',
-      tower: unit.tower || '',
-      floor: unit.floor || 1,
-      area: unit.area || 0,
-      bedrooms: unit.bedrooms || 0,
-      bathrooms: unit.bathrooms || 0,
-      parkingSpaces: unit.parkingSpaces || 0,
-      storageSpaces: unit.storageSpaces || 0,
-      status: unit.status || UnitStatus.VACANT,
-      monthlyFee: unit.monthlyFee || 0,
-      propertyType: unit.propertyType || PropertyType.APARTMENT,
-      orientation: unit.orientation || '',
-      hasBalcony: unit.hasBalcony || false,
-      hasGarden: unit.hasGarden || false,
-      isFurnished: unit.isFurnished || false,
-      description: unit.description || ''
-    });
+    // Función para establecer formData con el nombre del edificio correcto
+    const setFormDataWithTower = () => {
+      const currentBuilding = this.availableBuildings().find(b => (b.id || b._id) === unit.buildingId);
+      const towerName = currentBuilding?.name || unit.tower || 'Torre Principal';
+      
+      console.log('[Units] openEditModal - buildingId:', unit.buildingId);
+      console.log('[Units] openEditModal - availableBuildings:', this.availableBuildings().map(b => ({id: b.id || b._id, name: b.name})));
+      console.log('[Units] openEditModal - currentBuilding:', currentBuilding);
+      console.log('[Units] openEditModal - tower will be:', towerName);
+      
+      this.formData.set({
+        condominiumId: unit.condominiumId || '',
+        buildingId: unit.buildingId,
+        unitNumber: unit.unitNumber || '',
+        tower: towerName,
+        floor: unit.floor || 1,
+        area: unit.area || 0,
+        bedrooms: unit.bedrooms || 0,
+        bathrooms: unit.bathrooms || 0,
+        parkingSpaces: unit.parkingSpaces || 0,
+        storageSpaces: unit.storageSpaces || 0,
+        status: unit.status || UnitStatus.VACANT,
+        monthlyFee: unit.monthlyFee || 0,
+        propertyType: unit.propertyType || PropertyType.APARTMENT,
+        orientation: unit.orientation || '',
+        hasBalcony: unit.hasBalcony || false,
+        hasGarden: unit.hasGarden || false,
+        isFurnished: unit.isFurnished || false,
+        description: unit.description || ''
+      });
+      
+      console.log('[Units] openEditModal - formData set:', this.formData());
+    };
     
-    console.log('[Units] openEditModal - formData set:', this.formData());
-    
-    // Cargar edificios para el dropdown (si hay condominiumId)
-    if (unit.condominiumId && unit.condominiumId !== 'undefined') {
-      this.loadBuildingsByCondominium(unit.condominiumId);
+    // Si ya hay edificios cargados, usar directamente
+    if (this.availableBuildings().length > 0) {
+      setFormDataWithTower();
+    } else {
+      // Si no hay edificios, cargarlos primero
+      console.log('[Units] openEditModal - Loading buildings first...');
+      
+      // Cargar edificios según condominiumId
+      if (unit.condominiumId && unit.condominiumId !== 'undefined') {
+        this.buildingService.getBuildings({ condominiumId: unit.condominiumId }).subscribe({
+          next: (response) => {
+            if (response.success && response.data) {
+              const validBuildings = (response.data.items || []).filter(b => b.id || b._id);
+              this.availableBuildings.set(validBuildings);
+              console.log('[Units] openEditModal - Buildings loaded:', validBuildings.length);
+              setFormDataWithTower();
+            }
+          },
+          error: (err) => console.error('[Units] Error loading buildings:', err)
+        });
+      } else {
+        // Cargar todos los edificios
+        this.buildingService.getBuildings().subscribe({
+          next: (response) => {
+            if (response.success && response.data) {
+              const validBuildings = (response.data.items || []).filter(b => b.id || b._id);
+              this.availableBuildings.set(validBuildings);
+              console.log('[Units] openEditModal - All buildings loaded:', validBuildings.length);
+              setFormDataWithTower();
+            }
+          },
+          error: (err) => console.error('[Units] Error loading buildings:', err)
+        });
+      }
     }
     
     this.showModal.set(true);
@@ -502,6 +543,7 @@ export class UnitsComponent implements OnInit {
     console.log('[Units] saveUnit - CALLED!');
     console.log('[Units] saveUnit - modalMode:', this.modalMode());
     console.log('[Units] saveUnit - formData:', this.formData());
+    console.log('[Units] saveUnit - formData.tower:', this.formData().tower);
     console.log('[Units] saveUnit - unitResidents:', this.unitResidents());
     console.log('==========================================');
     
@@ -511,6 +553,7 @@ export class UnitsComponent implements OnInit {
     };
     
     console.log('[Units] saveUnit - data to send:', data);
+    console.log('[Units] saveUnit - data.tower:', data.tower);
     
     if (!this.validateForm(data)) {
       console.warn('[Units] saveUnit - Validation failed');
