@@ -275,13 +275,22 @@ export class UnitsComponent implements OnInit {
 
   onBuildingChange(event: Event): void {
     const buildingId = (event.target as HTMLSelectElement).value;
-    const selectedBuilding = this.availableBuildings().find(b => b.id === buildingId);
+    const selectedBuilding = this.availableBuildings().find(b => (b.id || b._id) === buildingId);
+    
+    console.log('[Units] onBuildingChange - buildingId:', buildingId);
+    console.log('[Units] onBuildingChange - selectedBuilding:', selectedBuilding);
+    
+    // Usar el nombre del edificio como torre por defecto
+    const towerName = selectedBuilding?.name || 'Torre Principal';
+    console.log('[Units] onBuildingChange - tower will be:', towerName);
     
     this.formData.update(current => ({
       ...current,
       buildingId,
-      tower: selectedBuilding?.name || ''
+      tower: towerName
     }));
+    
+    console.log('[Units] onBuildingChange - formData after update:', this.formData());
   }
 
   loadUnits(): void {
