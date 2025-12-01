@@ -166,7 +166,8 @@
                 </tr>
               } @else {
                 @for (condo of getPaginatedItems(); track condo.id || condo._id || $index) {
-                  <tr class="hover:bg-white/30 transition-colors border-b border-neutral-100">
+                  <tr class="hover:bg-white/30 transition-colors border-b border-neutral-100 cursor-pointer"
+                      (click)="navigateToBuildings(condo)">
                     <td>
                       <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
@@ -222,8 +223,14 @@
                         {{ getStatusLabel(condo.status) }}
                       </span>
                     </td>
-                    <td>
+                    <td (click)="$event.stopPropagation()">
                       <div class="flex gap-1">
+                        <button
+                          (click)="navigateToBuildings(condo)"
+                          class="btn btn-sm btn-ghost rounded-lg text-primary hover:bg-primary/10"
+                          title="Ver edificios">
+                          <i class="ri-building-line text-base"></i>
+                        </button>
                         <button
                           (click)="openViewModal(condo)"
                           class="btn btn-sm btn-ghost rounded-lg text-info hover:bg-info/10"

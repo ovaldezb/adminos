@@ -1,0 +1,33 @@
+<!-- Breadcrumbs Component -->
+<nav class="glass rounded-2xl px-6 py-3 mb-6 shadow-sm border border-white/20">
+  <ol class="flex items-center gap-2 text-sm">
+    @for (item of items(); track $index; let isLast = $last) {
+      <li class="flex items-center gap-2">
+        @if (item.route && !isLast) {
+          <a 
+            [routerLink]="item.route" 
+            class="flex items-center gap-2 text-neutral-600 hover:text-primary transition-colors font-medium"
+          >
+            @if (item.icon) {
+              <i [class]="item.icon + ' text-base'"></i>
+            }
+            <span>{{ item.label }}</span>
+          </a>
+        } @else {
+          <span class="flex items-center gap-2 font-semibold" 
+                [class.text-primary]="isLast"
+                [class.text-neutral-600]="!isLast">
+            @if (item.icon) {
+              <i [class]="item.icon + ' text-base'"></i>
+            }
+            <span>{{ item.label }}</span>
+          </span>
+        }
+        
+        @if (!isLast) {
+          <i class="ri-arrow-right-s-line text-neutral-400 text-lg"></i>
+        }
+      </li>
+    }
+  </ol>
+</nav>

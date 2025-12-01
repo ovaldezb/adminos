@@ -19,11 +19,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/condominiums/condominiums').then(m => m.CondominiumsComponent)
   },
   {
-    path: 'edificios',
+    path: 'condominios/:condoId/edificios',
     loadComponent: () => import('./pages/buildings/buildings').then(m => m.BuildingsComponent)
   },
   {
-    path: 'unidades',
+    path: 'condominios/:condoId/edificios/:buildingId/unidades',
     loadComponent: () => import('./pages/units/units').then(m => m.UnitsComponent)
   },
   {

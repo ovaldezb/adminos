@@ -44,23 +44,7 @@ export class SideMenuComponent {
     { 
       icon: 'ri-community-line', 
       label: 'Condominios', 
-      route: '/condominios',
-      badge: '3',
-      badgeColor: 'badge-secondary'
-    },
-    { 
-      icon: 'ri-building-line', 
-      label: 'Edificios', 
-      route: '/edificios',
-      badge: '5',
-      badgeColor: 'badge-primary'
-    },
-    { 
-      icon: 'ri-home-4-fill', 
-      label: 'Unidades', 
-      route: '/unidades',
-      badge: '248',
-      badgeColor: 'badge-info'
+      route: '/condominios'
     },
     { 
       icon: 'ri-user-follow-fill', 

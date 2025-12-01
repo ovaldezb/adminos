@@ -494,4 +494,10 @@ export class CondominiumsComponent implements OnInit {
   getFullAddress(condo: Condominium): string {
     return `${condo.streetAddress}, Col. ${condo.neighborhood}, ${condo.city}`;
   }
+
+  // Navigation
+  navigateToBuildings(condo: Condominium): void {
+    const condoId = this.getCondoId(condo);
+    this.router.navigate(['/condominios', condoId, 'edificios']);
+  }
 }

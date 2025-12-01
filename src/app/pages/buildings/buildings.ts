@@ -1,9 +1,10 @@
 import { Component, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
+import { BreadcrumbsComponent, BreadcrumbItem } from '../../components/breadcrumbs/breadcrumbs';
 import { BuildingService, CondominiumService } from '../../services';
 import { 
   Building, 
@@ -21,7 +22,7 @@ import {
 
 @Component({
   selector: 'app-buildings',
-  imports: [CommonModule, FormsModule, NavbarComponent, SideMenuComponent, RouterLink],
+  imports: [CommonModule, FormsModule, NavbarComponent, SideMenuComponent, RouterLink, BreadcrumbsComponent],
   templateUrl: './buildings.html'
 })
 export class BuildingsComponent {
@@ -29,6 +30,21 @@ export class BuildingsComponent {
   protected readonly userName = signal('Administrador');
   protected readonly selectedCondo = signal<Condominium | null>(null);
   protected readonly isOverviewMode = computed(() => !this.selectedCondo() || this.getCondoId(this.selectedCondo()) === 'all');
+  
+  // Condominuim ID from route
+  protected readonly condominiumId = signal<string>('');
+  protected readonly currentCondominium = signal<Condominium | null>(null);
+  
+  // Breadcrumbs
+  protected readonly breadcrumbs = computed<BreadcrumbItem[]>(() => {
+    const condo = this.currentCondominium();
+    if (!condo) return [];
+    
+    return [
+      { label: 'Condominios', route: '/condominios', icon: 'ri-community-line' },
+      { label: condo.name, icon: 'ri-building-line' }
+    ];
+  });
   
   // Expose Math for template
   protected readonly Math = Math;
@@ -178,13 +194,20 @@ export class BuildingsComponent {
 
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private buildingService: BuildingService,
     private condominiumService: CondominiumService
   ) {
-    // Load initial data
+    // Get condominiumId from route
     effect(() => {
-      const condo = this.selectedCondo();
-      this.loadBuildings();
+      this.route.params.subscribe(params => {
+        const condoId = params['condoId'];
+        if (condoId) {
+          this.condominiumId.set(condoId);
+          this.loadCondominiumDetails(condoId);
+          this.loadBuildings();
+        }
+      });
     });
     
     // Load condominiums for dropdown
@@ -219,17 +242,31 @@ export class BuildingsComponent {
     });
   }
 
+  loadCondominiumDetails(condoId: string): void {
+    this.condominiumService.getCondominiumById(condoId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.currentCondominium.set(response.data);
+          this.selectedCondo.set(response.data);
+        }
+      },
+      error: (err) => {
+        console.error('Error loading condominium details:', err);
+        this.showToastMessage('Error al cargar los detalles del condominio', 'error');
+      }
+    });
+  }
+
   loadBuildings(): void {
-    const selectedCondo = this.selectedCondo();
-    const condoId = this.getCondoId(selectedCondo);
+    const condoId = this.condominiumId();
     
     // Si no hay condominio seleccionado, marcar que se necesita selección
-    if (!selectedCondo) {
+    if (!condoId) {
       this.needsCondoSelection.set(true);
       this.buildings.set([]);
       this.loading.set(false);
       this.error.set(null);
-      console.log('⚠️ No condominium selected - waiting for selection');
+      console.log('⚠️ No condominium ID from route - waiting');
       return;
     }
     
@@ -237,20 +274,38 @@ export class BuildingsComponent {
     this.loading.set(true);
     this.error.set(null);
     
-    // No enviar condominiumId si es 'all' (todos los condominios)
-    const filterCondoId = condoId === 'all' ? undefined : condoId;
+    console.log('🏗️ Loading buildings for condoId:', condoId);
     
-    console.log('🏗️ Loading buildings - selectedCondo:', selectedCondo?.name);
-    console.log('🏗️ Original condoId:', condoId);
-    console.log('🏗️ Filter condoId:', filterCondoId);
-    
-    // Llamar al servicio SIN PARÁMETROS (la Lambda no los acepta todavía)
+    // Llamar al servicio para obtener TODOS los edificios
     this.buildingService.getBuildings().subscribe({
       next: (response) => {
+        console.log('🏗️ Buildings response:', response);
+        
         if (response.success && response.data) {
-          this.buildings.set(response.data.items);
-          this.totalPages.set(response.data.totalPages);
-          this.totalItems.set(response.data.total);
+          const allBuildings = response.data.items || [];
+          console.log('🏗️ Total buildings from API:', allBuildings.length);
+          console.log('🏗️ All buildings:', allBuildings);
+          
+          // Filtrar por condominiumId (considerando diferentes campos posibles)
+          const filteredBuildings = allBuildings.filter((b: any) => {
+            const buildingCondoId = b.condominiumId || b.condominium_id || (b.condominium as any)?._id || (b.condominium as any)?.id;
+            const matches = buildingCondoId === condoId;
+            
+            if (matches) {
+              console.log('✅ Building matched:', b.name, 'condoId:', buildingCondoId);
+            }
+            
+            return matches;
+          });
+          
+          console.log('🏗️ Filtered buildings for condoId', condoId, ':', filteredBuildings.length);
+          
+          this.buildings.set(filteredBuildings);
+          this.totalPages.set(Math.ceil(filteredBuildings.length / this.pageSize()));
+          this.totalItems.set(filteredBuildings.length);
+        } else {
+          console.warn('🏗️ No data in buildings response');
+          this.buildings.set([]);
         }
         this.loading.set(false);
       },
@@ -744,5 +799,16 @@ export class BuildingsComponent {
 
   formatPercentage(value: number): string {
     return `${value.toFixed(1)}%`;
+  }
+
+  // Navigation
+  navigateToUnits(building: BuildingDetails): void {
+    const condoId = this.condominiumId();
+    const buildingId = this.getCondoId({ id: building.id, _id: building._id } as any);
+    this.router.navigate(['/condominios', condoId, 'edificios', buildingId, 'unidades']);
+  }
+
+  goBackToCondominiums(): void {
+    this.router.navigate(['/condominios']);
   }
 }

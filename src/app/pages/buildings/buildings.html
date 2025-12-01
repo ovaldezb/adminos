@@ -30,16 +30,26 @@
     <!-- Main Content -->
     <main class="flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300 min-h-screen">
       
+      <!-- Breadcrumbs -->
+      @if (breadcrumbs().length > 0) {
+        <app-breadcrumbs [items]="breadcrumbs()" />
+      }
+      
       <!-- Header Section -->
       <div class="glass rounded-2xl p-6 shadow-lg mb-6 border border-white/20">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3">
+            <button 
+              (click)="goBackToCondominiums()"
+              class="btn btn-ghost btn-sm rounded-lg text-neutral-600 hover:bg-neutral-100">
+              <i class="ri-arrow-left-line text-base"></i>
+            </button>
             <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
               <i class="ri-building-line text-2xl text-primary"></i>
             </div>
             <div>
               <h1 class="text-2xl font-bold text-neutral-900">Edificios y Torres</h1>
-              <p class="text-sm text-neutral-600">{{ getCondoName() }}</p>
+              <p class="text-sm text-neutral-600">{{ currentCondominium()?.name || 'Cargando...' }}</p>
             </div>
           </div>
           
@@ -227,7 +237,8 @@
                   </tr>
                 } @else {
                 @for (building of filteredBuildings(); track building._id || building.id || $index) {
-                  <tr class="hover:bg-white/30 transition-colors border-b border-neutral-100">
+                  <tr class="hover:bg-white/30 transition-colors border-b border-neutral-100 cursor-pointer"
+                      (click)="navigateToUnits(building)">
                     <td>
                       <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
@@ -286,8 +297,14 @@
                         {{ getStatusLabel(building.status) }}
                       </span>
                     </td>
-                    <td>
+                    <td (click)="$event.stopPropagation()">
                       <div class="flex gap-1">
+                        <button
+                          (click)="navigateToUnits(building)"
+                          class="btn btn-sm btn-ghost rounded-lg text-primary hover:bg-primary/10"
+                          title="Ver unidades">
+                          <i class="ri-home-4-line text-base"></i>
+                        </button>
                         <button
                           (click)="openViewModal(building)"
                           class="btn btn-sm btn-ghost rounded-lg text-info hover:bg-info/10"

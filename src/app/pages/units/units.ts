@@ -1,9 +1,10 @@
 import { Component, signal, computed, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
+import { BreadcrumbsComponent, BreadcrumbItem } from '../../components/breadcrumbs/breadcrumbs';
 import { Condominium } from '../../models';
 import { UnitService, BuildingService, CondominiumService } from '../../services';
 import { 
@@ -20,7 +21,7 @@ import {
 
 @Component({
   selector: 'app-units',
-  imports: [CommonModule, FormsModule, NavbarComponent, SideMenuComponent],
+  imports: [CommonModule, FormsModule, NavbarComponent, SideMenuComponent, BreadcrumbsComponent],
   templateUrl: './units.html',
   styleUrl: './units.css'
 })
@@ -29,6 +30,41 @@ export class UnitsComponent implements OnInit {
   protected readonly userName = signal('Administrador');
   protected readonly selectedCondo = signal<Condominium | null>(null);
   protected readonly isOverviewMode = computed(() => !this.selectedCondo() || this.selectedCondo()?.id === 'all');
+  
+  // IDs from route
+  protected readonly condominiumId = signal<string>('');
+  protected readonly buildingId = signal<string>('');
+  
+  // Current entities
+  protected readonly currentCondominium = signal<Condominium | null>(null);
+  protected readonly currentBuilding = signal<BuildingDetails | null>(null);
+  
+  // Breadcrumbs
+  protected readonly breadcrumbs = computed<BreadcrumbItem[]>(() => {
+    const condo = this.currentCondominium();
+    const building = this.currentBuilding();
+    
+    const items: BreadcrumbItem[] = [
+      { label: 'Condominios', route: '/condominios', icon: 'ri-community-line' }
+    ];
+    
+    if (condo) {
+      items.push({ 
+        label: condo.name, 
+        route: `/condominios/${this.condominiumId()}/edificios`,
+        icon: 'ri-building-line'
+      });
+    }
+    
+    if (building) {
+      items.push({ 
+        label: building.name,
+        icon: 'ri-home-4-line'
+      });
+    }
+    
+    return items;
+  });
   
   // Expose Math for template
   protected readonly Math = Math;
@@ -141,89 +177,42 @@ export class UnitsComponent implements OnInit {
 
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private unitService: UnitService,
     private buildingService: BuildingService,
     private condominiumService: CondominiumService
   ) {
-    // Effect to reload units when condo changes
+    // Effect to reload units when route params change
     effect(() => {
-      const condo = this.selectedCondo();
-      console.log('[Units] Effect triggered - condo changed:', condo?.id);
-      if (condo) {
-        this.loadUnits();
-      }
-    }, { allowSignalWrites: true });
+      this.route.params.subscribe(params => {
+        const condoId = params['condoId'];
+        const buildingId = params['buildingId'];
+        
+        if (condoId && buildingId) {
+          this.condominiumId.set(condoId);
+          this.buildingId.set(buildingId);
+          this.loadCondominiumDetails(condoId);
+          this.loadBuildingDetails(buildingId);
+          this.loadUnits();
+        }
+      });
+    });
   }
 
   ngOnInit(): void {
     console.log('[Units] ngOnInit - Initializing component');
     // Load condominiums first
     this.loadCondominiums();
-    // Load buildings for dropdown
-    this.loadBuildingsForDropdown();
-    // Load initial units
-    this.loadUnits();
   }
 
   toggleSidebar(): void {
     this.sidebarOpen.set(!this.sidebarOpen());
   }
 
-  // Load buildings for dropdown, matching buildings component logic
-  loadBuildingsForDropdown(): void {
-    const condoId = this.selectedCondo()?.id;
-    console.log('[Units] loadBuildingsForDropdown - condoId:', condoId);
-    
-    // If 'all' or no condo selected, load all buildings
-    if (!condoId || condoId === 'all') {
-      this.buildingService.getBuildings().subscribe({
-        next: (response) => {
-          console.log('[Units] Buildings loaded (all):', response);
-          if (response.success && response.data) {
-            // Filter out buildings with missing or empty id
-            const validBuildings = (response.data.items || []).filter(b => b.id || b._id);
-            console.log('[Units] Valid buildings count:', validBuildings.length);
-            this.availableBuildings.set(validBuildings);
-          } else {
-            console.warn('[Units] No buildings data in response');
-            this.availableBuildings.set([]);
-          }
-        },
-        error: (err) => {
-          console.error('[Units] Error loading buildings:', err);
-          this.availableBuildings.set([]);
-        }
-      });
-    } else {
-      this.buildingService.getBuildings({ condominiumId: condoId }).subscribe({
-        next: (response) => {
-          console.log('[Units] Buildings loaded (filtered by condo):', response);
-          if (response.success && response.data) {
-            const validBuildings = (response.data.items || []).filter(b => b.id || b._id);
-            console.log('[Units] Valid buildings count:', validBuildings.length);
-            this.availableBuildings.set(validBuildings);
-          } else {
-            console.warn('[Units] No buildings data in response');
-            this.availableBuildings.set([]);
-          }
-        },
-        error: (err) => {
-          console.error('[Units] Error loading buildings:', err);
-          this.availableBuildings.set([]);
-        }
-      });
-    }
-  }
-
-  // Update building dropdown when condo changes
+  // Update when condo changes (from navbar)
   onCondoSelected(condo: Condominium | null): void {
     console.log('[Units] onCondoSelected - condo:', condo?.id);
     this.selectedCondo.set(condo);
-    this.currentPage.set(1);
-    // Reset building filter when changing condo
-    this.buildingFilter.set('');
-    this.loadBuildingsForDropdown();
-    // loadUnits will be triggered by the effect
   }
 
   // CRUD Operations
@@ -242,6 +231,35 @@ export class UnitsComponent implements OnInit {
       },
       error: (err) => {
         console.error('[Units] Error loading condominiums:', err);
+      }
+    });
+  }
+
+  loadCondominiumDetails(condoId: string): void {
+    this.condominiumService.getCondominiumById(condoId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.currentCondominium.set(response.data);
+          this.selectedCondo.set(response.data);
+        }
+      },
+      error: (err) => {
+        console.error('Error loading condominium details:', err);
+        this.showToastMessage('Error al cargar los detalles del condominio', 'error');
+      }
+    });
+  }
+
+  loadBuildingDetails(buildingId: string): void {
+    this.buildingService.getBuildingById(buildingId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.currentBuilding.set(response.data);
+        }
+      },
+      error: (err) => {
+        console.error('Error loading building details:', err);
+        this.showToastMessage('Error al cargar los detalles del edificio', 'error');
       }
     });
   }
@@ -295,38 +313,41 @@ export class UnitsComponent implements OnInit {
 
   loadUnits(): void {
     console.log('[Units] loadUnits - Starting...');
+    
+    const buildingId = this.buildingId();
+    
+    // Si no hay buildingId desde la ruta, no cargar
+    if (!buildingId) {
+      console.log('⚠️ No building ID from route - waiting');
+      this.units.set([]);
+      this.loading.set(false);
+      return;
+    }
+    
     this.loading.set(true);
     this.error.set(null);
     
-    let condoId = this.selectedCondo()?.id;
-    const buildingId = this.buildingFilter() || undefined;
+    console.log('[Units] loadUnits - Building ID:', buildingId);
     
-    // If buildingId is set, always send it, and only send condoId if not 'all'
-    if (buildingId && condoId === 'all') {
-      condoId = undefined;
-    }
-    
-    const params = {
-      page: this.currentPage(),
-      pageSize: this.pageSize(),
-      condominiumId: condoId && condoId !== 'all' ? condoId : undefined,
-      buildingId: buildingId,
-      search: this.searchTerm() || undefined,
-      status: this.statusFilter() || undefined
-    };
-    
-    console.log('[Units] loadUnits - Request params:', params);
-    console.log('[Units] loadUnits - API URL:', this.unitService);
-    
-    this.unitService.getUnits(params).subscribe({
+    // Llamar al servicio SIN PARÁMETROS y filtrar localmente
+    this.unitService.getUnits({ page: 1, pageSize: 1000 }).subscribe({
       next: (response) => {
         console.log('[Units] loadUnits - Response received:', response);
         if (response.success && response.data) {
-          const items = response.data.items || [];
-          console.log('[Units] loadUnits - Units loaded:', items.length);
-          this.units.set(items);
-          this.totalPages.set(response.data.totalPages || 1);
-          this.totalItems.set(response.data.total || 0);
+          const allUnits = response.data.items || [];
+          
+          // Filter units by buildingId
+          const filteredUnits = allUnits.filter((u: UnitDetails) => {
+            const unitBuildingId = u.buildingId || (u as any).building_id;
+            return unitBuildingId === buildingId;
+          });
+          
+          console.log('[Units] Total units:', allUnits.length);
+          console.log('[Units] Filtered units for buildingId:', buildingId, '->', filteredUnits.length);
+          
+          this.units.set(filteredUnits);
+          this.totalPages.set(Math.ceil(filteredUnits.length / this.pageSize()));
+          this.totalItems.set(filteredUnits.length);
         } else {
           console.warn('[Units] loadUnits - No data in response or error:', response.error);
           this.units.set([]);
@@ -385,9 +406,6 @@ export class UnitsComponent implements OnInit {
     
     // Reset residents list
     this.unitResidents.set([]);
-    
-    // Cargar edificios (si hay condo seleccionado carga de ese condo, si no carga todos)
-    this.loadBuildingsForDropdown();
     
     this.showModal.set(true);
   }
@@ -924,5 +942,15 @@ export class UnitsComponent implements OnInit {
     if (!resident.isResident && resident.isOwner) labels.push('Solo Dueño');
     
     return labels.length > 0 ? labels.join(' | ') : `Residente ${index + 1}`;
+  }
+
+  // Navigation
+  goBackToBuildings(): void {
+    const condoId = this.condominiumId();
+    this.router.navigate(['/condominios', condoId, 'edificios']);
+  }
+
+  goBackToCondominiums(): void {
+    this.router.navigate(['/condominios']);
   }
 }

@@ -14,15 +14,26 @@
 
     <!-- Main Content -->
     <main class="flex-1 p-6 lg:p-8 transition-all duration-300" [class.ml-0]="!sidebarOpen()" [class.ml-64]="sidebarOpen()">
+      
+      <!-- Breadcrumbs -->
+      @if (breadcrumbs().length > 0) {
+        <app-breadcrumbs [items]="breadcrumbs()" />
+      }
+      
       <!-- Header -->
       <div class="mb-8">
         <div class="flex items-center gap-3 mb-2">
+          <button 
+            (click)="goBackToBuildings()"
+            class="btn btn-ghost btn-sm rounded-lg text-neutral-600 hover:bg-neutral-100">
+            <i class="ri-arrow-left-line text-base"></i>
+          </button>
           <div class="p-3 glass rounded-2xl">
             <i class="ri-home-4-fill text-2xl text-primary"></i>
           </div>
           <div>
-            <h1 class="text-3xl font-bold text-neutral-800">Gestión de Unidades</h1>
-            <p class="text-neutral-600">{{ getCondoName() }}</p>
+            <h1 class="text-3xl font-bold text-neutral-800">Unidades</h1>
+            <p class="text-neutral-600">{{ currentBuilding()?.name || 'Cargando...' }}</p>
           </div>
         </div>
       </div>
