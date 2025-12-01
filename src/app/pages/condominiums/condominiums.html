@@ -165,7 +165,7 @@
                   </td>
                 </tr>
               } @else {
-                @for (condo of getPaginatedItems(); track condo.id) {
+                @for (condo of getPaginatedItems(); track condo.id || condo._id || $index) {
                   <tr class="hover:bg-white/30 transition-colors border-b border-neutral-100">
                     <td>
                       <div class="flex items-center gap-3">

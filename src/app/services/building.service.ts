@@ -43,8 +43,17 @@ export class BuildingService {
         
         // La Lambda retorna { success, message, data: { buildings: [], count } }
         // Necesitamos transformarlo a formato PaginatedResponse
-        const buildings = response.data?.buildings || [];
+        const rawBuildings = response.data?.buildings || [];
         const total = response.data?.count || 0;
+        
+        // Normalizar buildings: copiar _id a id si id está vacío
+        const buildings = rawBuildings.map((building: any) => ({
+          ...building,
+          id: building.id || building._id, // Usar _id si id está vacío
+          _id: building._id // Mantener _id también
+        }));
+        
+        console.log('✅ Building Service - Normalized buildings:', buildings);
         
         const paginatedResponse: ApiResponse<PaginatedResponse<BuildingDetails>> = {
           success: response.success,
