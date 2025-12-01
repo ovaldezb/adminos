@@ -612,7 +612,7 @@ export class UnitsComponent implements OnInit {
   }
 
   private validateForm(data: Partial<CreateUnitDto>): boolean {
-    if (!data.condominiumId || !data.buildingId || !data.unitNumber || !data.tower) {
+    if (!data.condominiumId || !data.buildingId || !data.unitNumber) {
       this.error.set('Por favor complete todos los campos obligatorios (Condominio, Edificio, Número de Unidad)');
       return false;
     }
@@ -622,7 +622,7 @@ export class UnitsComponent implements OnInit {
       return false;
     }
     
-    if (!data.monthlyFee || data.monthlyFee < 0) {
+    if (data.monthlyFee === undefined || data.monthlyFee === null || data.monthlyFee < 0) {
       this.error.set('La cuota mensual debe ser mayor o igual a 0');
       return false;
     }
