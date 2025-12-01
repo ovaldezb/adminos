@@ -528,14 +528,13 @@
                 </label>
                 <select
                   class="select select-bordered"
-                  [value]="formData().condominiumId"
                   (change)="onCondominiumChange($event)"
                   name="condominiumId"
                   required
                 >
-                  <option value="">Seleccione un condominio</option>
+                  <option value="" [selected]="!formData().condominiumId">Seleccione un condominio</option>
                   @for (condo of availableCondominiums(); track condo.id) {
-                    <option [value]="condo.id">{{ condo.name }}</option>
+                    <option [value]="condo.id" [selected]="formData().condominiumId === condo.id">{{ condo.name }}</option>
                   }
                 </select>
               </div>
@@ -547,13 +546,12 @@
                 </label>
                 <select
                   class="select select-bordered"
-                  [value]="formData().buildingId"
                   (change)="onBuildingChange($event)"
                   name="buildingId"
                   [disabled]="!formData().condominiumId"
                   required
                 >
-                  <option value="">
+                  <option value="" [selected]="!formData().buildingId">
                     @if (!formData().condominiumId) {
                       Primero seleccione un condominio
                     } @else {
@@ -561,7 +559,9 @@
                     }
                   </option>
                   @for (building of availableBuildings(); track building.id || building._id) {
-                    <option [value]="building.id">{{ building.name }} ({{ getTypeLabel(building.type) }})</option>
+                    <option [value]="building.id || building._id" [selected]="formData().buildingId === (building.id || building._id)">
+                      {{ building.name }} ({{ getTypeLabel(building.type) }})
+                    </option>
                   }
                 </select>
               </div>
@@ -574,7 +574,8 @@
                 <input
                   type="text"
                   class="input input-bordered"
-                  [(ngModel)]="formData().unitNumber"
+                  [value]="formData().unitNumber"
+                  (input)="onFormFieldChange($event, 'unitNumber')"
                   name="unitNumber"
                   placeholder="Ej: 101, A-201, Casa 5"
                   required
@@ -602,7 +603,8 @@
                 <input
                   type="number"
                   class="input input-bordered"
-                  [(ngModel)]="formData().floor"
+                  [value]="formData().floor"
+                  (input)="onFormFieldChange($event, 'floor')"
                   name="floor"
                   required
                   min="1"
@@ -616,7 +618,8 @@
                 <input
                   type="number"
                   class="input input-bordered"
-                  [(ngModel)]="formData().area"
+                  [value]="formData().area"
+                  (input)="onFormFieldChange($event, 'area')"
                   name="area"
                   required
                   min="0"
@@ -630,16 +633,16 @@
                 </label>
                 <select
                   class="select select-bordered"
-                  [(ngModel)]="formData().propertyType"
+                  (change)="onFormFieldChange($event, 'propertyType')"
                   name="propertyType"
                   required
                 >
-                  <option [value]="PropertyType.APARTMENT">Departamento</option>
-                  <option [value]="PropertyType.PENTHOUSE">Penthouse</option>
-                  <option [value]="PropertyType.DUPLEX">Dúplex</option>
-                  <option [value]="PropertyType.STUDIO">Studio</option>
-                  <option [value]="PropertyType.LOFT">Loft</option>
-                  <option [value]="PropertyType.TOWNHOUSE">Casa</option>
+                  <option [value]="PropertyType.APARTMENT" [selected]="formData().propertyType === PropertyType.APARTMENT">Departamento</option>
+                  <option [value]="PropertyType.PENTHOUSE" [selected]="formData().propertyType === PropertyType.PENTHOUSE">Penthouse</option>
+                  <option [value]="PropertyType.DUPLEX" [selected]="formData().propertyType === PropertyType.DUPLEX">Dúplex</option>
+                  <option [value]="PropertyType.STUDIO" [selected]="formData().propertyType === PropertyType.STUDIO">Studio</option>
+                  <option [value]="PropertyType.LOFT" [selected]="formData().propertyType === PropertyType.LOFT">Loft</option>
+                  <option [value]="PropertyType.TOWNHOUSE" [selected]="formData().propertyType === PropertyType.TOWNHOUSE">Casa</option>
                 </select>
               </div>
 
@@ -649,15 +652,15 @@
                 </label>
                 <select
                   class="select select-bordered"
-                  [(ngModel)]="formData().status"
+                  (change)="onFormFieldChange($event, 'status')"
                   name="status"
                   required
                 >
-                  <option [value]="UnitStatus.OCCUPIED">Ocupada</option>
-                  <option [value]="UnitStatus.VACANT">Vacante</option>
-                  <option [value]="UnitStatus.UNDER_MAINTENANCE">En Mantenimiento</option>
-                  <option [value]="UnitStatus.FOR_SALE">En Venta</option>
-                  <option [value]="UnitStatus.FOR_RENT">En Alquiler</option>
+                  <option [value]="UnitStatus.OCCUPIED" [selected]="formData().status === UnitStatus.OCCUPIED">Ocupada</option>
+                  <option [value]="UnitStatus.VACANT" [selected]="formData().status === UnitStatus.VACANT">Vacante</option>
+                  <option [value]="UnitStatus.UNDER_MAINTENANCE" [selected]="formData().status === UnitStatus.UNDER_MAINTENANCE">En Mantenimiento</option>
+                  <option [value]="UnitStatus.FOR_SALE" [selected]="formData().status === UnitStatus.FOR_SALE">En Venta</option>
+                  <option [value]="UnitStatus.FOR_RENT" [selected]="formData().status === UnitStatus.FOR_RENT">En Alquiler</option>
                 </select>
               </div>
 
@@ -668,7 +671,8 @@
                 <input
                   type="number"
                   class="input input-bordered"
-                  [(ngModel)]="formData().bedrooms"
+                  [value]="formData().bedrooms"
+                  (input)="onFormFieldChange($event, 'bedrooms')"
                   name="bedrooms"
                   required
                   min="0"
@@ -682,7 +686,8 @@
                 <input
                   type="number"
                   class="input input-bordered"
-                  [(ngModel)]="formData().bathrooms"
+                  [value]="formData().bathrooms"
+                  (input)="onFormFieldChange($event, 'bathrooms')"
                   name="bathrooms"
                   required
                   min="0"
@@ -696,7 +701,8 @@
                 <input
                   type="number"
                   class="input input-bordered"
-                  [(ngModel)]="formData().parkingSpaces"
+                  [value]="formData().parkingSpaces"
+                  (input)="onFormFieldChange($event, 'parkingSpaces')"
                   name="parkingSpaces"
                   required
                   min="0"
@@ -710,7 +716,8 @@
                 <input
                   type="number"
                   class="input input-bordered"
-                  [(ngModel)]="formData().storageSpaces"
+                  [value]="formData().storageSpaces"
+                  (input)="onFormFieldChange($event, 'storageSpaces')"
                   name="storageSpaces"
                   min="0"
                 />
@@ -723,7 +730,8 @@
                 <input
                   type="number"
                   class="input input-bordered"
-                  [(ngModel)]="formData().monthlyFee"
+                  [value]="formData().monthlyFee"
+                  (input)="onFormFieldChange($event, 'monthlyFee')"
                   name="monthlyFee"
                   required
                   min="0"
@@ -737,18 +745,18 @@
                 </label>
                 <select
                   class="select select-bordered"
-                  [(ngModel)]="formData().orientation"
+                  (change)="onFormFieldChange($event, 'orientation')"
                   name="orientation"
                 >
-                  <option value="">Seleccionar...</option>
-                  <option value="Norte">Norte</option>
-                  <option value="Sur">Sur</option>
-                  <option value="Este">Este</option>
-                  <option value="Oeste">Oeste</option>
-                  <option value="Noreste">Noreste</option>
-                  <option value="Noroeste">Noroeste</option>
-                  <option value="Sureste">Sureste</option>
-                  <option value="Suroeste">Suroeste</option>
+                  <option value="" [selected]="!formData().orientation">Seleccionar...</option>
+                  <option value="Norte" [selected]="formData().orientation === 'Norte'">Norte</option>
+                  <option value="Sur" [selected]="formData().orientation === 'Sur'">Sur</option>
+                  <option value="Este" [selected]="formData().orientation === 'Este'">Este</option>
+                  <option value="Oeste" [selected]="formData().orientation === 'Oeste'">Oeste</option>
+                  <option value="Noreste" [selected]="formData().orientation === 'Noreste'">Noreste</option>
+                  <option value="Noroeste" [selected]="formData().orientation === 'Noroeste'">Noroeste</option>
+                  <option value="Sureste" [selected]="formData().orientation === 'Sureste'">Sureste</option>
+                  <option value="Suroeste" [selected]="formData().orientation === 'Suroeste'">Suroeste</option>
                 </select>
               </div>
 
@@ -759,7 +767,8 @@
                     <input
                       type="checkbox"
                       class="checkbox checkbox-primary"
-                      [(ngModel)]="formData().hasBalcony"
+                      [checked]="formData().hasBalcony"
+                      (change)="onFormFieldChange($event, 'hasBalcony')"
                       name="hasBalcony"
                     />
                     <span class="label-text">Tiene Balcón</span>
@@ -771,7 +780,8 @@
                     <input
                       type="checkbox"
                       class="checkbox checkbox-primary"
-                      [(ngModel)]="formData().hasGarden"
+                      [checked]="formData().hasGarden"
+                      (change)="onFormFieldChange($event, 'hasGarden')"
                       name="hasGarden"
                     />
                     <span class="label-text">Tiene Jardín</span>
@@ -783,7 +793,8 @@
                     <input
                       type="checkbox"
                       class="checkbox checkbox-primary"
-                      [(ngModel)]="formData().isFurnished"
+                      [checked]="formData().isFurnished"
+                      (change)="onFormFieldChange($event, 'isFurnished')"
                       name="isFurnished"
                     />
                     <span class="label-text">Amoblado</span>
@@ -798,7 +809,8 @@
                 </label>
                 <textarea
                   class="textarea textarea-bordered h-24"
-                  [(ngModel)]="formData().description"
+                  [value]="formData().description"
+                  (input)="onFormFieldChange($event, 'description')"
                   name="description"
                   placeholder="Descripción opcional de la unidad..."
                 ></textarea>

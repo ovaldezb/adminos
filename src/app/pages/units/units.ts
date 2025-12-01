@@ -1,4 +1,4 @@
-import { Component, signal, computed, effect } from '@angular/core';
+import { Component, signal, computed, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -24,7 +24,7 @@ import {
   templateUrl: './units.html',
   styleUrl: './units.css'
 })
-export class UnitsComponent {
+export class UnitsComponent implements OnInit {
   protected readonly sidebarOpen = signal(false);
   protected readonly userName = signal('Administrador');
   protected readonly selectedCondo = signal<Condominium | null>(null);
@@ -145,14 +145,24 @@ export class UnitsComponent {
     private buildingService: BuildingService,
     private condominiumService: CondominiumService
   ) {
-    // Load initial data
+    // Effect to reload units when condo changes
     effect(() => {
       const condo = this.selectedCondo();
-      this.loadUnits();
-    });
-    
-    // Load condominiums for dropdown
+      console.log('[Units] Effect triggered - condo changed:', condo?.id);
+      if (condo) {
+        this.loadUnits();
+      }
+    }, { allowSignalWrites: true });
+  }
+
+  ngOnInit(): void {
+    console.log('[Units] ngOnInit - Initializing component');
+    // Load condominiums first
     this.loadCondominiums();
+    // Load buildings for dropdown
+    this.loadBuildingsForDropdown();
+    // Load initial units
+    this.loadUnits();
   }
 
   toggleSidebar(): void {
@@ -162,35 +172,43 @@ export class UnitsComponent {
   // Load buildings for dropdown, matching buildings component logic
   loadBuildingsForDropdown(): void {
     const condoId = this.selectedCondo()?.id;
+    console.log('[Units] loadBuildingsForDropdown - condoId:', condoId);
+    
     // If 'all' or no condo selected, load all buildings
     if (!condoId || condoId === 'all') {
       this.buildingService.getBuildings().subscribe({
         next: (response) => {
+          console.log('[Units] Buildings loaded (all):', response);
           if (response.success && response.data) {
             // Filter out buildings with missing or empty id
             const validBuildings = (response.data.items || []).filter(b => b.id || b._id);
+            console.log('[Units] Valid buildings count:', validBuildings.length);
             this.availableBuildings.set(validBuildings);
           } else {
+            console.warn('[Units] No buildings data in response');
             this.availableBuildings.set([]);
           }
         },
         error: (err) => {
-          console.error('Error loading buildings:', err);
+          console.error('[Units] Error loading buildings:', err);
           this.availableBuildings.set([]);
         }
       });
     } else {
       this.buildingService.getBuildings({ condominiumId: condoId }).subscribe({
         next: (response) => {
+          console.log('[Units] Buildings loaded (filtered by condo):', response);
           if (response.success && response.data) {
             const validBuildings = (response.data.items || []).filter(b => b.id || b._id);
+            console.log('[Units] Valid buildings count:', validBuildings.length);
             this.availableBuildings.set(validBuildings);
           } else {
+            console.warn('[Units] No buildings data in response');
             this.availableBuildings.set([]);
           }
         },
         error: (err) => {
-          console.error('Error loading buildings:', err);
+          console.error('[Units] Error loading buildings:', err);
           this.availableBuildings.set([]);
         }
       });
@@ -199,21 +217,32 @@ export class UnitsComponent {
 
   // Update building dropdown when condo changes
   onCondoSelected(condo: Condominium | null): void {
+    console.log('[Units] onCondoSelected - condo:', condo?.id);
     this.selectedCondo.set(condo);
     this.currentPage.set(1);
+    // Reset building filter when changing condo
+    this.buildingFilter.set('');
     this.loadBuildingsForDropdown();
-    this.loadUnits();
+    // loadUnits will be triggered by the effect
   }
 
   // CRUD Operations
   loadCondominiums(): void {
+    console.log('[Units] loadCondominiums - Starting...');
     this.condominiumService.getAllCondominiums().subscribe({
       next: (response) => {
+        console.log('[Units] Condominiums loaded:', response);
         if (response.success && response.data) {
-          this.availableCondominiums.set(response.data);
+          const condos = response.data;
+          console.log('[Units] Available condominiums count:', condos.length);
+          this.availableCondominiums.set(condos);
+        } else {
+          console.warn('[Units] No condominiums data in response');
         }
       },
-      error: (err) => console.error('Error loading condominiums:', err)
+      error: (err) => {
+        console.error('[Units] Error loading condominiums:', err);
+      }
     });
   }
 
@@ -256,39 +285,59 @@ export class UnitsComponent {
   }
 
   loadUnits(): void {
+    console.log('[Units] loadUnits - Starting...');
     this.loading.set(true);
     this.error.set(null);
     
     let condoId = this.selectedCondo()?.id;
     const buildingId = this.buildingFilter() || undefined;
+    
     // If buildingId is set, always send it, and only send condoId if not 'all'
     if (buildingId && condoId === 'all') {
       condoId = undefined;
     }
-    console.log('[Units] loadUnits params:', { buildingId, condominiumId: condoId });
-    this.unitService.getUnits({
+    
+    const params = {
       page: this.currentPage(),
       pageSize: this.pageSize(),
-      condominiumId: condoId,
+      condominiumId: condoId && condoId !== 'all' ? condoId : undefined,
       buildingId: buildingId,
       search: this.searchTerm() || undefined,
       status: this.statusFilter() || undefined
-    }).subscribe({
+    };
+    
+    console.log('[Units] loadUnits - Request params:', params);
+    console.log('[Units] loadUnits - API URL:', this.unitService);
+    
+    this.unitService.getUnits(params).subscribe({
       next: (response) => {
+        console.log('[Units] loadUnits - Response received:', response);
         if (response.success && response.data) {
-          this.units.set(response.data.items || []);
-          this.totalPages.set(response.data.totalPages);
-          this.totalItems.set(response.data.total);
+          const items = response.data.items || [];
+          console.log('[Units] loadUnits - Units loaded:', items.length);
+          this.units.set(items);
+          this.totalPages.set(response.data.totalPages || 1);
+          this.totalItems.set(response.data.total || 0);
         } else {
+          console.warn('[Units] loadUnits - No data in response or error:', response.error);
           this.units.set([]);
           this.totalPages.set(1);
           this.totalItems.set(0);
+          if (response.error?.message) {
+            this.error.set(response.error.message);
+          }
         }
         this.loading.set(false);
       },
       error: (err) => {
-        console.error('Error loading units:', err);
-        this.error.set('Error al cargar las unidades');
+        console.error('[Units] loadUnits - HTTP Error:', err);
+        console.error('[Units] loadUnits - Error details:', {
+          status: err.status,
+          statusText: err.statusText,
+          message: err.message,
+          url: err.url
+        });
+        this.error.set('Error al cargar las unidades. Revisa la consola para más detalles.');
         this.units.set([]);
         this.totalPages.set(1);
         this.totalItems.set(0);
@@ -337,34 +386,97 @@ export class UnitsComponent {
   }
 
   openEditModal(unit: UnitDetails): void {
+    console.log('[Units] openEditModal - unit:', unit);
     this.modalMode.set('edit');
     this.selectedUnit.set(unit);
-    this.formData.set({
-      condominiumId: unit.condominiumId,
-      buildingId: unit.buildingId,
-      unitNumber: unit.unitNumber,
-      tower: unit.tower,
-      floor: unit.floor,
-      area: unit.area,
-      bedrooms: unit.bedrooms,
-      bathrooms: unit.bathrooms,
-      parkingSpaces: unit.parkingSpaces,
-      storageSpaces: unit.storageSpaces,
-      status: unit.status,
-      monthlyFee: unit.monthlyFee,
-      propertyType: unit.propertyType,
-      orientation: unit.orientation,
-      hasBalcony: unit.hasBalcony,
-      hasGarden: unit.hasGarden,
-      isFurnished: unit.isFurnished,
-      description: unit.description
-    });
     
-    // Cargar edificios del condominio actual
-    if (unit.condominiumId) {
-      this.loadBuildingsByCondominium(unit.condominiumId);
+    // Cargar residentes existentes
+    const existingResidents = unit.residents || unit.residentDetails || [];
+    this.unitResidents.set([...existingResidents]);
+    
+    // Determinar condominiumId: usar selectedCondo o el de la unidad
+    let condominiumId = unit.condominiumId;
+    if (!condominiumId || condominiumId === 'undefined') {
+      // Si no tiene condominiumId, usar el condominio seleccionado
+      const selected = this.selectedCondo();
+      if (selected && selected.id && selected.id !== 'all') {
+        condominiumId = selected.id;
+      }
     }
     
+    // Set form data con todos los campos
+    this.formData.set({
+      condominiumId: condominiumId || '',
+      buildingId: unit.buildingId || '',
+      unitNumber: unit.unitNumber || '',
+      tower: unit.tower || '',
+      floor: unit.floor || 1,
+      area: unit.area || 0,
+      bedrooms: unit.bedrooms || 0,
+      bathrooms: unit.bathrooms || 0,
+      parkingSpaces: unit.parkingSpaces || 0,
+      storageSpaces: unit.storageSpaces || 0,
+      status: unit.status || UnitStatus.VACANT,
+      monthlyFee: unit.monthlyFee || 0,
+      propertyType: unit.propertyType || PropertyType.APARTMENT,
+      orientation: unit.orientation || '',
+      hasBalcony: unit.hasBalcony || false,
+      hasGarden: unit.hasGarden || false,
+      isFurnished: unit.isFurnished || false,
+      description: unit.description || ''
+    });
+    
+    // Cargar edificios del condominio si existe
+    if (condominiumId && condominiumId !== 'undefined') {
+      this.loadBuildingsByCondominium(condominiumId);
+    }
+    
+    this.showModal.set(true);
+  }
+
+  private setFormDataAndLoadBuildings(unit: UnitDetails, condominiumId: string): void {
+    console.log('[Units] setFormDataAndLoadBuildings - condominiumId:', condominiumId);
+    console.log('[Units] setFormDataAndLoadBuildings - buildingId:', unit.buildingId);
+    
+    // Validar que condominiumId sea válido
+    if (!condominiumId || condominiumId === 'undefined' || condominiumId === 'null') {
+      console.error('[Units] setFormDataAndLoadBuildings - Invalid condominiumId:', condominiumId);
+      this.error.set('Error: ID de condominio inválido');
+      return;
+    }
+    
+    // Set form data con todos los campos
+    this.formData.set({
+      condominiumId: condominiumId,
+      buildingId: unit.buildingId || '',
+      unitNumber: unit.unitNumber || '',
+      tower: unit.tower || '',
+      floor: unit.floor || 1,
+      area: unit.area || 0,
+      bedrooms: unit.bedrooms || 0,
+      bathrooms: unit.bathrooms || 0,
+      parkingSpaces: unit.parkingSpaces || 0,
+      storageSpaces: unit.storageSpaces || 0,
+      status: unit.status || UnitStatus.VACANT,
+      monthlyFee: unit.monthlyFee || 0,
+      propertyType: unit.propertyType || PropertyType.APARTMENT,
+      orientation: unit.orientation || '',
+      hasBalcony: unit.hasBalcony || false,
+      hasGarden: unit.hasGarden || false,
+      isFurnished: unit.isFurnished || false,
+      description: unit.description || ''
+    });
+    
+    console.log('[Units] setFormDataAndLoadBuildings - formData set:', this.formData());
+    console.log('[Units] setFormDataAndLoadBuildings - availableCondominiums:', this.availableCondominiums().map(c => ({id: c.id, name: c.name})));
+    
+    // Cargar edificios del condominio
+    if (condominiumId) {
+      console.log('[Units] setFormDataAndLoadBuildings - Loading buildings for condo:', condominiumId);
+      this.loadBuildingsByCondominium(condominiumId);
+    }
+    
+    // Abrir el modal después de cargar los datos
     this.showModal.set(true);
   }
 
@@ -380,18 +492,27 @@ export class UnitsComponent {
   }
 
   saveUnit(): void {
+    console.log('[Units] saveUnit - Starting...');
+    console.log('[Units] saveUnit - modalMode:', this.modalMode());
+    console.log('[Units] saveUnit - formData:', this.formData());
+    console.log('[Units] saveUnit - unitResidents:', this.unitResidents());
+    
     const data = {
       ...this.formData(),
       residents: this.unitResidents()
     };
     
+    console.log('[Units] saveUnit - data to send:', data);
+    
     if (!this.validateForm(data)) {
+      console.warn('[Units] saveUnit - Validation failed');
       return;
     }
 
     this.loading.set(true);
 
     if (this.modalMode() === 'create') {
+      console.log('[Units] saveUnit - Creating unit...');
       this.unitService.createUnit(data as CreateUnitDto).subscribe({
         next: (response) => {
           if (response.success) {
@@ -411,10 +532,20 @@ export class UnitsComponent {
       });
     } else if (this.modalMode() === 'edit') {
       const unitId = this.selectedUnit()?.id;
-      if (!unitId) return;
+      console.log('[Units] saveUnit - Editing unit with ID:', unitId);
+      console.log('[Units] saveUnit - Selected unit:', this.selectedUnit());
+      
+      if (!unitId) {
+        console.error('[Units] saveUnit - No unit ID found!');
+        this.showToastMessage('Error: No se encontró el ID de la unidad', 'error');
+        this.loading.set(false);
+        return;
+      }
 
+      console.log('[Units] saveUnit - Calling updateUnit service...');
       this.unitService.updateUnit(unitId, data as UpdateUnitDto).subscribe({
         next: (response) => {
+          console.log('[Units] saveUnit - Update response:', response);
           if (response.success) {
             this.showToastMessage('Unidad actualizada exitosamente', 'success');
             this.closeModal();
@@ -667,6 +798,29 @@ export class UnitsComponent {
     this.unitResidents.update(residents => 
       residents.map((r, i) => i === index ? { ...r, [field]: value } : r)
     );
+  }
+
+  // === Form Field Update Methods ===
+  
+  updateFormField(field: keyof CreateUnitDto, value: any): void {
+    this.formData.update(current => ({
+      ...current,
+      [field]: value
+    }));
+  }
+
+  onFormFieldChange(event: Event, field: keyof CreateUnitDto): void {
+    const target = event.target as HTMLInputElement | HTMLSelectElement;
+    let value: any = target.value;
+    
+    // Convert to appropriate type
+    if (target.type === 'number') {
+      value = parseFloat(value) || 0;
+    } else if (target.type === 'checkbox') {
+      value = (target as HTMLInputElement).checked;
+    }
+    
+    this.updateFormField(field, value);
   }
 
   validateResidents(): boolean {

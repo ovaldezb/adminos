@@ -77,9 +77,70 @@ export class UnitService {
       httpParams = httpParams.set('search', params.search);
     }
 
-    return this.http.get<ApiResponse<PaginatedResponse<UnitDetails>>>(this.apiUrl, { params: httpParams }).pipe(
+    // Backend response format: { success, message, data: { units: [], count } }
+    interface BackendUnitsResponse {
+      units: any[];
+      count: number;
+    }
+
+    return this.http.get<ApiResponse<BackendUnitsResponse>>(this.apiUrl, { params: httpParams }).pipe(
+      map((response) => {
+        console.log('[UnitService] Raw backend response:', response);
+        
+        if (!response.success || !response.data) {
+          return {
+            success: false,
+            error: { code: 'NO_DATA', message: 'No se recibieron datos del backend' },
+            timestamp: new Date(),
+          } as ApiResponse<PaginatedResponse<UnitDetails>>;
+        }
+
+        // Map backend format to frontend format
+        const backendData = response.data;
+        const units = backendData.units || [];
+        const count = backendData.count || 0;
+        const pageSize = params?.pageSize || 10;
+        const currentPage = params?.page || 1;
+        const totalPages = Math.ceil(count / pageSize);
+
+        // Map backend units to UnitDetails (normalize _id to id, status values, etc.)
+        const mappedUnits: UnitDetails[] = units.map((unit: any) => ({
+          ...unit,
+          id: unit._id || unit.id, // Backend uses _id
+          buildingId: unit.buildingId || unit._buildingId, // Normalize buildingId
+          condominiumId: unit.condominiumId || unit._condominiumId, // Normalize condominiumId
+          // Map backend status to frontend enum
+          status: this.mapBackendStatus(unit.status),
+          // Map backend propertyType to frontend enum
+          propertyType: this.mapBackendPropertyType(unit.propertyType),
+          // Ensure required fields exist with defaults
+          isOccupied: unit.status === 'ACTIVE' || unit.status === 'OCCUPIED',
+          occupancyStatus: unit.status === 'ACTIVE' ? UnitOccupancyStatus.OWNER_OCCUPIED : UnitOccupancyStatus.VACANT,
+          hasDebt: false,
+          debtAmount: 0,
+          residents: unit.residents || [],
+          parkingSpaces: unit.parkingSlots || unit.parkingSpaces || 0,
+          storageSpaces: unit.storageSlots || unit.storageSpaces || 0,
+          createdAt: unit.createdAt ? new Date(unit.createdAt) : new Date(),
+          updatedAt: unit.updatedAt ? new Date(unit.updatedAt) : new Date(),
+        }));
+
+        console.log('[UnitService] Mapped units:', mappedUnits);
+
+        return {
+          success: true,
+          data: {
+            items: mappedUnits,
+            total: count,
+            page: currentPage,
+            pageSize: pageSize,
+            totalPages: totalPages,
+          },
+          timestamp: new Date(),
+        } as ApiResponse<PaginatedResponse<UnitDetails>>;
+      }),
       catchError((error) => {
-        console.error('Error fetching units from backend:', error);
+        console.error('[UnitService] Error fetching units from backend:', error);
         return of({
           success: false,
           error: { code: 'BACKEND_ERROR', message: 'Error al cargar las unidades' },
@@ -87,6 +148,47 @@ export class UnitService {
         });
       })
     );
+  }
+
+  /**
+   * Maps backend status values to frontend UnitStatus enum
+   */
+  private mapBackendStatus(backendStatus: string): UnitStatus {
+    const statusMap: Record<string, UnitStatus> = {
+      'ACTIVE': UnitStatus.OCCUPIED,
+      'INACTIVE': UnitStatus.VACANT,
+      'OCCUPIED': UnitStatus.OCCUPIED,
+      'VACANT': UnitStatus.VACANT,
+      'occupied': UnitStatus.OCCUPIED,
+      'vacant': UnitStatus.VACANT,
+      'under_maintenance': UnitStatus.UNDER_MAINTENANCE,
+      'for_sale': UnitStatus.FOR_SALE,
+      'for_rent': UnitStatus.FOR_RENT,
+    };
+    
+    return statusMap[backendStatus] || UnitStatus.VACANT;
+  }
+
+  /**
+   * Maps backend propertyType values to frontend PropertyType enum
+   */
+  private mapBackendPropertyType(backendPropertyType: string): PropertyType {
+    const typeMap: Record<string, PropertyType> = {
+      'APARTMENT': PropertyType.APARTMENT,
+      'PENTHOUSE': PropertyType.PENTHOUSE,
+      'DUPLEX': PropertyType.DUPLEX,
+      'STUDIO': PropertyType.STUDIO,
+      'LOFT': PropertyType.LOFT,
+      'TOWNHOUSE': PropertyType.TOWNHOUSE,
+      'apartment': PropertyType.APARTMENT,
+      'penthouse': PropertyType.PENTHOUSE,
+      'duplex': PropertyType.DUPLEX,
+      'studio': PropertyType.STUDIO,
+      'loft': PropertyType.LOFT,
+      'townhouse': PropertyType.TOWNHOUSE,
+    };
+    
+    return typeMap[backendPropertyType] || PropertyType.APARTMENT;
   }
 
   /**
@@ -112,12 +214,39 @@ export class UnitService {
    * Adds unit to Building's unitsId array automatically
    */
   createUnit(unitData: CreateUnitDto): Observable<ApiResponse<Unit>> {
-    return this.http.post<ApiResponse<Unit>>(this.apiUrl, unitData).pipe(
+    console.log('[UnitService] createUnit - Original data:', unitData);
+    
+    // Map frontend field names to backend field names
+    const backendData = {
+      ...unitData,
+      parkingSlots: unitData.parkingSpaces,
+      storageSlots: unitData.storageSpaces
+    };
+    
+    // Remove frontend field names
+    delete (backendData as any).parkingSpaces;
+    delete (backendData as any).storageSpaces;
+    
+    console.log('[UnitService] createUnit - Mapped data for backend:', backendData);
+    console.log('[UnitService] createUnit - URL:', this.apiUrl);
+    
+    return this.http.post<ApiResponse<Unit>>(this.apiUrl, backendData).pipe(
+      map((response) => {
+        console.log('[UnitService] createUnit - Response:', response);
+        return response;
+      }),
       catchError((error) => {
-        console.error('Error creating unit in backend:', error);
+        console.error('[UnitService] createUnit - Error:', error);
+        console.error('[UnitService] createUnit - Error details:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          url: error.url,
+          error: error.error
+        });
         return of({
           success: false,
-          error: { code: 'BACKEND_ERROR', message: 'Error al crear la unidad' },
+          error: { code: 'BACKEND_ERROR', message: error.error?.message || 'Error al crear la unidad' },
           timestamp: new Date(),
         });
       })
@@ -132,12 +261,40 @@ export class UnitService {
     id: string,
     updates: UpdateUnitDto
   ): Observable<ApiResponse<UnitDetails>> {
-    return this.http.put<ApiResponse<UnitDetails>>(`${this.apiUrl}/${id}`, updates).pipe(
+    console.log('[UnitService] updateUnit - ID:', id);
+    console.log('[UnitService] updateUnit - Original data:', updates);
+    
+    // Map frontend field names to backend field names
+    const backendData = {
+      ...updates,
+      parkingSlots: updates.parkingSpaces,
+      storageSlots: updates.storageSpaces
+    };
+    
+    // Remove frontend field names
+    delete (backendData as any).parkingSpaces;
+    delete (backendData as any).storageSpaces;
+    
+    console.log('[UnitService] updateUnit - Mapped data for backend:', backendData);
+    console.log('[UnitService] updateUnit - URL:', `${this.apiUrl}/${id}`);
+    
+    return this.http.put<ApiResponse<UnitDetails>>(`${this.apiUrl}/${id}`, backendData).pipe(
+      map((response) => {
+        console.log('[UnitService] updateUnit - Response:', response);
+        return response;
+      }),
       catchError((error) => {
-        console.error(`Error updating unit ${id} in backend:`, error);
+        console.error('[UnitService] updateUnit - Error:', error);
+        console.error('[UnitService] updateUnit - Error details:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          url: error.url,
+          error: error.error
+        });
         return of({
           success: false,
-          error: { code: 'BACKEND_ERROR', message: 'Error al actualizar la unidad' },
+          error: { code: 'BACKEND_ERROR', message: error.error?.message || 'Error al actualizar la unidad' },
           timestamp: new Date(),
         });
       })
