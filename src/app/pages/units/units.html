@@ -529,7 +529,14 @@
           </div>
         } @else {
           <!-- Create/Edit Form -->
-          <form (ngSubmit)="saveUnit()">
+          @if (loading()) {
+            <!-- Loading State -->
+            <div class="flex flex-col items-center justify-center py-8">
+              <div class="loading loading-spinner loading-lg text-primary mb-4"></div>
+              <p class="text-neutral-600">Cargando datos del formulario...</p>
+            </div>
+          } @else {
+            <form (ngSubmit)="saveUnit()">
             <div class="grid grid-cols-2 gap-4">
               <!-- Condominio Dropdown -->
               <div class="form-control">
@@ -538,12 +545,13 @@
                 </label>
                 <select
                   class="select select-bordered"
+                  [value]="formData().condominiumId"
                   (change)="onCondominiumChange($event)"
                   name="condominiumId"
                 >
                   <option value="" [selected]="!formData().condominiumId">Seleccione un condominio</option>
-                  @for (condo of availableCondominiums(); track condo.id) {
-                    <option [value]="condo._id" [selected]="formData().condominiumId === condo.id">{{ condo.name }}</option>
+                  @for (condo of availableCondominiums(); track condo.id || condo._id) {
+                    <option [value]="condo.id || condo._id" [selected]="formData().condominiumId === (condo.id || condo._id)">{{ condo.name }}</option>
                   }
                 </select>
               </div>
@@ -555,6 +563,7 @@
                 </label>
                 <select
                   class="select select-bordered"
+                  [value]="formData().buildingId"
                   (change)="onBuildingChange($event)"
                   name="buildingId"
                   required
@@ -594,9 +603,9 @@
                   type="text"
                   class="input input-bordered"
                   [value]="formData().tower"
+                  (input)="onFormFieldChange($event, 'tower')"
                   name="tower"
                   placeholder="Se llena automáticamente o personalizable"
-                  readonly
                 />
               </div>
 
@@ -637,6 +646,7 @@
                 </label>
                 <select
                   class="select select-bordered"
+                  [value]="formData().propertyType"
                   (change)="onFormFieldChange($event, 'propertyType')"
                   name="propertyType"
                   required
@@ -656,6 +666,7 @@
                 </label>
                 <select
                   class="select select-bordered"
+                  [value]="formData().status"
                   (change)="onFormFieldChange($event, 'status')"
                   name="status"
                   required
@@ -1021,6 +1032,7 @@
               </button>
             </div>
           </form>
+          }
         }
 
         @if (modalMode() === 'view') {

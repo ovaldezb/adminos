@@ -271,24 +271,37 @@ export class UnitsComponent implements OnInit {
       return;
     }
 
-    this.buildingService.getBuildingById(condominiumId).subscribe({
+    this.buildingService.getBuildings({ condominiumId }).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.availableBuildings.set(response.data.buildings || []);
+          const validBuildings = (response.data.items || []).filter(b => b.id || b._id);
+          console.log('[Units] loadBuildingsByCondominium - Buildings loaded:', validBuildings.length);
+          this.availableBuildings.set(validBuildings);
+        } else {
+          console.warn('[Units] loadBuildingsByCondominium - No buildings found');
+          this.availableBuildings.set([]);
         }
       },
-      error: (err) => console.error('Error loading buildings:', err)
+      error: (err) => {
+        console.error('[Units] Error loading buildings:', err);
+        this.availableBuildings.set([]);
+      }
     });
   }
 
   onCondominiumChange(event: Event): void {
     const condominiumId = (event.target as HTMLSelectElement).value;
+    console.log('[Units] onCondominiumChange - condominiumId:', condominiumId);
+    
+    // Actualizar formData y limpiar campos dependientes
     this.formData.update(current => ({
       ...current,
       condominiumId,
       buildingId: '',
       tower: ''
     }));
+    
+    // Cargar edificios del condominio seleccionado
     this.loadBuildingsByCondominium(condominiumId);
   }
 
@@ -369,14 +382,21 @@ export class UnitsComponent implements OnInit {
   }
 
   openCreateModal(): void {
+    console.log('[Units] openCreateModal - Starting...');
     this.modalMode.set('create');
     this.selectedUnit.set(null);
+    this.loading.set(true);
     
-    const selectedCondoId = this.selectedCondo()?.id === 'all' ? '' : this.selectedCondo()?.id || '';
+    // Usar los IDs de la ruta actual como valores predeterminados
+    const currentCondoId = this.condominiumId();
+    const currentBuildingId = this.buildingId();
     
+    console.log('[Units] openCreateModal - Route IDs:', { currentCondoId, currentBuildingId });
+    
+    // Inicializar datos del formulario con los valores de la ruta
     this.formData.set({
-      condominiumId: selectedCondoId,
-      buildingId: '',
+      condominiumId: currentCondoId || '',
+      buildingId: currentBuildingId || '',
       unitNumber: '',
       tower: '',
       floor: 1,
@@ -399,7 +419,55 @@ export class UnitsComponent implements OnInit {
     // Reset residents list
     this.unitResidents.set([]);
     
-    this.showModal.set(true);
+    // Asegurar que tenemos condominios cargados
+    if (this.availableCondominiums().length === 0) {
+      console.log('[Units] openCreateModal - Loading condominiums...');
+      this.condominiumService.getAllCondominiums().subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.availableCondominiums.set(response.data);
+            console.log('[Units] openCreateModal - Condominiums loaded:', response.data.length);
+          }
+          
+          // Cargar buildings si hay condominio seleccionado
+          if (currentCondoId && currentCondoId !== 'all') {
+            this.loadBuildingsByCondominium(currentCondoId);
+          }
+          
+          // Si ya tenemos el edificio actual cargado, precargar la torre
+          if (currentBuildingId && this.currentBuilding()) {
+            this.formData.update(current => ({
+              ...current,
+              tower: this.currentBuilding()?.name || 'Torre Principal'
+            }));
+          }
+          
+          this.loading.set(false);
+          this.showModal.set(true);
+        },
+        error: (err) => {
+          console.error('[Units] openCreateModal - Error loading condominiums:', err);
+          this.error.set('Error al cargar los condominios disponibles');
+          this.loading.set(false);
+        }
+      });
+    } else {
+      // Ya tenemos condominios, cargar buildings si es necesario
+      if (currentCondoId && currentCondoId !== 'all') {
+        this.loadBuildingsByCondominium(currentCondoId);
+      }
+      
+      // Si ya tenemos el edificio actual cargado, precargar la torre
+      if (currentBuildingId && this.currentBuilding()) {
+        this.formData.update(current => ({
+          ...current,
+          tower: this.currentBuilding()?.name || 'Torre Principal'
+        }));
+      }
+      
+      this.loading.set(false);
+      this.showModal.set(true);
+    }
   }
 
   openEditModal(unit: UnitDetails): void {
@@ -407,30 +475,47 @@ export class UnitsComponent implements OnInit {
     
     this.modalMode.set('edit');
     this.selectedUnit.set(unit);
+    this.loading.set(true);
     
+    // Usar los IDs de la ruta actual como fuente de verdad
+    const currentCondoId = this.condominiumId();
+    const currentBuildingId = this.buildingId();
+    
+    console.log('[Units] openEditModal - Route IDs:', { currentCondoId, currentBuildingId });
+    console.log('[Units] openEditModal - Unit IDs:', { condominiumId: unit.condominiumId, buildingId: unit.buildingId });
+    
+    // Validaciones usando los IDs de la ruta
+    if (!currentBuildingId) {
+      this.error.set('Error: No se puede editar la unidad, falta el ID del edificio en la ruta.');
+      this.loading.set(false);
+      return;
+    }
+
+    if (!currentCondoId) {
+      this.error.set('Error: No se puede editar la unidad, falta el ID del condominio en la ruta.');
+      this.loading.set(false);
+      return;
+    }
+
     // Cargar residentes existentes
     const existingResidents = unit.residents || unit.residentDetails || [];
     this.unitResidents.set([...existingResidents]);
     
-    // Para editar solo necesitamos buildingId
-    if (!unit.buildingId) {
-      this.error.set('Error: La unidad no tiene un edificio asignado.');
-      return;
-    }
-    
-    // Función para establecer formData con el nombre del edificio correcto
-    const setFormDataWithTower = () => {
-      const currentBuilding = this.availableBuildings().find(b => (b.id || b._id) === unit.buildingId);
+    // Función para establecer todos los datos del formulario
+    const setCompleteFormData = (condominiums: Condominium[], buildings: BuildingDetails[]) => {
+      // Usar el edificio actual de la ruta como fuente de verdad
+      const currentBuilding = buildings.find(b => (b.id || b._id) === currentBuildingId);
+      const currentCondominium = condominiums.find(c => (c.id || c._id) === currentCondoId);
       const towerName = currentBuilding?.name || unit.tower || 'Torre Principal';
       
-      console.log('[Units] openEditModal - buildingId:', unit.buildingId);
-      console.log('[Units] openEditModal - availableBuildings:', this.availableBuildings().map(b => ({id: b.id || b._id, name: b.name})));
-      console.log('[Units] openEditModal - currentBuilding:', currentBuilding);
-      console.log('[Units] openEditModal - tower will be:', towerName);
+      console.log('[Units] openEditModal - Setting complete form data:');
+      console.log('- Current building from route:', currentBuilding);
+      console.log('- Current condominium from route:', currentCondominium);
+      console.log('- Tower name:', towerName);
       
       this.formData.set({
-        condominiumId: unit.condominiumId || '',
-        buildingId: unit.buildingId,
+        condominiumId: currentCondoId,
+        buildingId: currentBuildingId,
         unitNumber: unit.unitNumber || '',
         tower: towerName,
         floor: unit.floor || 1,
@@ -446,49 +531,72 @@ export class UnitsComponent implements OnInit {
         hasBalcony: unit.hasBalcony || false,
         hasGarden: unit.hasGarden || false,
         isFurnished: unit.isFurnished || false,
-        description: unit.description || ''
+        description: unit.description || '',
+        residents: existingResidents
       });
       
-      console.log('[Units] openEditModal - formData set:', this.formData());
+      console.log('[Units] openEditModal - Form data set complete:', this.formData());
+      this.loading.set(false);
+      this.showModal.set(true);
     };
     
-    // Si ya hay edificios cargados, usar directamente
-    if (this.availableBuildings().length > 0) {
-      setFormDataWithTower();
-    } else {
-      // Si no hay edificios, cargarlos primero
-      console.log('[Units] openEditModal - Loading buildings first...');
-      
-      // Cargar edificios según condominiumId
-      if (unit.condominiumId && unit.condominiumId !== 'undefined') {
-        this.buildingService.getBuildings({ condominiumId: unit.condominiumId }).subscribe({
-          next: (response) => {
-            if (response.success && response.data) {
-              const validBuildings = (response.data.items || []).filter(b => b.id || b._id);
-              this.availableBuildings.set(validBuildings);
-              console.log('[Units] openEditModal - Buildings loaded:', validBuildings.length);
-              setFormDataWithTower();
-            }
-          },
-          error: (err) => console.error('[Units] Error loading buildings:', err)
-        });
-      } else {
-        // Cargar todos los edificios
-        this.buildingService.getBuildings().subscribe({
-          next: (response) => {
-            if (response.success && response.data) {
-              const validBuildings = (response.data.items || []).filter(b => b.id || b._id);
-              this.availableBuildings.set(validBuildings);
-              console.log('[Units] openEditModal - All buildings loaded:', validBuildings.length);
-              setFormDataWithTower();
-            }
-          },
-          error: (err) => console.error('[Units] Error loading buildings:', err)
-        });
-      }
-    }
+    // Verificar si ya tenemos todos los datos necesarios
+    const hasCondominiums = this.availableCondominiums().length > 0;
+    const hasBuildings = this.availableBuildings().length > 0;
+    const hasBuildingForUnit = hasBuildings && this.availableBuildings().some(b => (b.id || b._id) === unit.buildingId);
     
-    this.showModal.set(true);
+    if (hasCondominiums && hasBuildingForUnit) {
+      // Ya tenemos todos los datos
+      console.log('[Units] openEditModal - Using existing data');
+      setCompleteFormData(this.availableCondominiums(), this.availableBuildings());
+    } else {
+      // Necesitamos cargar datos
+      console.log('[Units] openEditModal - Loading required data...');
+      
+      // Cargar condominiums y buildings en paralelo
+      const condominiumsPromise = hasCondominiums 
+        ? Promise.resolve({ success: true, data: this.availableCondominiums() })
+        : this.condominiumService.getAllCondominiums().toPromise();
+        
+      const buildingsPromise = this.buildingService.getBuildings({ 
+        condominiumId: currentCondoId 
+      }).toPromise();
+      
+      Promise.all([condominiumsPromise, buildingsPromise])
+        .then(([condoResponse, buildingResponse]) => {
+          console.log('[Units] openEditModal - Data loaded:', { condoResponse, buildingResponse });
+          
+          let condominiums: Condominium[] = [];
+          let buildings: BuildingDetails[] = [];
+          
+          // Procesar condominiums
+          if (hasCondominiums) {
+            condominiums = this.availableCondominiums();
+          } else if (condoResponse && 'success' in condoResponse && condoResponse.success && condoResponse.data) {
+            condominiums = condoResponse.data;
+            this.availableCondominiums.set(condominiums);
+          }
+          
+          // Procesar buildings
+          if (buildingResponse?.success && buildingResponse.data) {
+            buildings = (buildingResponse.data.items || []).filter(b => b.id || b._id);
+            this.availableBuildings.set(buildings);
+          }
+          
+          console.log('[Units] openEditModal - Final data:', {
+            condominiums: condominiums.length,
+            buildings: buildings.length,
+            targetBuildingId: unit.buildingId
+          });
+          
+          setCompleteFormData(condominiums, buildings);
+        })
+        .catch((error) => {
+          console.error('[Units] openEditModal - Error loading data:', error);
+          this.error.set('Error al cargar los datos necesarios para editar la unidad');
+          this.loading.set(false);
+        });
+    }
   }
 
   private setFormDataAndLoadBuildings(unit: UnitDetails, condominiumId: string): void {

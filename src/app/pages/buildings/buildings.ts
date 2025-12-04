@@ -757,7 +757,8 @@ export class BuildingsComponent {
   // Navigation
   navigateToUnits(building: BuildingDetails): void {
     const condoId = this.condominiumId();
-    const buildingId = this.getCondoId({ id: building.id, _id: building._id } as any);
+    const buildingId = building.id || building._id;
+    console.log('[Buildings] navigateToUnits - condoId:', condoId, 'buildingId:', buildingId);
     this.router.navigate(['/condominios', condoId, 'edificios', buildingId, 'unidades']);
   }
 
