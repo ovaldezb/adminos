@@ -116,7 +116,7 @@ export class BuildingsComponent {
   });
   
   // Form data
-  protected readonly formData = signal<Partial<CreateBuildingDto>>({
+  protected readonly building = signal<Partial<CreateBuildingDto>>({
     condominiumId: '',
     name: '',
     type: BuildingType.BUILDING,
@@ -201,6 +201,7 @@ export class BuildingsComponent {
     // Get condominiumId from route
     effect(() => {
       this.route.params.subscribe(params => {
+        console.log('🚪 Route params:', params);
         const condoId = params['condoId'];
         if (condoId) {
           this.condominiumId.set(condoId);
@@ -299,7 +300,7 @@ export class BuildingsComponent {
     const selectedCondoId = this.getCondoId(this.selectedCondo());
     const defaultCondoId = selectedCondoId === 'all' ? '' : selectedCondoId || '';
     
-    this.formData.set({
+    this.building.set({
       condominiumId: defaultCondoId,
       name: '',
       type: BuildingType.BUILDING,
@@ -323,7 +324,7 @@ export class BuildingsComponent {
   openEditModal(building: BuildingDetails): void {
     this.modalMode.set('edit');
     this.selectedBuilding.set(building);
-    this.formData.set({
+    this.building.set({
       condominiumId: building.condominiumId,
       name: building.name,
       type: building.type,
@@ -358,8 +359,8 @@ export class BuildingsComponent {
   }
 
   saveBuilding(): void {
-    const data = this.formData();
-    
+    const data = this.building();
+    console.log('💾 Saving building with data:', data);
     if (!this.validateForm(data)) {
       return;
     }
@@ -448,8 +449,8 @@ export class BuildingsComponent {
   addSecurityFeature(): void {
     const feature = this.newSecurityFeature().trim();
     if (feature) {
-      const current = this.formData();
-      this.formData.set({
+      const current = this.building();
+      this.building.set({
         ...current,
         securityFeatures: [...(current.securityFeatures || []), feature]
       });
@@ -458,10 +459,10 @@ export class BuildingsComponent {
   }
 
   removeSecurityFeature(index: number): void {
-    const current = this.formData();
+    const current = this.building();
     const features = [...(current.securityFeatures || [])];
     features.splice(index, 1);
-    this.formData.set({
+    this.building.set({
       ...current,
       securityFeatures: features
     });
@@ -470,8 +471,8 @@ export class BuildingsComponent {
   addAmenity(): void {
     const amenity = this.newAmenity().trim();
     if (amenity) {
-      const current = this.formData();
-      this.formData.set({
+      const current = this.building();
+      this.building.set({
         ...current,
         amenities: [...(current.amenities || []), amenity]
       });
@@ -480,10 +481,10 @@ export class BuildingsComponent {
   }
 
   removeAmenity(index: number): void {
-    const current = this.formData();
+    const current = this.building();
     const amenities = [...(current.amenities || [])];
     amenities.splice(index, 1);
-    this.formData.set({
+    this.building.set({
       ...current,
       amenities: amenities
     });
@@ -491,8 +492,8 @@ export class BuildingsComponent {
 
   // Form field update helpers
   updateFormField(field: string, value: any): void {
-    const current = this.formData();
-    this.formData.set({
+    const current = this.building();
+    this.building.set({
       ...current,
       [field]: value
     });

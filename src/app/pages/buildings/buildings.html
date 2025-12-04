@@ -471,7 +471,7 @@
               <label class="label"><span class="label-text text-neutral-700 font-medium">Condominio <span class="text-error">*</span></span></label>
               <div class="flex gap-2">
                 <select
-                  [value]="formData().condominiumId"
+                  [value]="building().condominiumId"
                   (change)="updateFormField('condominiumId', $any($event.target).value)"
                   class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 flex-1">
                   <option value="">Seleccionar condominio...</option>
@@ -502,7 +502,7 @@
                 <label class="label"><span class="label-text text-neutral-700 font-medium">Nombre <span class="text-error">*</span></span></label>
                 <input
                   type="text"
-                  [value]="formData().name"
+                  [value]="building().name"
                   (input)="updateFormField('name', $any($event.target).value)"
                   class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
                   placeholder="Ej: Torre A, Privada Los Robles"
@@ -512,7 +512,7 @@
               <div class="form-control">
                 <label class="label"><span class="label-text text-neutral-700 font-medium">Tipo <span class="text-error">*</span></span></label>
                 <select
-                  [value]="formData().type"
+                  [value]="building().type"
                   (change)="updateFormField('type', $any($event.target).value)"
                   class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900">
                   <option [value]="BuildingType.TOWER">Torre</option>
@@ -527,7 +527,7 @@
               <label class="label"><span class="label-text text-neutral-700 font-medium">Dirección de Acceso Principal <span class="text-error">*</span></span></label>
               <input
                 type="text"
-                [value]="formData().mainEntranceAddress"
+                [value]="building().mainEntranceAddress"
                 (input)="updateFormField('mainEntranceAddress', $any($event.target).value)"
                 class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
                 placeholder="Ej: Av. Principal #123, Col. Centro"
@@ -539,7 +539,7 @@
                 <label class="label"><span class="label-text text-neutral-700 font-medium">Viviendas <span class="text-error">*</span></span></label>
                 <input
                   type="number"
-                  [value]="formData().totalUnits"
+                  [value]="building().totalUnits"
                   (input)="updateFormField('totalUnits', +$any($event.target).value)"
                   class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
                   min="1"
@@ -550,7 +550,7 @@
                 <label class="label"><span class="label-text text-neutral-700 font-medium">Pisos</span></label>
                 <input
                   type="number"
-                  [value]="formData().num_floors"
+                  [value]="building().num_floors"
                   (input)="updateFormField('num_floors', +$any($event.target).value)"
                   class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
                   min="1"
@@ -561,7 +561,7 @@
                 <label class="label"><span class="label-text text-neutral-700 font-medium">Año</span></label>
                 <input
                   type="number"
-                  [value]="formData().yearBuilt"
+                  [value]="building().yearBuilt"
                   (input)="updateFormField('yearBuilt', +$any($event.target).value)"
                   class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
                   min="1900"
@@ -572,7 +572,7 @@
               <div class="form-control">
                 <label class="label"><span class="label-text text-neutral-700 font-medium">Estado</span></label>
                 <select
-                  [value]="formData().status"
+                  [value]="building().status"
                   (change)="updateFormField('status', $any($event.target).value)"
                   class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900">
                   <option [value]="BuildingStatus.ACTIVE">Activo</option>
@@ -589,7 +589,7 @@
               <label class="label cursor-pointer justify-start gap-3">
                 <input
                   type="checkbox"
-                  [checked]="formData().hasCommonAreas"
+                  [checked]="building().hasCommonAreas"
                   (change)="updateFormField('hasCommonAreas', $any($event.target).checked)"
                   class="checkbox checkbox-primary"
                 />
@@ -597,12 +597,12 @@
               </label>
             </div>
 
-            @if (formData().hasCommonAreas) {
+            @if (building().hasCommonAreas) {
               <div class="grid grid-cols-2 gap-4">
                 <div class="form-control col-span-2">
                   <label class="label"><span class="label-text text-neutral-700 font-medium">Descripción de Áreas Comunes</span></label>
                   <textarea
-                    [value]="formData().commonAreasDescription"
+                    [value]="building().commonAreasDescription"
                     (input)="updateFormField('commonAreasDescription', $any($event.target).value)"
                     class="textarea textarea-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
                     rows="2"
@@ -614,7 +614,7 @@
                   <label class="label"><span class="label-text text-neutral-700 font-medium">Tarifa de Renta</span></label>
                   <input
                     type="number"
-                    [value]="formData().commonAreaRentalRate"
+                    [value]="building().commonAreaRentalRate"
                     (input)="updateFormField('commonAreaRentalRate', +$any($event.target).value)"
                     class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
                     placeholder="Precio por evento"
@@ -631,7 +631,7 @@
                 <label class="label"><span class="label-text text-neutral-700 font-medium">Estacionamientos</span></label>
                 <input
                   type="number"
-                  [value]="formData().parkingSpots"
+                  [value]="building().parkingSpots"
                   (input)="updateFormField('parkingSpots', +$any($event.target).value)"
                   class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
                   min="0"
@@ -642,7 +642,7 @@
                 <label class="label"><span class="label-text text-neutral-700 font-medium">Elevadores</span></label>
                 <input
                   type="number"
-                  [value]="formData().elevators"
+                  [value]="building().elevators"
                   (input)="updateFormField('elevators', +$any($event.target).value)"
                   class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
                   min="0"
@@ -670,7 +670,7 @@
                 </button>
               </div>
               <div class="flex flex-wrap gap-2">
-                @for (feature of formData().securityFeatures; track $index) {
+                @for (feature of building().securityFeatures; track $index) {
                   <div class="badge badge-lg badge-primary gap-2 rounded-lg">
                     {{ feature }}
                     <button
@@ -704,7 +704,7 @@
                 </button>
               </div>
               <div class="flex flex-wrap gap-2">
-                @for (amenity of formData().amenities; track $index) {
+                @for (amenity of building().amenities; track $index) {
                   <div class="badge badge-lg badge-secondary gap-2 rounded-lg">
                     {{ amenity }}
                     <button
@@ -721,7 +721,7 @@
             <div class="form-control">
               <label class="label"><span class="label-text text-neutral-700 font-medium">Descripción General</span></label>
               <textarea
-                [value]="formData().description"
+                [value]="building().description"
                 (input)="updateFormField('description', $any($event.target).value)"
                 class="textarea textarea-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
                 rows="3"

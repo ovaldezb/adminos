@@ -37,7 +37,7 @@ export class BuildingService {
   getBuildings(params: GetBuildingsParams = {}): Observable<ApiResponse<PaginatedResponse<BuildingDetails>>> {
     console.log('🔍 Building Service - Calling GET /building (sin parámetros)');
 
-    return this.http.get<any>(this.apiUrl).pipe(
+    return this.http.get<any>(this.apiUrl+'/'+params.condominiumId).pipe(
       map(response => {
         console.log('✅ Building Service - Raw response:', response);
         
@@ -99,8 +99,8 @@ export class BuildingService {
 
   // GET /buildings/:id - Get building by ID from backend
   // Backend: GET /buildings/{id} - Returns { success, message, data: building }
-  getBuildingById(id: string): Observable<ApiResponse<BuildingDetails>> {
-    return this.http.get<ApiResponse<BuildingDetails>>(`${this.apiUrl}/${id}`).pipe(
+  getBuildingById(id: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/${id}`).pipe(
       catchError((error) => {
         console.error(`Error fetching building ${id} from backend:`, error);
         return throwError(() => error);

@@ -5,7 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
 import { BreadcrumbsComponent, BreadcrumbItem } from '../../components/breadcrumbs/breadcrumbs';
-import { Condominium } from '../../models';
+import { Building, Condominium } from '../../models';
 import { UnitService, BuildingService, CondominiumService } from '../../services';
 import { 
   Unit, 
@@ -37,7 +37,7 @@ export class UnitsComponent implements OnInit {
   
   // Current entities
   protected readonly currentCondominium = signal<Condominium | null>(null);
-  protected readonly currentBuilding = signal<BuildingDetails | null>(null);
+  protected readonly currentBuilding = signal<Building | null>(null);
   
   // Breadcrumbs
   protected readonly breadcrumbs = computed<BreadcrumbItem[]>(() => {
@@ -220,10 +220,10 @@ export class UnitsComponent implements OnInit {
     console.log('[Units] loadCondominiums - Starting...');
     this.condominiumService.getAllCondominiums().subscribe({
       next: (response) => {
-        console.log('[Units] Condominiums loaded:', response);
+        
         if (response.success && response.data) {
           const condos = response.data;
-          console.log('[Units] Available condominiums count:', condos.length);
+          //console.log('[Units] Available condominiums count:', condos.length);
           this.availableCondominiums.set(condos);
         } else {
           console.warn('[Units] No condominiums data in response');
@@ -265,15 +265,16 @@ export class UnitsComponent implements OnInit {
   }
 
   loadBuildingsByCondominium(condominiumId: string): void {
+    console.log('[Units] loadBuildingsByCondominium - condominiumId:', condominiumId);  
     if (!condominiumId || condominiumId === 'all') {
       this.availableBuildings.set([]);
       return;
     }
 
-    this.buildingService.getBuildings().subscribe({
+    this.buildingService.getBuildingById(condominiumId).subscribe({
       next: (response) => {
         if (response.success && response.data) {
-          this.availableBuildings.set(response.data.items);
+          this.availableBuildings.set(response.data.buildings || []);
         }
       },
       error: (err) => console.error('Error loading buildings:', err)
@@ -329,8 +330,6 @@ export class UnitsComponent implements OnInit {
       search: this.searchTerm() || undefined,
       status: this.statusFilter() || undefined
     };
-    
-    console.log('[Units] loadUnits - Request params:', params);
     
     this.unitService.getUnits(params).subscribe({
       next: (response) => {

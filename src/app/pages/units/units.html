@@ -544,7 +544,7 @@
                 >
                   <option value="" [selected]="!formData().condominiumId">Seleccione un condominio</option>
                   @for (condo of availableCondominiums(); track condo.id) {
-                    <option [value]="condo.id" [selected]="formData().condominiumId === condo.id">{{ condo.name }}</option>
+                    <option [value]="condo._id" [selected]="formData().condominiumId === condo.id">{{ condo.name }}</option>
                   }
                 </select>
               </div>
