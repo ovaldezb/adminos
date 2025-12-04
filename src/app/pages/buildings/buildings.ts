@@ -1,4 +1,4 @@
-import { Component, signal, computed, effect, OnDestroy } from '@angular/core';
+import { Component, signal, computed, effect, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
@@ -25,7 +25,7 @@ import {
   imports: [CommonModule, FormsModule, NavbarComponent, SideMenuComponent, RouterLink, BreadcrumbsComponent],
   templateUrl: './buildings.html'
 })
-export class BuildingsComponent implements OnDestroy {
+export class BuildingsComponent implements OnInit, OnDestroy {
   protected readonly sidebarOpen = signal(window.innerWidth >= 1024); // Abierto solo en desktop
   protected readonly userName = signal('Administrador');
   protected readonly selectedCondo = signal<Condominium | null>(null);
@@ -38,12 +38,20 @@ export class BuildingsComponent implements OnDestroy {
   // Breadcrumbs
   protected readonly breadcrumbs = computed<BreadcrumbItem[]>(() => {
     const condo = this.currentCondominium();
-    if (!condo) return [];
+    const condoId = this.condominiumId();
     
-    return [
-      { label: 'Condominios', route: '/condominios', icon: 'ri-community-line' },
-      { label: condo.name, icon: 'ri-building-line' }
-    ];
+    const items: BreadcrumbItem[] = [];
+    
+    // Condominio (con enlace a la lista de condominios)
+    if (condo) {
+      items.push({ label: condo.name, route: '/condominios', icon: 'ri-community-line' });
+      // Edificios (página actual, sin enlace)
+      items.push({ label: 'Edificios', icon: 'ri-building-line' });
+    } else if (condoId) {
+      items.push({ label: 'Cargando...', route: '/condominios', icon: 'ri-loader-4-line' });
+    }
+    
+    return items;
   });
   
   // Expose Math for template
@@ -201,24 +209,50 @@ export class BuildingsComponent implements OnDestroy {
     private buildingService: BuildingService,
     private condominiumService: CondominiumService
   ) {
-    // Get condominiumId from route
-    effect(() => {
-      this.route.params.subscribe(params => {
-        console.log('🚪 Route params:', params);
-        const condoId = params['condoId'];
-        if (condoId) {
-          this.condominiumId.set(condoId);
-          this.loadCondominiumDetails(condoId);
-          this.loadBuildings();
-        }
-      });
-    });
-    
     // Load condominiums for dropdown
     this.loadCondominiums();
     
     // Escuchar eventos de condominios creados para actualizar la lista automáticamente
     this.setupCondominiumCreatedListener();
+  }
+
+  ngOnInit(): void {
+    // Get condominiumId from route
+    this.route.params.subscribe(params => {
+      console.log('🚪 Route params:', params);
+      const condoId = params['condoId'];
+      if (condoId) {
+        console.log('🏠 Setting condominiumId:', condoId);
+        this.condominiumId.set(condoId);
+        
+        // Primero cargar la lista de condominios para tener acceso al nombre
+        this.condominiumService.getAllCondominiums().subscribe({
+          next: (response) => {
+            if (response.success && response.data) {
+              this.availableCondominiums.set(response.data);
+              // Buscar el condominio actual por ID
+              const currentCondo = response.data.find((c: any) => 
+                c._id === condoId || c.id === condoId
+              );
+              if (currentCondo) {
+                console.log('🏠 Found condominium:', currentCondo.name);
+                this.currentCondominium.set(currentCondo);
+                this.selectedCondo.set(currentCondo);
+              } else {
+                console.warn('⚠️ Condominium not found in list, trying API call');
+                this.loadCondominiumDetails(condoId);
+              }
+            }
+          },
+          error: (err) => {
+            console.error('Error loading condominiums:', err);
+            this.loadCondominiumDetails(condoId);
+          }
+        });
+        
+        this.loadBuildings();
+      }
+    });
   }
 
   toggleSidebar(): void {
@@ -250,15 +284,18 @@ export class BuildingsComponent implements OnDestroy {
   }
 
   loadCondominiumDetails(condoId: string): void {
+    console.log('🏠 Loading condominium details for ID:', condoId);
     this.condominiumService.getCondominiumById(condoId).subscribe({
       next: (response) => {
+        console.log('🏠 Condominium details response:', response);
         if (response.success && response.data) {
+          console.log('🏠 Setting currentCondominium:', response.data.name);
           this.currentCondominium.set(response.data);
           this.selectedCondo.set(response.data);
         }
       },
       error: (err) => {
-        console.error('Error loading condominium details:', err);
+        console.error('❌ Error loading condominium details:', err);
         this.showToastMessage('Error al cargar los detalles del condominio', 'error');
       }
     });

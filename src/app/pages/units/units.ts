@@ -46,25 +46,46 @@ export class UnitsComponent implements OnInit, OnDestroy {
   protected readonly breadcrumbs = computed<BreadcrumbItem[]>(() => {
     const condo = this.currentCondominium();
     const building = this.currentBuilding();
+    const condoId = this.condominiumId();
+    const buildingId = this.buildingId();
     
-    const items: BreadcrumbItem[] = [
-      { label: 'Condominios', route: '/condominios', icon: 'ri-community-line' }
-    ];
+    const items: BreadcrumbItem[] = [];
     
+    // Condominio (con enlace a la lista de condominios)
     if (condo) {
       items.push({ 
         label: condo.name, 
-        route: `/condominios/${this.condominiumId()}/edificios`,
-        icon: 'ri-building-line'
+        route: '/condominios',
+        icon: 'ri-community-line'
+      });
+    } else if (condoId) {
+      items.push({ 
+        label: 'Cargando...', 
+        route: '/condominios',
+        icon: 'ri-loader-4-line'
       });
     }
     
+    // Edificio (con enlace a la lista de edificios del condominio)
     if (building) {
       items.push({ 
         label: building.name,
-        icon: 'ri-home-4-line'
+        route: `/condominios/${condoId}/edificios`,
+        icon: 'ri-building-line'
+      });
+    } else if (buildingId) {
+      items.push({ 
+        label: 'Cargando...',
+        route: `/condominios/${condoId}/edificios`,
+        icon: 'ri-loader-4-line'
       });
     }
+    
+    // Unidades (página actual, sin enlace)
+    items.push({ 
+      label: 'Unidades',
+      icon: 'ri-home-4-line'
+    });
     
     return items;
   });
@@ -190,22 +211,6 @@ export class UnitsComponent implements OnInit, OnDestroy {
     private condominiumService: CondominiumService,
     private residentService: ResidentService
   ) {
-    // Effect to reload units when route params change
-    effect(() => {
-      this.route.params.subscribe(params => {
-        const condoId = params['condoId'];
-        const buildingId = params['buildingId'];
-        
-        if (condoId && buildingId) {
-          this.condominiumId.set(condoId);
-          this.buildingId.set(buildingId);
-          this.loadCondominiumDetails(condoId);
-          this.loadBuildingDetails(buildingId);
-          this.loadUnits();
-        }
-      });
-    });
-
     // Debug effect for unitResidents
     effect(() => {
       console.log('[Units] Constructor effect - unitResidents changed:', this.unitResidents());
@@ -216,12 +221,61 @@ export class UnitsComponent implements OnInit, OnDestroy {
     
     // Escuchar eventos de condominios creados para actualizar la lista automáticamente
     this.setupCondominiumCreatedListener();
+    
+    // Load condominiums for dropdown
+    this.loadCondominiums();
   }
 
   ngOnInit(): void {
     console.log('[Units] ngOnInit - Initializing component');
-    // Load condominiums first
-    this.loadCondominiums();
+    
+    // Get route params and load data
+    this.route.params.subscribe(params => {
+      const condoId = params['condoId'];
+      const buildingId = params['buildingId'];
+      
+      console.log('🏠 Units route params - condoId:', condoId, 'buildingId:', buildingId);
+      
+      if (condoId && buildingId) {
+        this.condominiumId.set(condoId);
+        this.buildingId.set(buildingId);
+        
+        // Cargar condominio desde la lista
+        this.condominiumService.getAllCondominiums().subscribe({
+          next: (response) => {
+            if (response.success && response.data) {
+              this.availableCondominiums.set(response.data);
+              const currentCondo = response.data.find((c: any) => 
+                c._id === condoId || c.id === condoId
+              );
+              if (currentCondo) {
+                console.log('🏠 Found condominium:', currentCondo.name);
+                this.currentCondominium.set(currentCondo);
+                this.selectedCondo.set(currentCondo);
+              }
+            }
+          }
+        });
+        
+        // Cargar edificio desde la lista
+        this.buildingService.getBuildings({ condominiumId: condoId }).subscribe({
+          next: (response) => {
+            if (response.success && response.data) {
+              this.availableBuildings.set(response.data.items);
+              const currentBuilding = response.data.items.find((b: any) => 
+                b._id === buildingId || b.id === buildingId
+              );
+              if (currentBuilding) {
+                console.log('🏢 Found building:', currentBuilding.name);
+                this.currentBuilding.set(currentBuilding);
+              }
+            }
+          }
+        });
+        
+        this.loadUnits();
+      }
+    });
   }
 
   toggleSidebar(): void {
