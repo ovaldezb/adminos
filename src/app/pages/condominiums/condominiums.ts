@@ -262,6 +262,15 @@ export class CondominiumsComponent implements OnInit {
             this.showToastMessage('Condominio creado exitosamente', 'success');
             this.closeModal();
             this.loadCondominiums();
+            
+            // Emitir evento para notificar a otros componentes sobre el nuevo condominio
+            if (response.data) {
+              console.log('🏘️ Nuevo condominio creado:', response.data);
+              this.notifyCondominiumCreated(response.data);
+              
+              // Ofrecer navegación rápida a los edificios del nuevo condominio
+              this.showCondominiumCreatedActions(response.data);
+            }
           } else {
             this.showToastMessage(response.error?.message || 'Error al crear el condominio', 'error');
           }
@@ -361,6 +370,39 @@ export class CondominiumsComponent implements OnInit {
   private getCondoId(condo: Condominium | null): string | undefined {
     if (!condo) return undefined;
     return condo.id || (condo as any)._id;
+  }
+
+  // Método para notificar la creación de un nuevo condominio
+  private notifyCondominiumCreated(newCondominium: any): void {
+    // Crear un evento personalizado para notificar a otros componentes
+    const event = new CustomEvent('condominiumCreated', {
+      detail: {
+        condominium: newCondominium
+      }
+    });
+    window.dispatchEvent(event);
+    
+    console.log('🔔 Evento condominiumCreated emitido:', event.detail);
+  }
+
+  // Mostrar acciones adicionales después de crear un condominio
+  private showCondominiumCreatedActions(newCondominium: any): void {
+    const condoId = newCondominium.id || newCondominium._id;
+    
+    if (condoId) {
+      console.log('🎯 Condominio creado - ofreciendo navegación a edificios');
+      
+      // Mostrar toast con opción de navegación
+      setTimeout(() => {
+        const shouldNavigate = confirm(
+          `Condominio "${newCondominium.name}" creado exitosamente.\\n\\n¿Deseas ir directamente a gestionar los edificios de este condominio?`
+        );
+        
+        if (shouldNavigate) {
+          this.router.navigate(['/condominios', condoId, 'edificios']);
+        }
+      }, 1000); // Esperar un segundo para que se vea el toast de éxito
+    }
   }
 
   // Helper para mostrar el tipo de condominio

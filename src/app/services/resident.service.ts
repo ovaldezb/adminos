@@ -18,7 +18,7 @@ import { environment } from '../../environments/environment';
 })
 export class ResidentService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = `${environment.apiUrl}/residents`;
+  private readonly apiUrl = `${environment.apiUrl}/resident`; // Cambiar a /resident para coincidir con las lambdas
 
   /**
    * Simulates AWS Lambda GET request to fetch all residents
@@ -46,7 +46,53 @@ export class ResidentService {
       httpParams = httpParams.set('search', params.search);
     }
 
-    return this.http.get<ApiResponse<PaginatedResponse<ResidentDetails>>>(this.apiUrl, { params: httpParams }).pipe(
+    // Backend responde con formato: { success, message, data: { residents: [], count } }
+    interface BackendResidentsResponse {
+      residents: any[];
+      count: number;
+    }
+
+    return this.http.get<ApiResponse<BackendResidentsResponse>>(this.apiUrl, { params: httpParams }).pipe(
+      map((response) => {
+        console.log('[ResidentService] Raw backend response:', response);
+        
+        if (!response.success || !response.data) {
+          return {
+            success: false,
+            error: { code: 'NO_DATA', message: 'No se recibieron datos del backend' },
+            timestamp: new Date(),
+          } as ApiResponse<PaginatedResponse<ResidentDetails>>;
+        }
+
+        const backendData = response.data;
+        const residents = backendData.residents || [];
+        const count = backendData.count || 0;
+        const pageSize = params?.pageSize || 10;
+        const currentPage = params?.page || 1;
+        const totalPages = Math.ceil(count / pageSize);
+
+        // Map backend residents to ResidentDetails
+        const mappedResidents: ResidentDetails[] = residents.map((resident: any) => ({
+          ...resident,
+          id: resident._id || resident.id,
+          isActive: resident.status !== 'INACTIVE',
+          totalDebt: resident.debt || 0,
+          createdAt: resident.createdAt ? new Date(resident.createdAt) : new Date(),
+          updatedAt: resident.updatedAt ? new Date(resident.updatedAt) : new Date(),
+        }));
+
+        return {
+          success: true,
+          data: {
+            items: mappedResidents,
+            total: count,
+            page: currentPage,
+            pageSize: pageSize,
+            totalPages: totalPages,
+          },
+          timestamp: new Date(),
+        } as ApiResponse<PaginatedResponse<ResidentDetails>>;
+      }),
       catchError((error) => {
         console.error('Error fetching residents from backend:', error);
         return of({
@@ -62,7 +108,9 @@ export class ResidentService {
    * GET /residents/by-unit/:unitId - Get residents by unit ID from backend
    */
   getResidentsByUnit(unitId: string): Observable<ApiResponse<UnitResidents>> {
-    return this.http.get<ApiResponse<UnitResidents>>(`${this.apiUrl}/by-unit/${unitId}`).pipe(
+    // Usar query parameter según la lambda: GET /resident?unitId=xxx
+    const params = new HttpParams().set('unitId', unitId);
+    return this.http.get<ApiResponse<UnitResidents>>(this.apiUrl, { params }).pipe(
       catchError((error) => {
         console.error(`Error fetching residents for unit ${unitId} from backend:`, error);
         return of({

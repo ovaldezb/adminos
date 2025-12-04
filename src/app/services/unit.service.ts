@@ -83,7 +83,10 @@ export class UnitService {
       count: number;
     }
 
-    return this.http.get<ApiResponse<BackendUnitsResponse>>(this.apiUrl+'/'+params?.buildingId, { params: httpParams }).pipe(
+    // Corregir la URL según las lambdas: GET /unit/{buildingId} para obtener unidades por edificio
+    const url = params?.buildingId ? `${this.apiUrl}/${params.buildingId}` : this.apiUrl;
+    
+    return this.http.get<ApiResponse<BackendUnitsResponse>>(url, { params: httpParams }).pipe(
       map((response) => {
         console.log('[UnitService] Raw backend response:', response);
         
@@ -104,26 +107,36 @@ export class UnitService {
         const totalPages = Math.ceil(count / pageSize);
 
         // Map backend units to UnitDetails (normalize _id to id, status values, etc.)
-        const mappedUnits: UnitDetails[] = units.map((unit: any) => ({
-          ...unit,
-          id: unit._id || unit.id, // Backend uses _id
-          buildingId: unit.buildingId || unit._buildingId, // Normalize buildingId
-          condominiumId: unit.condominiumId || unit._condominiumId, // Normalize condominiumId
-          // Map backend status to frontend enum
-          status: this.mapBackendStatus(unit.status),
-          // Map backend propertyType to frontend enum
-          propertyType: this.mapBackendPropertyType(unit.propertyType),
-          // Ensure required fields exist with defaults
-          isOccupied: unit.status === 'ACTIVE' || unit.status === 'OCCUPIED',
-          occupancyStatus: unit.status === 'ACTIVE' ? UnitOccupancyStatus.OWNER_OCCUPIED : UnitOccupancyStatus.VACANT,
-          hasDebt: false,
-          debtAmount: 0,
-          residents: unit.residents || [],
-          parkingSpaces: unit.parkingSlots || unit.parkingSpaces || 0,
-          storageSpaces: unit.storageSlots || unit.storageSpaces || 0,
-          createdAt: unit.createdAt ? new Date(unit.createdAt) : new Date(),
-          updatedAt: unit.updatedAt ? new Date(unit.updatedAt) : new Date(),
-        }));
+        const mappedUnits: UnitDetails[] = units.map((unit: any) => {
+          console.log('[UnitService] Mapping unit from backend:', unit);
+          console.log('[UnitService] Unit residents from backend:', unit.residents);
+          console.log('[UnitService] Unit residents type:', typeof unit.residents);
+          console.log('[UnitService] Unit residents length:', unit.residents?.length || 'undefined/null');
+
+          const mapped = {
+            ...unit,
+            id: unit._id || unit.id, // Backend uses _id
+            buildingId: unit.buildingId || unit._buildingId, // Normalize buildingId
+            condominiumId: unit.condominiumId || unit._condominiumId, // Normalize condominiumId
+            // Map backend status to frontend enum
+            status: this.mapBackendStatus(unit.status),
+            // Map backend propertyType to frontend enum
+            propertyType: this.mapBackendPropertyType(unit.propertyType),
+            // Ensure required fields exist with defaults
+            isOccupied: unit.status === 'ACTIVE' || unit.status === 'OCCUPIED',
+            occupancyStatus: unit.status === 'ACTIVE' ? UnitOccupancyStatus.OWNER_OCCUPIED : UnitOccupancyStatus.VACANT,
+            hasDebt: false,
+            debtAmount: 0,
+            residents: unit.residents || [],
+            parkingSpaces: unit.parkingSlots || unit.parkingSpaces || 0,
+            storageSpaces: unit.storageSlots || unit.storageSpaces || 0,
+            createdAt: unit.createdAt ? new Date(unit.createdAt) : new Date(),
+            updatedAt: unit.updatedAt ? new Date(unit.updatedAt) : new Date(),
+          };
+
+          console.log('[UnitService] Mapped unit residents:', mapped.residents);
+          return mapped;
+        });
 
         console.log('[UnitService] Mapped units:', mappedUnits);
 
@@ -214,7 +227,13 @@ export class UnitService {
    * Adds unit to Building's unitsId array automatically
    */
   createUnit(unitData: CreateUnitDto): Observable<ApiResponse<Unit>> {
+    console.log('=== [UnitService] createUnit DEBUG ===');
     console.log('[UnitService] createUnit - Original data:', unitData);
+    console.log('[UnitService] createUnit - Residents data:', unitData.residents);
+    console.log('[UnitService] createUnit - Residents count:', unitData.residents?.length || 0);
+    console.log('[UnitService] createUnit - apiUrl property:', this.apiUrl);
+    console.log('[UnitService] createUnit - environment.apiUrl:', environment.apiUrl);
+    console.log('[UnitService] createUnit - Full URL will be:', this.apiUrl);
     
     // Map frontend field names to backend field names
     const backendData = {
@@ -232,7 +251,9 @@ export class UnitService {
     delete (backendData as any).storageSpaces;
     
     console.log('[UnitService] createUnit - Mapped data for backend:', backendData);
-    console.log('[UnitService] createUnit - URL:', this.apiUrl);
+    console.log('[UnitService] createUnit - Backend residents:', backendData.residents);
+    console.log('[UnitService] createUnit - About to POST to:', this.apiUrl);
+    console.log('=== END DEBUG ===');
     
     return this.http.post<ApiResponse<Unit>>(this.apiUrl, backendData).pipe(
       map((response) => {
@@ -265,26 +286,38 @@ export class UnitService {
     id: string,
     updates: UpdateUnitDto
   ): Observable<ApiResponse<UnitDetails>> {
+    console.log('=== [UnitService] updateUnit DEBUG ===');
     console.log('[UnitService] updateUnit - ID:', id);
     console.log('[UnitService] updateUnit - Original data:', updates);
+    console.log('[UnitService] updateUnit - Residents data:', updates.residents);
+    console.log('[UnitService] updateUnit - Residents count:', updates.residents?.length || 0);
+    console.log('[UnitService] updateUnit - apiUrl property:', this.apiUrl);
+    console.log('[UnitService] updateUnit - environment.apiUrl:', environment.apiUrl);
+    console.log('[UnitService] updateUnit - Full URL will be:', `${this.apiUrl}/${id}`);
     
     // Map frontend field names to backend field names
     const backendData = {
       ...updates,
+      id: id, // Asegurar que el ID esté incluido para el backend
       parkingSlots: updates.parkingSpaces,
       storageSlots: updates.storageSpaces,
       // Map status to backend format (uppercase)
       status: updates.status ? this.mapFrontendStatusToBackend(updates.status) : 'VACANT',
       // Map propertyType to backend format (uppercase)
-      propertyType: updates.propertyType ? this.mapFrontendPropertyTypeToBackend(updates.propertyType) : 'APARTMENT'
+      propertyType: updates.propertyType ? this.mapFrontendPropertyTypeToBackend(updates.propertyType) : 'APARTMENT',
+      // Convertir residentes a IDs si es necesario o mantenerlos como objetos
+      residentsId: updates.residents ? updates.residents.map(r => r.id).filter(id => id) : []
     };
     
     // Remove frontend field names
     delete (backendData as any).parkingSpaces;
     delete (backendData as any).storageSpaces;
+    delete (backendData as any).residents; // Usar residentsId en su lugar
     
     console.log('[UnitService] updateUnit - Mapped data for backend:', backendData);
-    console.log('[UnitService] updateUnit - URL:', `${this.apiUrl}/${id}`);
+    console.log('[UnitService] updateUnit - Backend residentsId:', backendData.residentsId);
+    console.log('[UnitService] updateUnit - About to PUT to:', `${this.apiUrl}/${id}`);
+    console.log('=== END DEBUG ===');
     
     return this.http.put<ApiResponse<UnitDetails>>(`${this.apiUrl}/${id}`, backendData).pipe(
       map((response) => {
