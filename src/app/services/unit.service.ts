@@ -83,7 +83,7 @@ export class UnitService {
       count: number;
     }
 
-    return this.http.get<ApiResponse<BackendUnitsResponse>>(this.apiUrl, { params: httpParams }).pipe(
+    return this.http.get<ApiResponse<BackendUnitsResponse>>(this.apiUrl+'/'+params?.buildingId, { params: httpParams }).pipe(
       map((response) => {
         console.log('[UnitService] Raw backend response:', response);
         
