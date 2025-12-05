@@ -27,6 +27,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/units/units').then(m => m.UnitsComponent)
   },
   {
+    path: 'condominios/:condoId/edificios/:buildingId/configurar-pagos',
+    loadComponent: () => import('./pages/fund-types/fund-types').then(m => m.FundTypesComponent)
+  },
+  {
     path: 'residentes',
     loadComponent: () => import('./pages/residents/residents').then(m => m.ResidentsComponent)
   },
@@ -37,6 +41,10 @@ export const routes: Routes = [
   {
     path: 'pagos',
     loadComponent: () => import('./pages/payments/payments').then(m => m.PaymentsComponent)
+  },
+  {
+    path: 'configuracion/tipos-de-fondos',
+    loadComponent: () => import('./pages/fund-types/fund-types').then(m => m.FundTypesComponent)
   },
   {
     path: '**',

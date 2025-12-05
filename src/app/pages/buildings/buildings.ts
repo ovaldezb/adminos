@@ -912,6 +912,13 @@ export class BuildingsComponent implements OnInit, OnDestroy {
     this.router.navigate(['/condominios', condoId, 'edificios', buildingId, 'unidades']);
   }
 
+  navigateToPaymentConfig(building: BuildingDetails): void {
+    const condoId = this.condominiumId();
+    const buildingId = building.id || building._id;
+    console.log('[Buildings] navigateToPaymentConfig - condoId:', condoId, 'buildingId:', buildingId);
+    this.router.navigate(['/condominios', condoId, 'edificios', buildingId, 'configurar-pagos']);
+  }
+
   goBackToCondominiums(): void {
     this.router.navigate(['/condominios']);
   }

@@ -10,3 +10,4 @@ export * from './notification.service';
 export * from './auth.service';
 export * from './building.service';
 export * from './assignment.service';
+export * from './fund-type.service';
