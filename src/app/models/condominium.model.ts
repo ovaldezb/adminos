@@ -8,7 +8,7 @@ export enum CondominiumType {
 export enum CondominiumStatus {
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
-  ARCHIVED = 'ARCHIVED'
+  MAINTENANCE = 'MAINTENANCE'
 }
 
 export enum AmenityType {
@@ -55,7 +55,7 @@ export interface Condominium {
   _id?: string;
   name: string;
   type: CondominiumType;
-  
+
   // Dirección completa (nombres coinciden con lambda)
   streetAddress: string;
   neighborhood: string; // colonia
@@ -63,29 +63,29 @@ export interface Condominium {
   zipCode: string;
   state: string;
   country: string;
-  
+
   // Configuración de pagos (nombres coinciden con lambda)
   conventionalPenalty: number; // Pena convencional
   initialFolioNumber: number; // Folio inicial para facturas/recibos
-  
+
   // Estados (nombres coinciden con lambda)
   isActive: boolean; // Para bloquear usuarios o funcionalidades
   hasAC: boolean; // Es Asociación Civil
-  
+
   // Información adicional
   additionalInfo?: string;
-  
+
   // Referencias y datos relacionados (nombres coinciden con lambda)
   buildingsId: string[]; // IDs de edificios asociados
   buildings: any[]; // Array de edificios (usar Building[] cuando esté definido)
   privateStreets: string[]; // Calles privadas
   amenities: string[]; // Amenidades
-  
+
   // Timestamps (nombres coinciden con lambda) - REQUERIDOS
   createdAt: Date;
   updatedAt: Date;
   status: CondominiumStatus;
-  
+
   // Configuración legacy (mantener compatibilidad)
   maintenanceFee?: number;
   currency?: string;
@@ -93,7 +93,7 @@ export interface Condominium {
   paymentDay?: number;
   rfc?: string;
   number?: string;
-  
+
   // Metadata
   units?: number;
   totalUnits?: number;
@@ -108,7 +108,7 @@ export interface Condominium {
 export interface CreateCondominiumDto {
   name: string;
   type: CondominiumType;
-  
+
   // Dirección (nombres exactos de lambda)
   streetAddress: string;
   neighborhood: string;
@@ -116,29 +116,29 @@ export interface CreateCondominiumDto {
   zipCode: string;
   state: string;
   country: string;
-  
+
   // Configuración (nombres exactos de lambda)
   conventionalPenalty: number;
   initialFolioNumber?: number; // Opcional, default 1
-  
+
   // Estados (nombres exactos de lambda)
   isActive?: boolean; // Default true
   hasAC?: boolean; // Default false (Asociación Civil)
-  
+
   // Información adicional
   additionalInfo?: string;
-  
+
   // Arrays (nombres exactos de lambda)
   buildingsId?: string[];
   buildings?: any[];
   privateStreets?: string[];
   amenities?: string[];
-  
+
   // Campos que serán generados por el backend (opcionales en el DTO)
   createdAt?: Date;
   updatedAt?: Date;
   status?: CondominiumStatus;
-  
+
   // Legacy fields para compatibilidad
   towers?: Omit<Tower, 'id'>[];
   maintenanceFee?: number;
@@ -151,7 +151,7 @@ export interface CreateCondominiumDto {
 }
 
 // Update Condominium DTO
-export interface UpdateCondominiumDto extends Partial<CreateCondominiumDto> {}
+export interface UpdateCondominiumDto extends Partial<CreateCondominiumDto> { }
 
 // Condominium Statistics
 export interface CondominiumStats {

@@ -12,11 +12,11 @@ export interface Resident {
   buildingId?: string; // ID del edificio/torre asociado
   unitId: string;
   isResponsible: boolean; // Indica si es el responsable principal de la unidad
-  
+
   // Banderas administrativas
   isAdministrator: boolean; // Puede administrar el condominio
   canReceiveNotifications: boolean; // Recibe notificaciones y anuncios
-  
+
   moveInDate: Date;
   moveOutDate?: Date;
   isActive: boolean;
@@ -65,11 +65,11 @@ export interface CreateResidentDto {
   buildingId?: string; // ID del edificio/torre (se obtiene automáticamente de la unidad seleccionada)
   unitId: string;
   isResponsible?: boolean; // Indica si es el responsable principal
-  
+
   // Banderas administrativas
   isAdministrator?: boolean;
   canReceiveNotifications?: boolean;
-  
+
   moveInDate: Date;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
