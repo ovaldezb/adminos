@@ -352,14 +352,14 @@ export class UnitService {
    */
   private mapFrontendStatusToBackend(frontendStatus: UnitStatus): string {
     const statusMap: Record<UnitStatus, string> = {
-      [UnitStatus.OCCUPIED]: 'OCCUPIED',
-      [UnitStatus.VACANT]: 'VACANT',
-      [UnitStatus.UNDER_MAINTENANCE]: 'MAINTENANCE',
-      [UnitStatus.FOR_SALE]: 'ACTIVE',
-      [UnitStatus.FOR_RENT]: 'ACTIVE',
+      [UnitStatus.OCCUPIED]: 'occupied',
+      [UnitStatus.VACANT]: 'vacant',
+      [UnitStatus.UNDER_MAINTENANCE]: 'maintenance',
+      [UnitStatus.FOR_SALE]: 'active',
+      [UnitStatus.FOR_RENT]: 'active',
     };
 
-    return statusMap[frontendStatus] || 'VACANT';
+    return statusMap[frontendStatus] || 'vacant';
   }
 
   /**
@@ -367,15 +367,15 @@ export class UnitService {
    */
   private mapFrontendPropertyTypeToBackend(frontendPropertyType: PropertyType): string {
     const typeMap: Record<PropertyType, string> = {
-      [PropertyType.APARTMENT]: 'APARTMENT',
-      [PropertyType.PENTHOUSE]: 'PENTHOUSE',
-      [PropertyType.DUPLEX]: 'DUPLEX',
-      [PropertyType.STUDIO]: 'STUDIO',
-      [PropertyType.LOFT]: 'LOFT',
-      [PropertyType.TOWNHOUSE]: 'TOWNHOUSE',
+      [PropertyType.APARTMENT]: 'apartment',
+      [PropertyType.PENTHOUSE]: 'penthouse',
+      [PropertyType.DUPLEX]: 'duplex',
+      [PropertyType.STUDIO]: 'studio',
+      [PropertyType.LOFT]: 'loft',
+      [PropertyType.TOWNHOUSE]: 'townhouse',
     };
 
-    return typeMap[frontendPropertyType] || 'APARTMENT';
+    return typeMap[frontendPropertyType] || 'apartment';
   }
 
   /**
