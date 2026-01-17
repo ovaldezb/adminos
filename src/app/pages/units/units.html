@@ -1,27 +1,22 @@
 <div class="min-h-screen bg-gradient-to-br from-neutral-50 via-sky-50 to-purple-50">
   <!-- Navbar -->
-  <app-navbar
-    (toggleSidebar)="toggleSidebar()"
-  />
+  <app-navbar (toggleSidebar)="toggleSidebar()" />
 
   <div class="flex">
     <!-- Sidebar -->
-    <app-side-menu
-      [isOpen]="sidebarOpen()"
-      (close)="toggleSidebar()"
-    />
+    <app-side-menu [isOpen]="sidebarOpen()" (close)="toggleSidebar()" />
 
     <!-- Main Content -->
-    <main class="flex-1 p-6 lg:p-8 transition-all duration-300" [class.ml-0]="!sidebarOpen()" [class.ml-64]="sidebarOpen()">
-      
+    <main class="flex-1 p-6 lg:p-8 transition-all duration-300" [class.ml-0]="!sidebarOpen()"
+      [class.ml-64]="sidebarOpen()">
+
       <!-- Breadcrumbs (siempre visible) -->
       <app-breadcrumbs [items]="breadcrumbs()" />
-      
+
       <!-- Header -->
       <div class="mb-8">
         <div class="flex items-center gap-3 mb-2">
-          <button 
-            (click)="goBackToBuildings()"
+          <button (click)="goBackToBuildings()"
             class="btn btn-ghost btn-sm rounded-lg text-neutral-600 hover:bg-neutral-100">
             <i class="ri-arrow-left-line text-base"></i>
           </button>
@@ -37,13 +32,13 @@
 
       <!-- Error Alert -->
       @if (error()) {
-        <div class="alert alert-error mb-6 glass shadow-xl">
-          <i class="ri-error-warning-fill text-xl"></i>
-          <span>{{ error() }}</span>
-          <button class="btn btn-sm btn-ghost" (click)="error.set(null)">
-            <i class="ri-close-line"></i>
-          </button>
-        </div>
+      <div class="alert alert-error mb-6 glass shadow-xl">
+        <i class="ri-error-warning-fill text-xl"></i>
+        <span>{{ error() }}</span>
+        <button class="btn btn-sm btn-ghost" (click)="error.set(null)">
+          <i class="ri-close-line"></i>
+        </button>
+      </div>
       }
 
       <!-- Filters & Actions -->
@@ -52,22 +47,14 @@
           <div class="flex flex-col sm:flex-row gap-3 flex-1 w-full">
             <!-- Search Input with Icon -->
             <div class="relative flex-1 min-w-0">
-              <input
-                type="text"
-                placeholder="Buscar unidad..."
-                class="input input-bordered w-full text-sm pl-10"
-                [value]="searchTerm()"
-                (input)="onSearchChange($event)"
-              />
+              <input type="text" placeholder="Buscar unidad..." class="input input-bordered w-full text-sm pl-10"
+                [value]="searchTerm()" (input)="onSearchChange($event)" />
               <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg"></i>
             </div>
 
             <!-- Status Filter -->
-            <select
-              class="select select-bordered w-full sm:w-auto text-sm font-medium"
-              [value]="statusFilter()"
-              (change)="onStatusFilterChange($event)"
-            >
+            <select class="select select-bordered w-full sm:w-auto text-sm font-medium" [value]="statusFilter()"
+              (change)="onStatusFilterChange($event)">
               <option value="">Todos los estados</option>
               <option [value]="UnitStatus.OCCUPIED">Ocupadas</option>
               <option [value]="UnitStatus.VACANT">Vacantes</option>
@@ -77,11 +64,8 @@
             </select>
 
             <!-- Property Type Filter -->
-            <select
-              class="select select-bordered w-full sm:w-auto text-sm font-medium"
-              [value]="propertyTypeFilter()"
-              (change)="onPropertyTypeFilterChange($event)"
-            >
+            <select class="select select-bordered w-full sm:w-auto text-sm font-medium" [value]="propertyTypeFilter()"
+              (change)="onPropertyTypeFilterChange($event)">
               <option value="">Todos los tipos</option>
               <option [value]="PropertyType.APARTMENT">Departamento</option>
               <option [value]="PropertyType.PENTHOUSE">Penthouse</option>
@@ -92,14 +76,11 @@
             </select>
 
             <!-- Building Filter -->
-            <select
-              class="select select-bordered w-full sm:w-auto text-sm font-medium"
-              [value]="buildingFilter()"
-              (change)="onBuildingFilterChange($event)"
-            >
+            <select class="select select-bordered w-full sm:w-auto text-sm font-medium" [value]="buildingFilter()"
+              (change)="onBuildingFilterChange($event)">
               <option value="">Todos los edificios</option>
               @for (building of availableBuildings(); track building.id || building._id) {
-                <option [value]="building.id || building._id">{{ building.name }}</option>
+              <option [value]="building.id || building._id">{{ building.name }}</option>
               }
             </select>
           </div>
@@ -140,202 +121,172 @@
       <!-- Units Table -->
       <div class="glass rounded-2xl shadow-xl overflow-hidden">
         @if (loading()) {
-          <div class="flex flex-col items-center justify-center p-12 gap-4">
-            <span class="loading loading-spinner loading-lg text-primary"></span>
-            <p class="text-neutral-600 font-medium">Cargando unidades...</p>
-          </div>
+        <div class="flex flex-col items-center justify-center p-12 gap-4">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+          <p class="text-neutral-600 font-medium">Cargando unidades...</p>
+        </div>
         } @else if (filteredUnits().length === 0) {
-          <div class="text-center p-12">
-            <i class="ri-inbox-line text-6xl text-neutral-300 mb-4"></i>
-            <p class="text-neutral-500">No se encontraron unidades</p>
-          </div>
+        <div class="text-center p-12">
+          <i class="ri-inbox-line text-6xl text-neutral-300 mb-4"></i>
+          <p class="text-neutral-500">No se encontraron unidades</p>
+        </div>
         } @else {
-          <!-- Desktop Table -->
-          <div class="hidden lg:block overflow-x-auto">
-            <table class="table">
-              <thead class="bg-neutral-800 text-neutral-100">
-                <tr>
-                  <th class="text-neutral-100">Unidad</th>
-                  <th class="text-neutral-100">Torre</th>
-                  <th class="text-neutral-100">Tipo</th>
-                  <th class="text-neutral-100">Área</th>
-                  <th class="text-neutral-100">Habitaciones</th>
-                  <th class="text-neutral-100">Estado</th>
-                  <th class="text-neutral-100">Propietario</th>
-                  <th class="text-neutral-100">Cuota Mensual</th>
-                  <th class="text-neutral-100">Acciones</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white">
-                @for (unit of filteredUnits(); track unit.id) {
-                  <tr class="hover:bg-sky-50 transition-colors border-b border-neutral-200">
-                    <td class="text-neutral-800">
-                      <div class="font-semibold">{{ unit.unitNumber }}</div>
-                      <div class="text-xs text-neutral-500">Piso {{ unit.floor }}</div>
-                    </td>
-                    <td class="text-neutral-700">{{ unit.tower }}</td>
-                    <td class="text-neutral-700">
-                      <span class="text-sm">{{ getPropertyTypeLabel(unit.propertyType) }}</span>
-                    </td>
-                    <td class="text-neutral-700">{{ unit.area }} m²</td>
-                    <td>
-                      <div class="flex items-center gap-2 text-sm text-neutral-700">
-                        <span><i class="ri-hotel-bed-line"></i> {{ unit.bedrooms }}</span>
-                        <span><i class="ri-drop-line"></i> {{ unit.bathrooms }}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span class="badge" [ngClass]="getStatusBadgeClass(unit.status)">
-                        {{ getStatusLabel(unit.status) }}
-                      </span>
-                      @if (unit.hasDebt) {
-                        <span class="badge badge-error badge-sm ml-1">Deuda</span>
-                      }
-                    </td>
-                    <td class="text-neutral-700">
-                      @if (unit.ownerName) {
-                        <div class="font-medium">{{ unit.ownerName }}</div>
-                        @if (unit.ownerPhone) {
-                          <div class="text-xs text-neutral-500">{{ unit.ownerPhone }}</div>
-                        }
-                      } @else {
-                        <span class="text-neutral-400 text-sm">Sin propietario</span>
-                      }
-                    </td>
-                    <td class="font-semibold text-neutral-800">{{ formatCurrency(unit.monthlyFee) }}</td>
-                    <td>
-                      <div class="flex gap-1">
-                        <button
-                          class="btn btn-ghost btn-xs hover:bg-sky-100"
-                          (click)="openViewModal(unit)"
-                          title="Ver detalles"
-                        >
-                          <i class="ri-eye-line"></i>
-                        </button>
-                        <button
-                          class="btn btn-ghost btn-xs text-primary hover:bg-sky-100"
-                          (click)="openEditModal(unit)"
-                          title="Editar"
-                        >
-                          <i class="ri-edit-line"></i>
-                        </button>
-                        <button
-                          class="btn btn-ghost btn-xs text-error hover:bg-red-50"
-                          (click)="openDeleteModal(unit)"
-                          title="Eliminar"
-                        >
-                          <i class="ri-delete-bin-line"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Mobile Cards -->
-          <div class="lg:hidden divide-y divide-neutral-200">
-            @for (unit of filteredUnits(); track unit.id) {
-              <div class="p-4 bg-white hover:bg-sky-50 transition-colors">
-                <div class="flex items-start justify-between mb-3">
-                  <div>
-                    <div class="font-bold text-lg text-neutral-800">{{ unit.unitNumber }}</div>
-                    <div class="text-sm text-neutral-600">Torre {{ unit.tower }} - Piso {{ unit.floor }}</div>
+        <!-- Desktop Table -->
+        <div class="hidden lg:block overflow-x-auto">
+          <table class="table">
+            <thead class="bg-neutral-800 text-neutral-100">
+              <tr>
+                <th class="text-neutral-100">Unidad</th>
+                <th class="text-neutral-100">Torre</th>
+                <th class="text-neutral-100">Tipo</th>
+                <th class="text-neutral-100">Área</th>
+                <th class="text-neutral-100">Habitaciones</th>
+                <th class="text-neutral-100">Estado</th>
+                <th class="text-neutral-100">Propietario</th>
+                <th class="text-neutral-100">Cuota Mensual</th>
+                <th class="text-neutral-100">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white">
+              @for (unit of filteredUnits(); track unit.id || $index) {
+              <tr class="hover:bg-sky-50 transition-colors border-b border-neutral-200">
+                <td class="text-neutral-800">
+                  <div class="font-semibold">{{ unit.unitNumber }}</div>
+                  <div class="text-xs text-neutral-500">Piso {{ unit.floor }}</div>
+                </td>
+                <td class="text-neutral-700">{{ unit.tower }}</td>
+                <td class="text-neutral-700">
+                  <span class="text-sm">{{ getPropertyTypeLabel(unit.propertyType) }}</span>
+                </td>
+                <td class="text-neutral-700">{{ unit.area }} m²</td>
+                <td>
+                  <div class="flex items-center gap-2 text-sm text-neutral-700">
+                    <span><i class="ri-hotel-bed-line"></i> {{ unit.bedrooms }}</span>
+                    <span><i class="ri-drop-line"></i> {{ unit.bathrooms }}</span>
                   </div>
-                  <span class="badge badge-sm" [ngClass]="getStatusBadgeClass(unit.status)">
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="getStatusBadgeClass(unit.status)">
                     {{ getStatusLabel(unit.status) }}
                   </span>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-2 text-sm mb-3">
-                  <div>
-                    <span class="text-neutral-500">Tipo:</span>
-                    <span class="text-neutral-700 ml-1">{{ getPropertyTypeLabel(unit.propertyType) }}</span>
-                  </div>
-                  <div>
-                    <span class="text-neutral-500">Área:</span>
-                    <span class="text-neutral-700 ml-1">{{ unit.area }} m²</span>
-                  </div>
-                  <div>
-                    <span class="text-neutral-500"><i class="ri-hotel-bed-line"></i></span>
-                    <span class="text-neutral-700 ml-1">{{ unit.bedrooms }} hab</span>
-                  </div>
-                  <div>
-                    <span class="text-neutral-500"><i class="ri-drop-line"></i></span>
-                    <span class="text-neutral-700 ml-1">{{ unit.bathrooms }} baños</span>
-                  </div>
-                </div>
-
-                @if (unit.ownerName) {
-                  <div class="text-sm mb-3">
-                    <div class="text-neutral-500">Propietario:</div>
-                    <div class="font-medium text-neutral-800">{{ unit.ownerName }}</div>
-                  </div>
-                }
-
-                <div class="flex items-center justify-between">
-                  <div>
-                    <div class="text-xs text-neutral-500">Cuota mensual</div>
-                    <div class="font-bold text-lg text-primary">{{ formatCurrency(unit.monthlyFee) }}</div>
-                  </div>
+                  @if (unit.hasDebt) {
+                  <span class="badge badge-error badge-sm ml-1">Deuda</span>
+                  }
+                </td>
+                <td class="text-neutral-700">
+                  @if (unit.ownerName) {
+                  <div class="font-medium">{{ unit.ownerName }}</div>
+                  @if (unit.ownerPhone) {
+                  <div class="text-xs text-neutral-500">{{ unit.ownerPhone }}</div>
+                  }
+                  } @else {
+                  <span class="text-neutral-400 text-sm">Sin propietario</span>
+                  }
+                </td>
+                <td class="font-semibold text-neutral-800">{{ formatCurrency(unit.monthlyFee) }}</td>
+                <td>
                   <div class="flex gap-1">
-                    <button
-                      class="btn btn-sm btn-ghost"
-                      (click)="openViewModal(unit)"
-                    >
+                    <button class="btn btn-ghost btn-xs hover:bg-sky-100" (click)="openViewModal(unit)"
+                      title="Ver detalles">
                       <i class="ri-eye-line"></i>
                     </button>
-                    <button
-                      class="btn btn-sm btn-ghost text-primary"
-                      (click)="openEditModal(unit)"
-                    >
+                    <button class="btn btn-ghost btn-xs text-primary hover:bg-sky-100" (click)="openEditModal(unit)"
+                      title="Editar">
                       <i class="ri-edit-line"></i>
                     </button>
-                    <button
-                      class="btn btn-sm btn-ghost text-error"
-                      (click)="openDeleteModal(unit)"
-                    >
+                    <button class="btn btn-ghost btn-xs text-error hover:bg-red-50" (click)="openDeleteModal(unit)"
+                      title="Eliminar">
                       <i class="ri-delete-bin-line"></i>
                     </button>
                   </div>
-                </div>
-              </div>
-            }
-          </div>
-
-          <!-- Pagination -->
-          <div class="flex flex-col sm:flex-row items-center justify-between p-4 bg-neutral-50 gap-3">
-            <div class="text-sm text-neutral-600 text-center sm:text-left">
-              Mostrando {{ (currentPage() - 1) * pageSize() + 1 }} - 
-              {{ Math.min(currentPage() * pageSize(), totalItems()) }} de {{ totalItems() }}
-            </div>
-            <div class="btn-group">
-              <button
-                class="btn btn-sm"
-                [disabled]="currentPage() === 1"
-                (click)="previousPage()"
-              >
-                <i class="ri-arrow-left-s-line"></i>
-              </button>
-              @for (page of [].constructor(totalPages()); track $index) {
-                <button
-                  class="btn btn-sm"
-                  [class.btn-active]="currentPage() === $index + 1"
-                  (click)="goToPage($index + 1)"
-                >
-                  {{ $index + 1 }}
-                </button>
+                </td>
+              </tr>
               }
-              <button
-                class="btn btn-sm"
-                [disabled]="currentPage() === totalPages()"
-                (click)="nextPage()"
-              >
-                <i class="ri-arrow-right-s-line"></i>
-              </button>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Cards -->
+        <div class="lg:hidden divide-y divide-neutral-200">
+          @for (unit of filteredUnits(); track unit.id || $index) {
+          <div class="p-4 bg-white hover:bg-sky-50 transition-colors">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <div class="font-bold text-lg text-neutral-800">{{ unit.unitNumber }}</div>
+                <div class="text-sm text-neutral-600">Torre {{ unit.tower }} - Piso {{ unit.floor }}</div>
+              </div>
+              <span class="badge badge-sm" [ngClass]="getStatusBadgeClass(unit.status)">
+                {{ getStatusLabel(unit.status) }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+              <div>
+                <span class="text-neutral-500">Tipo:</span>
+                <span class="text-neutral-700 ml-1">{{ getPropertyTypeLabel(unit.propertyType) }}</span>
+              </div>
+              <div>
+                <span class="text-neutral-500">Área:</span>
+                <span class="text-neutral-700 ml-1">{{ unit.area }} m²</span>
+              </div>
+              <div>
+                <span class="text-neutral-500"><i class="ri-hotel-bed-line"></i></span>
+                <span class="text-neutral-700 ml-1">{{ unit.bedrooms }} hab</span>
+              </div>
+              <div>
+                <span class="text-neutral-500"><i class="ri-drop-line"></i></span>
+                <span class="text-neutral-700 ml-1">{{ unit.bathrooms }} baños</span>
+              </div>
+            </div>
+
+            @if (unit.ownerName) {
+            <div class="text-sm mb-3">
+              <div class="text-neutral-500">Propietario:</div>
+              <div class="font-medium text-neutral-800">{{ unit.ownerName }}</div>
+            </div>
+            }
+
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xs text-neutral-500">Cuota mensual</div>
+                <div class="font-bold text-lg text-primary">{{ formatCurrency(unit.monthlyFee) }}</div>
+              </div>
+              <div class="flex gap-1">
+                <button class="btn btn-sm btn-ghost" (click)="openViewModal(unit)">
+                  <i class="ri-eye-line"></i>
+                </button>
+                <button class="btn btn-sm btn-ghost text-primary" (click)="openEditModal(unit)">
+                  <i class="ri-edit-line"></i>
+                </button>
+                <button class="btn btn-sm btn-ghost text-error" (click)="openDeleteModal(unit)">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              </div>
             </div>
           </div>
+          }
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex flex-col sm:flex-row items-center justify-between p-4 bg-neutral-50 gap-3">
+          <div class="text-sm text-neutral-600 text-center sm:text-left">
+            Mostrando {{ (currentPage() - 1) * pageSize() + 1 }} -
+            {{ Math.min(currentPage() * pageSize(), totalItems()) }} de {{ totalItems() }}
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-sm" [disabled]="currentPage() === 1" (click)="previousPage()">
+              <i class="ri-arrow-left-s-line"></i>
+            </button>
+            @for (page of [].constructor(totalPages()); track $index) {
+            <button class="btn btn-sm" [class.btn-active]="currentPage() === $index + 1" (click)="goToPage($index + 1)">
+              {{ $index + 1 }}
+            </button>
+            }
+            <button class="btn btn-sm" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
+              <i class="ri-arrow-right-s-line"></i>
+            </button>
+          </div>
+        </div>
         }
       </div>
     </main>
@@ -343,810 +294,694 @@
 
   <!-- Modal -->
   @if (showModal()) {
-    <div class="modal modal-open">
-      <div class="modal-box max-w-4xl glass">
-        <h3 class="font-bold text-2xl mb-6">
-          @if (modalMode() === 'create') {
-            <i class="ri-add-line text-primary"></i> Nueva Unidad
-          } @else if (modalMode() === 'edit') {
-            <i class="ri-edit-line text-primary"></i> Editar Unidad
-          } @else {
-            <i class="ri-eye-line text-primary"></i> Detalles de Unidad
-          }
-        </h3>
+  <div class="modal modal-open">
+    <div class="modal-box max-w-4xl glass">
+      <h3 class="font-bold text-2xl mb-6">
+        @if (modalMode() === 'create') {
+        <i class="ri-add-line text-primary"></i> Nueva Unidad
+        } @else if (modalMode() === 'edit') {
+        <i class="ri-edit-line text-primary"></i> Editar Unidad
+        } @else {
+        <i class="ri-eye-line text-primary"></i> Detalles de Unidad
+        }
+      </h3>
 
-        @if (modalMode() === 'view' && selectedUnit()) {
-          <!-- View Mode -->
-          <div class="grid grid-cols-2 gap-6">
+      @if (modalMode() === 'view' && selectedUnit()) {
+      <!-- View Mode -->
+      <div class="grid grid-cols-2 gap-6">
+        <div>
+          <h4 class="font-semibold mb-2 text-neutral-700">Información Básica</h4>
+          <div class="space-y-2">
             <div>
-              <h4 class="font-semibold mb-2 text-neutral-700">Información Básica</h4>
-              <div class="space-y-2">
-                <div>
-                  <span class="text-sm text-neutral-500">Número:</span>
-                  <p class="font-medium">{{ selectedUnit()!.unitNumber }}</p>
-                </div>
-                <div>
-                  <span class="text-sm text-neutral-500">Torre:</span>
-                  <p class="font-medium">{{ selectedUnit()!.tower }}</p>
-                </div>
-                <div>
-                  <span class="text-sm text-neutral-500">Piso:</span>
-                  <p class="font-medium">{{ selectedUnit()!.floor }}</p>
-                </div>
-                <div>
-                  <span class="text-sm text-neutral-500">Tipo:</span>
-                  <p class="font-medium">{{ getPropertyTypeLabel(selectedUnit()!.propertyType) }}</p>
-                </div>
-                <div>
-                  <span class="text-sm text-neutral-500">Estado:</span>
-                  <p><span class="badge" [ngClass]="getStatusBadgeClass(selectedUnit()!.status)">
-                    {{ getStatusLabel(selectedUnit()!.status) }}
-                  </span></p>
-                </div>
-              </div>
+              <span class="text-sm text-neutral-500">Número:</span>
+              <p class="font-medium">{{ selectedUnit()!.unitNumber }}</p>
             </div>
-
             <div>
-              <h4 class="font-semibold mb-2 text-neutral-700">Características</h4>
-              <div class="space-y-2">
-                <div>
-                  <span class="text-sm text-neutral-500">Área:</span>
-                  <p class="font-medium">{{ selectedUnit()!.area }} m²</p>
-                </div>
-                <div>
-                  <span class="text-sm text-neutral-500">Habitaciones:</span>
-                  <p class="font-medium">{{ selectedUnit()!.bedrooms }}</p>
-                </div>
-                <div>
-                  <span class="text-sm text-neutral-500">Baños:</span>
-                  <p class="font-medium">{{ selectedUnit()!.bathrooms }}</p>
-                </div>
-                <div>
-                  <span class="text-sm text-neutral-500">Estacionamientos:</span>
-                  <p class="font-medium">{{ selectedUnit()!.parkingSpaces }}</p>
-                </div>
-                <div>
-                  <span class="text-sm text-neutral-500">Depósitos:</span>
-                  <p class="font-medium">{{ selectedUnit()!.storageSpaces || 0 }}</p>
-                </div>
-              </div>
+              <span class="text-sm text-neutral-500">Torre:</span>
+              <p class="font-medium">{{ selectedUnit()!.tower }}</p>
             </div>
-
-            @if (selectedUnit()!.ownerName) {
-              <div class="col-span-2">
-                <h4 class="font-semibold mb-2 text-neutral-700">Propietario</h4>
-                <div class="space-y-2">
-                  <div>
-                    <span class="text-sm text-neutral-500">Nombre:</span>
-                    <p class="font-medium">{{ selectedUnit()!.ownerName }}</p>
-                  </div>
-                  @if (selectedUnit()!.ownerEmail) {
-                    <div>
-                      <span class="text-sm text-neutral-500">Email:</span>
-                      <p class="font-medium">{{ selectedUnit()!.ownerEmail }}</p>
-                    </div>
-                  }
-                  @if (selectedUnit()!.ownerPhone) {
-                    <div>
-                      <span class="text-sm text-neutral-500">Teléfono:</span>
-                      <p class="font-medium">{{ selectedUnit()!.ownerPhone }}</p>
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-
-            <div class="col-span-2">
-              <h4 class="font-semibold mb-2 text-neutral-700">Información Financiera</h4>
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <span class="text-sm text-neutral-500">Cuota Mensual:</span>
-                  <p class="font-medium text-lg">{{ formatCurrency(selectedUnit()!.monthlyFee) }}</p>
-                </div>
-                @if (selectedUnit()!.hasDebt) {
-                  <div>
-                    <span class="text-sm text-neutral-500">Deuda:</span>
-                    <p class="font-medium text-lg text-error">{{ formatCurrency(selectedUnit()!.debtAmount) }}</p>
-                  </div>
-                }
-              </div>
+            <div>
+              <span class="text-sm text-neutral-500">Piso:</span>
+              <p class="font-medium">{{ selectedUnit()!.floor }}</p>
             </div>
+            <div>
+              <span class="text-sm text-neutral-500">Tipo:</span>
+              <p class="font-medium">{{ getPropertyTypeLabel(selectedUnit()!.propertyType) }}</p>
+            </div>
+            <div>
+              <span class="text-sm text-neutral-500">Estado:</span>
+              <p><span class="badge" [ngClass]="getStatusBadgeClass(selectedUnit()!.status)">
+                  {{ getStatusLabel(selectedUnit()!.status) }}
+                </span></p>
+            </div>
+          </div>
+        </div>
 
-            @if (selectedUnit()!.description) {
-              <div class="col-span-2">
-                <h4 class="font-semibold mb-2 text-neutral-700">Descripción</h4>
-                <p class="text-sm text-neutral-600">{{ selectedUnit()!.description }}</p>
-              </div>
+        <div>
+          <h4 class="font-semibold mb-2 text-neutral-700">Características</h4>
+          <div class="space-y-2">
+            <div>
+              <span class="text-sm text-neutral-500">Área:</span>
+              <p class="font-medium">{{ selectedUnit()!.area }} m²</p>
+            </div>
+            <div>
+              <span class="text-sm text-neutral-500">Habitaciones:</span>
+              <p class="font-medium">{{ selectedUnit()!.bedrooms }}</p>
+            </div>
+            <div>
+              <span class="text-sm text-neutral-500">Baños:</span>
+              <p class="font-medium">{{ selectedUnit()!.bathrooms }}</p>
+            </div>
+            <div>
+              <span class="text-sm text-neutral-500">Estacionamientos:</span>
+              <p class="font-medium">{{ selectedUnit()!.parkingSpaces }}</p>
+            </div>
+            <div>
+              <span class="text-sm text-neutral-500">Depósitos:</span>
+              <p class="font-medium">{{ selectedUnit()!.storageSpaces || 0 }}</p>
+            </div>
+          </div>
+        </div>
+
+        @if (selectedUnit()!.ownerName) {
+        <div class="col-span-2">
+          <h4 class="font-semibold mb-2 text-neutral-700">Propietario</h4>
+          <div class="space-y-2">
+            <div>
+              <span class="text-sm text-neutral-500">Nombre:</span>
+              <p class="font-medium">{{ selectedUnit()!.ownerName }}</p>
+            </div>
+            @if (selectedUnit()!.ownerEmail) {
+            <div>
+              <span class="text-sm text-neutral-500">Email:</span>
+              <p class="font-medium">{{ selectedUnit()!.ownerEmail }}</p>
+            </div>
             }
+            @if (selectedUnit()!.ownerPhone) {
+            <div>
+              <span class="text-sm text-neutral-500">Teléfono:</span>
+              <p class="font-medium">{{ selectedUnit()!.ownerPhone }}</p>
+            </div>
+            }
+          </div>
+        </div>
+        }
 
-            <!-- Residents Section in View Mode -->
-            @if (selectedUnit()!.residentDetails && selectedUnit()!.residentDetails!.length > 0) {
-              <div class="col-span-2 border-t border-neutral-200 pt-4 mt-4">
-                <div class="flex items-center gap-2 mb-4">
-                  <i class="ri-user-3-fill text-xl text-primary"></i>
-                  <h4 class="font-bold text-lg text-neutral-800">Residentes ({{ selectedUnit()!.residentDetails!.length }})</h4>
-                </div>
-                
-                <div class="space-y-3">
-                  @for (resident of selectedUnit()!.residentDetails; track $index) {
-                    <div class="card bg-neutral-50 shadow-sm border-l-4"
-                         [ngClass]="{
+        <div class="col-span-2">
+          <h4 class="font-semibold mb-2 text-neutral-700">Información Financiera</h4>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <span class="text-sm text-neutral-500">Cuota Mensual:</span>
+              <p class="font-medium text-lg">{{ formatCurrency(selectedUnit()!.monthlyFee) }}</p>
+            </div>
+            @if (selectedUnit()!.hasDebt) {
+            <div>
+              <span class="text-sm text-neutral-500">Deuda:</span>
+              <p class="font-medium text-lg text-error">{{ formatCurrency(selectedUnit()!.debtAmount) }}</p>
+            </div>
+            }
+          </div>
+        </div>
+
+        @if (selectedUnit()!.description) {
+        <div class="col-span-2">
+          <h4 class="font-semibold mb-2 text-neutral-700">Descripción</h4>
+          <p class="text-sm text-neutral-600">{{ selectedUnit()!.description }}</p>
+        </div>
+        }
+
+        <!-- Residents Section in View Mode -->
+        @if (selectedUnit()!.residentDetails && selectedUnit()!.residentDetails!.length > 0) {
+        <div class="col-span-2 border-t border-neutral-200 pt-4 mt-4">
+          <div class="flex items-center gap-2 mb-4">
+            <i class="ri-user-3-fill text-xl text-primary"></i>
+            <h4 class="font-bold text-lg text-neutral-800">Residentes ({{ selectedUnit()!.residentDetails!.length }})
+            </h4>
+          </div>
+
+          <div class="space-y-3">
+            @for (resident of selectedUnit()!.residentDetails; track $index) {
+            <div class="card bg-neutral-50 shadow-sm border-l-4" [ngClass]="{
                            'border-primary': resident.isOwner,
                            'border-secondary': resident.isManager && !resident.isOwner,
                            'border-accent': !resident.isOwner && !resident.isManager
                          }">
-                      <div class="card-body p-4">
-                        <div class="flex items-start justify-between">
-                          <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-2">
-                              <p class="font-bold text-neutral-800">{{ resident.name }}</p>
-                              <div class="flex gap-1">
-                                @if (resident.isOwner) {
-                                  <span class="badge badge-primary badge-sm">
-                                    <i class="ri-key-2-line mr-1"></i>
-                                    Dueño
-                                  </span>
-                                }
-                                @if (resident.isManager) {
-                                  <span class="badge badge-secondary badge-sm">
-                                    <i class="ri-shield-user-line mr-1"></i>
-                                    Encargado
-                                  </span>
-                                }
-                                @if (resident.isResident) {
-                                  <span class="badge badge-accent badge-sm">
-                                    <i class="ri-home-4-line mr-1"></i>
-                                    Vive Aquí
-                                  </span>
-                                }
-                                @if (!resident.isResident && resident.isOwner) {
-                                  <span class="badge badge-neutral badge-sm">Solo Dueño</span>
-                                }
-                              </div>
-                            </div>
-                            <div class="space-y-1">
-                              <div class="flex items-center gap-2 text-sm text-neutral-600">
-                                <i class="ri-phone-line"></i>
-                                <span>{{ resident.phone }}</span>
-                              </div>
-                              @if (resident.email) {
-                                <div class="flex items-center gap-2 text-sm text-neutral-600">
-                                  <i class="ri-mail-line"></i>
-                                  <span>{{ resident.email }}</span>
-                                </div>
-                              }
-                            </div>
-                          </div>
-                        </div>
+              <div class="card-body p-4">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                      <p class="font-bold text-neutral-800">{{ resident.name }}</p>
+                      <div class="flex gap-1">
+                        @if (resident.isOwner) {
+                        <span class="badge badge-primary badge-sm">
+                          <i class="ri-key-2-line mr-1"></i>
+                          Dueño
+                        </span>
+                        }
+                        @if (resident.isManager) {
+                        <span class="badge badge-secondary badge-sm">
+                          <i class="ri-shield-user-line mr-1"></i>
+                          Encargado
+                        </span>
+                        }
+                        @if (resident.isResident) {
+                        <span class="badge badge-accent badge-sm">
+                          <i class="ri-home-4-line mr-1"></i>
+                          Vive Aquí
+                        </span>
+                        }
+                        @if (!resident.isResident && resident.isOwner) {
+                        <span class="badge badge-neutral badge-sm">Solo Dueño</span>
+                        }
                       </div>
                     </div>
-                  }
+                    <div class="space-y-1">
+                      <div class="flex items-center gap-2 text-sm text-neutral-600">
+                        <i class="ri-phone-line"></i>
+                        <span>{{ resident.phone }}</span>
+                      </div>
+                      @if (resident.email) {
+                      <div class="flex items-center gap-2 text-sm text-neutral-600">
+                        <i class="ri-mail-line"></i>
+                        <span>{{ resident.email }}</span>
+                      </div>
+                      }
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
             }
           </div>
-        } @else {
-          <!-- Create/Edit Form -->
-          @if (loading()) {
-            <!-- Loading State -->
-            <div class="flex flex-col items-center justify-center py-8">
-              <div class="loading loading-spinner loading-lg text-primary mb-4"></div>
-              <p class="text-neutral-600">Cargando datos del formulario...</p>
-            </div>
+        </div>
+        }
+      </div>
+      } @else {
+      <!-- Create/Edit Form -->
+      @if (loading()) {
+      <!-- Loading State -->
+      <div class="flex flex-col items-center justify-center py-8">
+        <div class="loading loading-spinner loading-lg text-primary mb-4"></div>
+        <p class="text-neutral-600">Cargando datos del formulario...</p>
+      </div>
+      } @else {
+      <form (ngSubmit)="saveUnit()">
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Condominio (Mostrar solo si no hay contexto) -->
+          @if (!condominiumId()) {
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Condominio</span>
+            </label>
+            <select class="select select-bordered" [value]="formData().condominiumId"
+              (change)="onCondominiumChange($event)" name="condominiumId">
+              <option value="" [selected]="!formData().condominiumId">Seleccione un condominio</option>
+              @for (condo of availableCondominiums(); track condo.id || condo._id || $index) {
+              <option [value]="condo.id || condo._id" [selected]="formData().condominiumId === (condo.id || condo._id)">
+                {{ condo.name }}</option>
+              }
+            </select>
+          </div>
           } @else {
-            <form (ngSubmit)="saveUnit()">
-            <div class="grid grid-cols-2 gap-4">
-              <!-- Condominio Dropdown -->
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Condominio</span>
-                </label>
-                <select
-                  class="select select-bordered"
-                  [value]="formData().condominiumId"
-                  (change)="onCondominiumChange($event)"
-                  name="condominiumId"
-                >
-                  <option value="" [selected]="!formData().condominiumId">Seleccione un condominio</option>
-                  @for (condo of availableCondominiums(); track condo.id || condo._id) {
-                    <option [value]="condo.id || condo._id" [selected]="formData().condominiumId === (condo.id || condo._id)">{{ condo.name }}</option>
-                  }
-                </select>
-              </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Condominio</span>
+            </label>
+            <div class="flex items-center gap-2 p-3 bg-neutral-100 rounded-xl border border-neutral-200">
+              <i class="ri-community-line text-primary"></i>
+              <span class="font-medium text-neutral-700">{{ currentCondominium()?.name || 'Cargando...' }}</span>
+            </div>
+          </div>
+          }
 
-              <!-- Edificio/Torre Dropdown -->
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Edificio/Torre *</span>
-                </label>
-                <select
-                  class="select select-bordered"
-                  [value]="formData().buildingId"
-                  (change)="onBuildingChange($event)"
-                  name="buildingId"
-                  required
-                >
-                  <option value="" [selected]="!formData().buildingId">
-                    Seleccione un edificio
-                  </option>
-                  @for (building of availableBuildings(); track building.id || building._id) {
-                    <option [value]="building.id || building._id" [selected]="formData().buildingId === (building.id || building._id)">
-                      {{ building.name }} ({{ getTypeLabel(building.type) }})
-                    </option>
-                  }
-                </select>
-              </div>
+          <!-- Edificio/Torre (Mostrar solo si no hay contexto) -->
+          @if (!buildingId()) {
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Edificio/Torre *</span>
+            </label>
+            <select class="select select-bordered" [value]="formData().buildingId" (change)="onBuildingChange($event)"
+              name="buildingId" required>
+              <option value="" [selected]="!formData().buildingId">
+                Seleccione un edificio
+              </option>
+              @for (building of availableBuildings(); track building.id || building._id || $index) {
+              <option [value]="building.id || building._id"
+                [selected]="formData().buildingId === (building.id || building._id)">
+                {{ building.name }} ({{ getTypeLabel(building.type) }})
+              </option>
+              }
+            </select>
+          </div>
+          } @else {
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Edificio/Torre</span>
+            </label>
+            <div class="flex items-center gap-2 p-3 bg-neutral-100 rounded-xl border border-neutral-200">
+              <i class="ri-building-line text-primary"></i>
+              <span class="font-medium text-neutral-700">{{ currentBuilding()?.name || 'Cargando...' }}</span>
+            </div>
+          </div>
+          }
 
-              <!-- Basic Info -->
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Número de Unidad *</span>
-                </label>
-                <input
-                  type="text"
-                  class="input input-bordered"
-                  [value]="formData().unitNumber"
-                  (input)="onFormFieldChange($event, 'unitNumber')"
-                  name="unitNumber"
-                  placeholder="Ej: 101, A-201, Casa 5"
-                  required
-                />
-              </div>
+          <!-- Basic Info -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Número de Unidad *</span>
+            </label>
+            <input type="text" class="input input-bordered" [value]="formData().unitNumber"
+              (input)="onFormFieldChange($event, 'unitNumber')" name="unitNumber" placeholder="Ej: 101, A-201, Casa 5"
+              required />
+          </div>
 
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Torre/Referencia</span>
-                </label>
-                <input
-                  type="text"
-                  class="input input-bordered"
-                  [value]="formData().tower"
-                  (input)="onFormFieldChange($event, 'tower')"
-                  name="tower"
-                  placeholder="Se llena automáticamente o personalizable"
-                />
-              </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Torre/Referencia</span>
+            </label>
+            <input type="text" class="input input-bordered" [value]="formData().tower"
+              (input)="onFormFieldChange($event, 'tower')" name="tower"
+              placeholder="Se llena automáticamente o personalizable" />
+          </div>
 
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Piso *</span>
-                </label>
-                <input
-                  type="number"
-                  class="input input-bordered"
-                  [value]="formData().floor"
-                  (input)="onFormFieldChange($event, 'floor')"
-                  name="floor"
-                  required
-                  min="1"
-                />
-              </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Piso *</span>
+            </label>
+            <input type="number" class="input input-bordered" [value]="formData().floor"
+              (input)="onFormFieldChange($event, 'floor')" name="floor" required min="1" />
+          </div>
 
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Área (m²) *</span>
-                </label>
-                <input
-                  type="number"
-                  class="input input-bordered"
-                  [value]="formData().area"
-                  (input)="onFormFieldChange($event, 'area')"
-                  name="area"
-                  required
-                  min="0"
-                  step="0.01"
-                />
-              </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Área (m²) *</span>
+            </label>
+            <input type="number" class="input input-bordered" [value]="formData().area"
+              (input)="onFormFieldChange($event, 'area')" name="area" required min="0" step="0.01" />
+          </div>
 
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Tipo de Propiedad *</span>
-                </label>
-                <select
-                  class="select select-bordered"
-                  [value]="formData().propertyType"
-                  (change)="onFormFieldChange($event, 'propertyType')"
-                  name="propertyType"
-                  required
-                >
-                  <option [value]="PropertyType.APARTMENT" [selected]="formData().propertyType === PropertyType.APARTMENT">Departamento</option>
-                  <option [value]="PropertyType.PENTHOUSE" [selected]="formData().propertyType === PropertyType.PENTHOUSE">Penthouse</option>
-                  <option [value]="PropertyType.DUPLEX" [selected]="formData().propertyType === PropertyType.DUPLEX">Dúplex</option>
-                  <option [value]="PropertyType.STUDIO" [selected]="formData().propertyType === PropertyType.STUDIO">Studio</option>
-                  <option [value]="PropertyType.LOFT" [selected]="formData().propertyType === PropertyType.LOFT">Loft</option>
-                  <option [value]="PropertyType.TOWNHOUSE" [selected]="formData().propertyType === PropertyType.TOWNHOUSE">Casa</option>
-                </select>
-              </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Tipo de Propiedad *</span>
+            </label>
+            <select class="select select-bordered" [value]="formData().propertyType"
+              (change)="onFormFieldChange($event, 'propertyType')" name="propertyType" required>
+              <option [value]="PropertyType.APARTMENT" [selected]="formData().propertyType === PropertyType.APARTMENT">
+                Departamento</option>
+              <option [value]="PropertyType.PENTHOUSE" [selected]="formData().propertyType === PropertyType.PENTHOUSE">
+                Penthouse</option>
+              <option [value]="PropertyType.DUPLEX" [selected]="formData().propertyType === PropertyType.DUPLEX">Dúplex
+              </option>
+              <option [value]="PropertyType.STUDIO" [selected]="formData().propertyType === PropertyType.STUDIO">Studio
+              </option>
+              <option [value]="PropertyType.LOFT" [selected]="formData().propertyType === PropertyType.LOFT">Loft
+              </option>
+              <option [value]="PropertyType.TOWNHOUSE" [selected]="formData().propertyType === PropertyType.TOWNHOUSE">
+                Casa</option>
+            </select>
+          </div>
 
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Estado *</span>
-                </label>
-                <select
-                  class="select select-bordered"
-                  [value]="formData().status"
-                  (change)="onFormFieldChange($event, 'status')"
-                  name="status"
-                  required
-                >
-                  <option [value]="UnitStatus.OCCUPIED" [selected]="formData().status === UnitStatus.OCCUPIED">Ocupada</option>
-                  <option [value]="UnitStatus.VACANT" [selected]="formData().status === UnitStatus.VACANT">Vacante</option>
-                  <option [value]="UnitStatus.UNDER_MAINTENANCE" [selected]="formData().status === UnitStatus.UNDER_MAINTENANCE">En Mantenimiento</option>
-                  <option [value]="UnitStatus.FOR_SALE" [selected]="formData().status === UnitStatus.FOR_SALE">En Venta</option>
-                  <option [value]="UnitStatus.FOR_RENT" [selected]="formData().status === UnitStatus.FOR_RENT">En Alquiler</option>
-                </select>
-              </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Estado *</span>
+            </label>
+            <select class="select select-bordered" [value]="formData().status"
+              (change)="onFormFieldChange($event, 'status')" name="status" required>
+              <option [value]="UnitStatus.OCCUPIED" [selected]="formData().status === UnitStatus.OCCUPIED">Ocupada
+              </option>
+              <option [value]="UnitStatus.VACANT" [selected]="formData().status === UnitStatus.VACANT">Vacante</option>
+              <option [value]="UnitStatus.UNDER_MAINTENANCE"
+                [selected]="formData().status === UnitStatus.UNDER_MAINTENANCE">En Mantenimiento</option>
+              <option [value]="UnitStatus.FOR_SALE" [selected]="formData().status === UnitStatus.FOR_SALE">En Venta
+              </option>
+              <option [value]="UnitStatus.FOR_RENT" [selected]="formData().status === UnitStatus.FOR_RENT">En Alquiler
+              </option>
+            </select>
+          </div>
 
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Habitaciones *</span>
-                </label>
-                <input
-                  type="number"
-                  class="input input-bordered"
-                  [value]="formData().bedrooms"
-                  (input)="onFormFieldChange($event, 'bedrooms')"
-                  name="bedrooms"
-                  required
-                  min="0"
-                />
-              </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Habitaciones *</span>
+            </label>
+            <input type="number" class="input input-bordered" [value]="formData().bedrooms"
+              (input)="onFormFieldChange($event, 'bedrooms')" name="bedrooms" required min="0" />
+          </div>
 
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Baños *</span>
-                </label>
-                <input
-                  type="number"
-                  class="input input-bordered"
-                  [value]="formData().bathrooms"
-                  (input)="onFormFieldChange($event, 'bathrooms')"
-                  name="bathrooms"
-                  required
-                  min="0"
-                />
-              </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Baños *</span>
+            </label>
+            <input type="number" class="input input-bordered" [value]="formData().bathrooms"
+              (input)="onFormFieldChange($event, 'bathrooms')" name="bathrooms" required min="0" />
+          </div>
 
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Estacionamientos *</span>
-                </label>
-                <input
-                  type="number"
-                  class="input input-bordered"
-                  [value]="formData().parkingSpaces"
-                  (input)="onFormFieldChange($event, 'parkingSpaces')"
-                  name="parkingSpaces"
-                  required
-                  min="0"
-                />
-              </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Estacionamientos *</span>
+            </label>
+            <input type="number" class="input input-bordered" [value]="formData().parkingSpaces"
+              (input)="onFormFieldChange($event, 'parkingSpaces')" name="parkingSpaces" required min="0" />
+          </div>
 
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Depósitos</span>
-                </label>
-                <input
-                  type="number"
-                  class="input input-bordered"
-                  [value]="formData().storageSpaces"
-                  (input)="onFormFieldChange($event, 'storageSpaces')"
-                  name="storageSpaces"
-                  min="0"
-                />
-              </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Depósitos</span>
+            </label>
+            <input type="number" class="input input-bordered" [value]="formData().storageSpaces"
+              (input)="onFormFieldChange($event, 'storageSpaces')" name="storageSpaces" min="0" />
+          </div>
 
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Cuota Mensual *</span>
-                </label>
-                <input
-                  type="number"
-                  class="input input-bordered"
-                  [value]="formData().monthlyFee"
-                  (input)="onFormFieldChange($event, 'monthlyFee')"
-                  name="monthlyFee"
-                  required
-                  min="0"
-                  step="0.01"
-                />
-              </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Cuota Mensual *</span>
+            </label>
+            <input type="number" class="input input-bordered" [value]="formData().monthlyFee"
+              (input)="onFormFieldChange($event, 'monthlyFee')" name="monthlyFee" required min="0" step="0.01" />
+          </div>
 
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Orientación</span>
-                </label>
-                <select
-                  class="select select-bordered"
-                  (change)="onFormFieldChange($event, 'orientation')"
-                  name="orientation"
-                >
-                  <option value="" [selected]="!formData().orientation">Seleccionar...</option>
-                  <option value="Norte" [selected]="formData().orientation === 'Norte'">Norte</option>
-                  <option value="Sur" [selected]="formData().orientation === 'Sur'">Sur</option>
-                  <option value="Este" [selected]="formData().orientation === 'Este'">Este</option>
-                  <option value="Oeste" [selected]="formData().orientation === 'Oeste'">Oeste</option>
-                  <option value="Noreste" [selected]="formData().orientation === 'Noreste'">Noreste</option>
-                  <option value="Noroeste" [selected]="formData().orientation === 'Noroeste'">Noroeste</option>
-                  <option value="Sureste" [selected]="formData().orientation === 'Sureste'">Sureste</option>
-                  <option value="Suroeste" [selected]="formData().orientation === 'Suroeste'">Suroeste</option>
-                </select>
-              </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Orientación</span>
+            </label>
+            <select class="select select-bordered" (change)="onFormFieldChange($event, 'orientation')"
+              name="orientation">
+              <option value="" [selected]="!formData().orientation">Seleccionar...</option>
+              <option value="Norte" [selected]="formData().orientation === 'Norte'">Norte</option>
+              <option value="Sur" [selected]="formData().orientation === 'Sur'">Sur</option>
+              <option value="Este" [selected]="formData().orientation === 'Este'">Este</option>
+              <option value="Oeste" [selected]="formData().orientation === 'Oeste'">Oeste</option>
+              <option value="Noreste" [selected]="formData().orientation === 'Noreste'">Noreste</option>
+              <option value="Noroeste" [selected]="formData().orientation === 'Noroeste'">Noroeste</option>
+              <option value="Sureste" [selected]="formData().orientation === 'Sureste'">Sureste</option>
+              <option value="Suroeste" [selected]="formData().orientation === 'Suroeste'">Suroeste</option>
+            </select>
+          </div>
 
-              <!-- Checkboxes -->
-              <div class="col-span-2 flex gap-4">
-                <div class="form-control">
-                  <label class="label cursor-pointer gap-2">
-                    <input
-                      type="checkbox"
-                      class="checkbox checkbox-primary"
-                      [checked]="formData().hasBalcony"
-                      (change)="onFormFieldChange($event, 'hasBalcony')"
-                      name="hasBalcony"
-                    />
-                    <span class="label-text">Tiene Balcón</span>
-                  </label>
+          <!-- Checkboxes -->
+          <div class="col-span-2 flex gap-4">
+            <div class="form-control">
+              <label class="label cursor-pointer gap-2">
+                <input type="checkbox" class="checkbox checkbox-primary" [checked]="formData().hasBalcony"
+                  (change)="onFormFieldChange($event, 'hasBalcony')" name="hasBalcony" />
+                <span class="label-text">Tiene Balcón</span>
+              </label>
+            </div>
+
+            <div class="form-control">
+              <label class="label cursor-pointer gap-2">
+                <input type="checkbox" class="checkbox checkbox-primary" [checked]="formData().hasGarden"
+                  (change)="onFormFieldChange($event, 'hasGarden')" name="hasGarden" />
+                <span class="label-text">Tiene Jardín</span>
+              </label>
+            </div>
+
+            <div class="form-control">
+              <label class="label cursor-pointer gap-2">
+                <input type="checkbox" class="checkbox checkbox-primary" [checked]="formData().isFurnished"
+                  (change)="onFormFieldChange($event, 'isFurnished')" name="isFurnished" />
+                <span class="label-text">Amoblado</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="form-control col-span-2">
+            <label class="label">
+              <span class="label-text font-semibold">Descripción</span>
+            </label>
+            <textarea class="textarea textarea-bordered h-24" [value]="formData().description"
+              (input)="onFormFieldChange($event, 'description')" name="description"
+              placeholder="Descripción opcional de la unidad..."></textarea>
+          </div>
+
+          <!-- === RESIDENTS SECTION === -->
+          <div class="col-span-2 border-t border-neutral-200 pt-6 mt-4">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div class="p-2 bg-primary/10 rounded-lg">
+                  <i class="ri-user-3-fill text-xl text-primary"></i>
                 </div>
-
-                <div class="form-control">
-                  <label class="label cursor-pointer gap-2">
-                    <input
-                      type="checkbox"
-                      class="checkbox checkbox-primary"
-                      [checked]="formData().hasGarden"
-                      (change)="onFormFieldChange($event, 'hasGarden')"
-                      name="hasGarden"
-                    />
-                    <span class="label-text">Tiene Jardín</span>
-                  </label>
-                </div>
-
-                <div class="form-control">
-                  <label class="label cursor-pointer gap-2">
-                    <input
-                      type="checkbox"
-                      class="checkbox checkbox-primary"
-                      [checked]="formData().isFurnished"
-                      (change)="onFormFieldChange($event, 'isFurnished')"
-                      name="isFurnished"
-                    />
-                    <span class="label-text">Amoblado</span>
-                  </label>
+                <div>
+                  <h4 class="font-bold text-lg text-neutral-800">Residentes de la Unidad</h4>
+                  <p class="text-sm text-neutral-600">Agrega personas que habitan o son dueños de esta unidad</p>
                 </div>
               </div>
-
-              <!-- Description -->
-              <div class="form-control col-span-2">
-                <label class="label">
-                  <span class="label-text font-semibold">Descripción</span>
-                </label>
-                <textarea
-                  class="textarea textarea-bordered h-24"
-                  [value]="formData().description"
-                  (input)="onFormFieldChange($event, 'description')"
-                  name="description"
-                  placeholder="Descripción opcional de la unidad..."
-                ></textarea>
+              <div class="flex gap-2">
+                <button type="button" class="btn btn-primary btn-sm gap-2" (click)="addResident()">
+                  <i class="ri-add-line"></i>
+                  Agregar Residente
+                </button>
+                <!-- Botón temporal para testing -->
+                <button type="button" class="btn btn-secondary btn-sm gap-2" (click)="testResidentsSignal()">
+                  <i class="ri-bug-line"></i>
+                  Test Signal
+                </button>
               </div>
+            </div>
 
-              <!-- === RESIDENTS SECTION === -->
-              <div class="col-span-2 border-t border-neutral-200 pt-6 mt-4">
-                <div class="flex items-center justify-between mb-4">
-                  <div class="flex items-center gap-3">
-                    <div class="p-2 bg-primary/10 rounded-lg">
-                      <i class="ri-user-3-fill text-xl text-primary"></i>
-                    </div>
-                    <div>
-                      <h4 class="font-bold text-lg text-neutral-800">Residentes de la Unidad</h4>
-                      <p class="text-sm text-neutral-600">Agrega personas que habitan o son dueños de esta unidad</p>
-                    </div>
-                  </div>
-                  <div class="flex gap-2">
-                    <button
-                      type="button"
-                      class="btn btn-primary btn-sm gap-2"
-                      (click)="addResident()"
-                    >
-                      <i class="ri-add-line"></i>
-                      Agregar Residente
-                    </button>
-                    <!-- Botón temporal para testing -->
-                    <button
-                      type="button"
-                      class="btn btn-secondary btn-sm gap-2"
-                      (click)="testResidentsSignal()"
-                    >
-                      <i class="ri-bug-line"></i>
-                      Test Signal
-                    </button>
-                  </div>
-                </div>
+            @if (unitResidents().length === 0) {
+            <div class="text-center py-8 bg-neutral-50 rounded-xl border-2 border-dashed border-neutral-300">
+              <i class="ri-user-add-line text-5xl text-neutral-300 mb-2"></i>
+              <p class="text-neutral-500 font-medium">No hay residentes agregados</p>
+              <p class="text-sm text-neutral-400">Haz clic en "Agregar Residente" para comenzar</p>
+            </div>
+            }
 
-                @if (unitResidents().length === 0) {
-                  <div class="text-center py-8 bg-neutral-50 rounded-xl border-2 border-dashed border-neutral-300">
-                    <i class="ri-user-add-line text-5xl text-neutral-300 mb-2"></i>
-                    <p class="text-neutral-500 font-medium">No hay residentes agregados</p>
-                    <p class="text-sm text-neutral-400">Haz clic en "Agregar Residente" para comenzar</p>
-                  </div>
-                }
-
-                @for (resident of unitResidents(); track $index) {
-                  <div class="card bg-neutral-50 shadow-md mb-4 border-l-4" 
-                       [ngClass]="{
+            @for (resident of unitResidents(); track $index) {
+            <div class="card bg-neutral-50 shadow-md mb-4 border-l-4" [ngClass]="{
                          'border-primary': resident.isOwner,
                          'border-secondary': resident.isManager && !resident.isOwner,
                          'border-accent': !resident.isOwner && !resident.isManager
                        }">
-                    <div class="card-body p-4">
-                      <!-- Header con número y botón eliminar -->
-                      <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
-                          <span class="badge badge-lg" 
-                                [ngClass]="{
+              <div class="card-body p-4">
+                <!-- Header con número y botón eliminar -->
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <span class="badge badge-lg" [ngClass]="{
                                   'badge-primary': resident.isOwner,
                                   'badge-secondary': resident.isManager && !resident.isOwner,
                                   'badge-accent': !resident.isOwner && !resident.isManager
                                 }">
-                            <i class="ri-user-line mr-1"></i>
-                            Residente {{ $index + 1 }}
-                          </span>
-                          @if (resident.isOwner) {
-                            <span class="badge badge-primary badge-sm">Dueño</span>
-                          }
-                          @if (resident.isManager) {
-                            <span class="badge badge-secondary badge-sm">Encargado</span>
-                          }
-                          @if (resident.isResident) {
-                            <span class="badge badge-accent badge-sm">Vive Aquí</span>
-                          }
-                        </div>
-                        <button
-                          type="button"
-                          class="btn btn-ghost btn-sm btn-circle text-error hover:bg-error/10"
-                          (click)="removeResident($index)"
-                          title="Eliminar residente"
-                        >
-                          <i class="ri-delete-bin-line"></i>
-                        </button>
-                      </div>
+                      <i class="ri-user-line mr-1"></i>
+                      Residente {{ $index + 1 }}
+                    </span>
+                    @if (resident.isOwner) {
+                    <span class="badge badge-primary badge-sm">Dueño</span>
+                    }
+                    @if (resident.isManager) {
+                    <span class="badge badge-secondary badge-sm">Encargado</span>
+                    }
+                    @if (resident.isResident) {
+                    <span class="badge badge-accent badge-sm">Vive Aquí</span>
+                    }
+                  </div>
+                  <button type="button" class="btn btn-ghost btn-sm btn-circle text-error hover:bg-error/10"
+                    (click)="removeResident($index)" title="Eliminar residente">
+                    <i class="ri-delete-bin-line"></i>
+                  </button>
+                </div>
 
-                      <!-- Formulario del residente -->
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <!-- Nombre -->
-                        <div class="form-control">
-                          <label class="label py-1">
-                            <span class="label-text text-sm font-semibold text-neutral-800">Nombre Completo *</span>
-                          </label>
-                          <input
-                            type="text"
-                            class="input input-bordered input-sm"
-                            [value]="resident.name"
-                            (input)="updateResident($index, 'name', $any($event.target).value)"
-                            placeholder="Ej: Juan Pérez García"
-                            required
-                          />
-                        </div>
+                <!-- Formulario del residente -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <!-- Nombre -->
+                  <div class="form-control">
+                    <label class="label py-1">
+                      <span class="label-text text-sm font-semibold text-neutral-800">Nombre Completo *</span>
+                    </label>
+                    <input type="text" class="input input-bordered input-sm" [value]="resident.name"
+                      (input)="updateResident($index, 'name', $any($event.target).value)"
+                      placeholder="Ej: Juan Pérez García" required />
+                  </div>
 
-                        <!-- Celular -->
-                        <div class="form-control">
-                          <label class="label py-1">
-                            <span class="label-text text-sm font-semibold text-neutral-800">Celular *</span>
-                          </label>
-                          <input
-                            type="tel"
-                            class="input input-bordered input-sm"
-                            [value]="resident.phone"
-                            (input)="updateResident($index, 'phone', $any($event.target).value)"
-                            placeholder="Ej: +52 55 1234-5678"
-                            required
-                          />
-                        </div>
+                  <!-- Celular -->
+                  <div class="form-control">
+                    <label class="label py-1">
+                      <span class="label-text text-sm font-semibold text-neutral-800">Celular *</span>
+                    </label>
+                    <input type="tel" class="input input-bordered input-sm" [value]="resident.phone"
+                      (input)="updateResident($index, 'phone', $any($event.target).value)"
+                      placeholder="Ej: +52 55 1234-5678" required />
+                  </div>
 
-                        <!-- Correo (opcional) -->
-                        <div class="form-control md:col-span-2">
-                          <label class="label py-1">
-                            <span class="label-text text-sm font-semibold text-neutral-800">Correo Electrónico (opcional)</span>
-                          </label>
-                          <input
-                            type="email"
-                            class="input input-bordered input-sm"
-                            [value]="resident.email"
-                            (input)="updateResident($index, 'email', $any($event.target).value)"
-                            placeholder="Ej: correo@ejemplo.com"
-                          />
-                        </div>
+                  <!-- Correo (opcional) -->
+                  <div class="form-control md:col-span-2">
+                    <label class="label py-1">
+                      <span class="label-text text-sm font-semibold text-neutral-800">Correo Electrónico
+                        (opcional)</span>
+                    </label>
+                    <input type="email" class="input input-bordered input-sm" [value]="resident.email"
+                      (input)="updateResident($index, 'email', $any($event.target).value)"
+                      placeholder="Ej: correo@ejemplo.com" />
+                  </div>
 
-                        <!-- Checkboxes en fila -->
-                        <div class="md:col-span-2 flex flex-wrap gap-4 pt-2">
-                          <div class="form-control">
-                            <label class="label cursor-pointer gap-2 py-1">
-                              <input
-                                type="checkbox"
-                                class="checkbox checkbox-primary checkbox-sm"
-                                [checked]="resident.isResident"
-                                (change)="updateResident($index, 'isResident', $any($event.target).checked)"
-                              />
-                              <span class="label-text font-semibold text-neutral-800">
-                                <i class="ri-home-4-line text-primary"></i>
-                                Vive Aquí
-                              </span>
-                            </label>
-                          </div>
+                  <!-- Checkboxes en fila -->
+                  <div class="md:col-span-2 flex flex-wrap gap-4 pt-2">
+                    <div class="form-control">
+                      <label class="label cursor-pointer gap-2 py-1">
+                        <input type="checkbox" class="checkbox checkbox-primary checkbox-sm"
+                          [checked]="resident.isResident"
+                          (change)="updateResident($index, 'isResident', $any($event.target).checked)" />
+                        <span class="label-text font-semibold text-neutral-800">
+                          <i class="ri-home-4-line text-primary"></i>
+                          Vive Aquí
+                        </span>
+                      </label>
+                    </div>
 
-                          <div class="form-control">
-                            <label class="label cursor-pointer gap-2 py-1">
-                              <input
-                                type="checkbox"
-                                class="checkbox checkbox-secondary checkbox-sm"
-                                [checked]="resident.isManager"
-                                (change)="updateResident($index, 'isManager', $any($event.target).checked)"
-                              />
-                              <span class="label-text font-semibold text-neutral-800">
-                                <i class="ri-shield-user-line text-secondary"></i>
-                                Encargado
-                              </span>
-                            </label>
-                          </div>
+                    <div class="form-control">
+                      <label class="label cursor-pointer gap-2 py-1">
+                        <input type="checkbox" class="checkbox checkbox-secondary checkbox-sm"
+                          [checked]="resident.isManager"
+                          (change)="updateResident($index, 'isManager', $any($event.target).checked)" />
+                        <span class="label-text font-semibold text-neutral-800">
+                          <i class="ri-shield-user-line text-secondary"></i>
+                          Encargado
+                        </span>
+                      </label>
+                    </div>
 
-                          <div class="form-control">
-                            <label class="label cursor-pointer gap-2 py-1">
-                              <input
-                                type="checkbox"
-                                class="checkbox checkbox-accent checkbox-sm"
-                                [checked]="resident.isOwner"
-                                (change)="updateResident($index, 'isOwner', $any($event.target).checked)"
-                              />
-                              <span class="label-text font-semibold text-neutral-800">
-                                <i class="ri-key-2-line text-accent"></i>
-                                Es Dueño
-                              </span>
-                            </label>
-                          </div>
-                        </div>
-
-                        <!-- Info badge -->
-                        <div class="md:col-span-2">
-                          <div class="alert alert-info py-2 px-3">
-                            <i class="ri-information-line text-sm"></i>
-                            <span class="text-xs">
-                              @if (!resident.isResident && resident.isOwner) {
-                                <strong>Solo Dueño:</strong> No vive en la unidad, solo es propietario
-                              } @else if (resident.isResident && resident.isOwner) {
-                                <strong>Dueño Residente:</strong> Es propietario y vive en la unidad
-                              } @else if (resident.isManager) {
-                                <strong>Encargado:</strong> Persona responsable del mantenimiento o administración
-                              } @else {
-                                <strong>Residente:</strong> Persona que habita en la unidad
-                              }
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                    <div class="form-control">
+                      <label class="label cursor-pointer gap-2 py-1">
+                        <input type="checkbox" class="checkbox checkbox-accent checkbox-sm" [checked]="resident.isOwner"
+                          (change)="updateResident($index, 'isOwner', $any($event.target).checked)" />
+                        <span class="label-text font-semibold text-neutral-800">
+                          <i class="ri-key-2-line text-accent"></i>
+                          Es Dueño
+                        </span>
+                      </label>
                     </div>
                   </div>
-                }
+
+                  <!-- Info badge -->
+                  <div class="md:col-span-2">
+                    <div class="alert alert-info py-2 px-3">
+                      <i class="ri-information-line text-sm"></i>
+                      <span class="text-xs">
+                        @if (!resident.isResident && resident.isOwner) {
+                        <strong>Solo Dueño:</strong> No vive en la unidad, solo es propietario
+                        } @else if (resident.isResident && resident.isOwner) {
+                        <strong>Dueño Residente:</strong> Es propietario y vive en la unidad
+                        } @else if (resident.isManager) {
+                        <strong>Encargado:</strong> Persona responsable del mantenimiento o administración
+                        } @else {
+                        <strong>Residente:</strong> Persona que habita en la unidad
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-
-            <!-- Modal Actions -->
-            <div class="modal-action">
-              <button type="button" class="btn btn-ghost" (click)="closeModal()">
-                Cancelar
-              </button>
-              <button type="submit" class="btn btn-primary" [disabled]="loading()">
-                @if (loading()) {
-                  <span class="loading loading-spinner"></span>
-                }
-                {{ modalMode() === 'create' ? 'Crear' : 'Guardar' }}
-              </button>
-            </div>
-          </form>
-          }
-        }
-
-        @if (modalMode() === 'view') {
-          <div class="modal-action">
-            <button class="btn btn-ghost" (click)="closeModal()">Cerrar</button>
+            }
           </div>
-        }
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="modal-action">
+          <button type="button" class="btn btn-ghost" (click)="closeModal()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading()">
+            @if (loading()) {
+            <span class="loading loading-spinner"></span>
+            }
+            {{ modalMode() === 'create' ? 'Crear' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+      }
+      }
+
+      @if (modalMode() === 'view') {
+      <div class="modal-action">
+        <button class="btn btn-ghost" (click)="closeModal()">Cerrar</button>
       </div>
-      <div class="modal-backdrop" (click)="closeModal()"></div>
+      }
     </div>
+    <div class="modal-backdrop" (click)="closeModal()"></div>
+  </div>
   }
 
   <!-- Delete Confirmation Modal -->
   @if (showDeleteModal()) {
-    <div class="modal modal-open">
-      <div class="modal-box glass max-w-md">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="p-3 bg-error/10 rounded-full">
-            <i class="ri-error-warning-line text-3xl text-error"></i>
-          </div>
-          <div>
-            <h3 class="font-bold text-xl text-neutral-800">Confirmar Eliminación</h3>
-          </div>
+  <div class="modal modal-open">
+    <div class="modal-box glass max-w-md">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="p-3 bg-error/10 rounded-full">
+          <i class="ri-error-warning-line text-3xl text-error"></i>
         </div>
-
-        @if (unitToDelete()) {
-          <div class="mb-6">
-            <p class="text-neutral-700 mb-4">
-              ¿Está seguro que desea eliminar la siguiente unidad?
-            </p>
-            <div class="bg-neutral-100 rounded-xl p-4 space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-neutral-600">Unidad:</span>
-                <span class="font-bold text-neutral-800">{{ unitToDelete()!.unitNumber }}</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-neutral-600">Torre:</span>
-                <span class="font-semibold text-neutral-700">{{ unitToDelete()!.tower }}</span>
-              </div>
-              @if (unitToDelete()!.ownerName) {
-                <div class="flex items-center justify-between">
-                  <span class="text-sm text-neutral-600">Propietario:</span>
-                  <span class="font-semibold text-neutral-700">{{ unitToDelete()!.ownerName }}</span>
-                </div>
-              }
-            </div>
-            <div class="alert alert-warning mt-4">
-              <i class="ri-alert-line"></i>
-              <span class="text-sm">Esta acción no se puede deshacer</span>
-            </div>
-          </div>
-        }
-
-        <div class="modal-action">
-          <button 
-            type="button" 
-            class="btn btn-ghost" 
-            (click)="closeDeleteModal()"
-            [disabled]="isDeleting()"
-          >
-            Cancelar
-          </button>
-          <button 
-            type="button" 
-            class="btn btn-error gap-2" 
-            (click)="confirmDelete()"
-            [disabled]="isDeleting()"
-          >
-            @if (isDeleting()) {
-              <span class="loading loading-spinner loading-sm"></span>
-              Eliminando...
-            } @else {
-              <i class="ri-delete-bin-line"></i>
-              Eliminar
-            }
-          </button>
+        <div>
+          <h3 class="font-bold text-xl text-neutral-800">Confirmar Eliminación</h3>
         </div>
       </div>
-      <div class="modal-backdrop" (click)="closeDeleteModal()"></div>
+
+      @if (unitToDelete()) {
+      <div class="mb-6">
+        <p class="text-neutral-700 mb-4">
+          ¿Está seguro que desea eliminar la siguiente unidad?
+        </p>
+        <div class="bg-neutral-100 rounded-xl p-4 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-neutral-600">Unidad:</span>
+            <span class="font-bold text-neutral-800">{{ unitToDelete()!.unitNumber }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-neutral-600">Torre:</span>
+            <span class="font-semibold text-neutral-700">{{ unitToDelete()!.tower }}</span>
+          </div>
+          @if (unitToDelete()!.ownerName) {
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-neutral-600">Propietario:</span>
+            <span class="font-semibold text-neutral-700">{{ unitToDelete()!.ownerName }}</span>
+          </div>
+          }
+        </div>
+        <div class="alert alert-warning mt-4">
+          <i class="ri-alert-line"></i>
+          <span class="text-sm">Esta acción no se puede deshacer</span>
+        </div>
+      </div>
+      }
+
+      <div class="modal-action">
+        <button type="button" class="btn btn-ghost" (click)="closeDeleteModal()" [disabled]="isDeleting()">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-error gap-2" (click)="confirmDelete()" [disabled]="isDeleting()">
+          @if (isDeleting()) {
+          <span class="loading loading-spinner loading-sm"></span>
+          Eliminando...
+          } @else {
+          <i class="ri-delete-bin-line"></i>
+          Eliminar
+          }
+        </button>
+      </div>
     </div>
+    <div class="modal-backdrop" (click)="closeDeleteModal()"></div>
+  </div>
   }
 
   <!-- Toast Notification -->
   @if (showToast()) {
-    <div class="toast toast-top toast-end z-50">
-      <div 
-        class="alert shadow-xl glass"
-        [ngClass]="{
+  <div class="toast toast-top toast-end z-50">
+    <div class="alert shadow-xl glass" [ngClass]="{
           'alert-success': toastType() === 'success',
           'alert-error': toastType() === 'error',
           'alert-info': toastType() === 'info'
-        }"
-      >
-        @if (toastType() === 'success') {
-          <i class="ri-checkbox-circle-fill text-xl"></i>
-        } @else if (toastType() === 'error') {
-          <i class="ri-error-warning-fill text-xl"></i>
-        } @else {
-          <i class="ri-information-fill text-xl"></i>
-        }
-        <span class="font-medium">{{ toastMessage() }}</span>
-        <button class="btn btn-sm btn-ghost btn-circle" (click)="showToast.set(false)">
-          <i class="ri-close-line"></i>
-        </button>
-      </div>
+        }">
+      @if (toastType() === 'success') {
+      <i class="ri-checkbox-circle-fill text-xl"></i>
+      } @else if (toastType() === 'error') {
+      <i class="ri-error-warning-fill text-xl"></i>
+      } @else {
+      <i class="ri-information-fill text-xl"></i>
+      }
+      <span class="font-medium">{{ toastMessage() }}</span>
+      <button class="btn btn-sm btn-ghost btn-circle" (click)="showToast.set(false)">
+        <i class="ri-close-line"></i>
+      </button>
     </div>
+  </div>
   }
 </div>

@@ -32,13 +32,13 @@ export interface Unit {
   hasGarden?: boolean;
   isFurnished?: boolean;
   description?: string;
-  
+
   // Información de ocupación
   isOccupied: boolean;
   occupancyStatus: UnitOccupancyStatus;
   residents?: UnitResident[]; // Lista de residentes asociados
   primaryResidentId?: string; // ID del residente principal
-  
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -85,7 +85,7 @@ export interface UnitDetails extends Unit {
   debtAmount: number;
   lastPaymentDate?: Date;
   occupancyStartDate?: Date;
-  
+
   // Residentes completos de la unidad
   residentDetails?: UnitResident[];
 }
@@ -112,12 +112,14 @@ export interface CreateUnitDto {
   hasGarden?: boolean;
   isFurnished?: boolean;
   description?: string;
-  residents?: UnitResident[]; // Lista de residentes
+  residentsId?: string[]; // IDs de residentes ya creados
+  residents?: UnitResident[]; // Lista de objetos residentes (para creación rápida)
 }
 
 export interface UpdateUnitDto extends Partial<CreateUnitDto> {
   ownerId?: string;
   residentId?: string;
+  residentsId?: string[]; // IDs de residentes
   residents?: UnitResident[]; // Actualización de lista de residentes
 }
 

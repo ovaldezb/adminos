@@ -1,71 +1,59 @@
 <div class="min-h-screen bg-gradient-to-br from-neutral-50 via-sky-50 to-violet-50">
   <!-- Navbar -->
-  <app-navbar
-    (toggleSidebar)="toggleSidebar()"
-  />
+  <app-navbar (toggleSidebar)="toggleSidebar()" />
 
   <div class="flex relative">
     <!-- Sidebar -->
-    <div 
+    <div
       class="fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto"
-      [class.-translate-x-full]="!sidebarOpen()"
-      [class.translate-x-0]="sidebarOpen()"
-    >
-      <app-side-menu
-        [isOpen]="sidebarOpen()"
-        [selectedCondo]="selectedCondo()"
-        (close)="sidebarOpen.set(false)"
-      />
+      [class.-translate-x-full]="!sidebarOpen()" [class.translate-x-0]="sidebarOpen()">
+      <app-side-menu [isOpen]="sidebarOpen()" [selectedCondo]="selectedCondo()" (close)="sidebarOpen.set(false)" />
     </div>
 
     <!-- Overlay para móvil -->
     @if (sidebarOpen()) {
-      <div 
-        class="fixed inset-0 bg-neutral-900/50 backdrop-blur-sm z-30 lg:hidden"
-        (click)="sidebarOpen.set(false)"
-      ></div>
+    <div class="fixed inset-0 bg-neutral-900/50 backdrop-blur-sm z-30 lg:hidden" (click)="sidebarOpen.set(false)"></div>
     }
 
     <!-- Main Content -->
     <main class="flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300 min-h-screen">
-      
+
       <!-- Debug Info (remover después) -->
       <!-- <div class="bg-yellow-100 p-2 mb-2 text-xs">
         condoId: {{ condominiumId() }} | 
         condo: {{ currentCondominium()?.name || 'null' }} |
         breadcrumbs: {{ breadcrumbs().length }}
       </div> -->
-      
+
       <!-- Breadcrumbs -->
       <app-breadcrumbs [items]="breadcrumbs()" />
-      
+
       <!-- Header Section -->
       <div class="glass rounded-2xl p-6 shadow-lg mb-6 border border-white/20">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3">
-            <button 
-              (click)="goBackToCondominiums()"
+            <button (click)="goBackToCondominiums()"
               class="btn btn-ghost btn-sm rounded-lg text-neutral-600 hover:bg-neutral-100">
               <i class="ri-arrow-left-line text-base"></i>
             </button>
-            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+            <div
+              class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
               <i class="ri-building-line text-2xl text-primary"></i>
             </div>
             <div>
               <h1 class="text-2xl font-bold text-neutral-900">Edificios y Torres</h1>
               @if (currentCondominium()) {
-                <p class="text-sm text-neutral-600">{{ currentCondominium()?.name }}</p>
+              <p class="text-sm text-neutral-600">{{ currentCondominium()?.name }}</p>
               } @else if (condominiumId()) {
-                <p class="text-sm text-neutral-500 flex items-center gap-2">
-                  <span class="loading loading-spinner loading-xs"></span>
-                  Cargando condominio...
-                </p>
+              <p class="text-sm text-neutral-500 flex items-center gap-2">
+                <span class="loading loading-spinner loading-xs"></span>
+                Cargando condominio...
+              </p>
               }
             </div>
           </div>
-          
-          <button 
-            (click)="openCreateModal()" 
+
+          <button (click)="openCreateModal()"
             class="btn btn-primary rounded-2xl gap-2 shadow-lg hover:shadow-xl transition-all">
             <i class="ri-add-line text-base"></i>
             Nuevo Edificio
@@ -133,20 +121,13 @@
         <div class="flex flex-wrap gap-3">
           <!-- Search -->
           <div class="flex-1 min-w-[200px] relative">
-            <input
-              type="text"
-              placeholder="Buscar edificio..."
-              [value]="searchTerm()"
-              (input)="onSearchChange($event)"
-              class="input input-bordered w-full rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 placeholder:text-neutral-500 pl-10"
-            />
+            <input type="text" placeholder="Buscar edificio..." [value]="searchTerm()" (input)="onSearchChange($event)"
+              class="input input-bordered w-full rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 placeholder:text-neutral-500 pl-10" />
             <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg"></i>
           </div>
 
           <!-- Type Filter -->
-          <select
-            [value]="typeFilter()"
-            (change)="onTypeFilterChange($event)"
+          <select [value]="typeFilter()" (change)="onTypeFilterChange($event)"
             class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 min-w-[180px]">
             <option value="">Todos los tipos</option>
             <option [value]="BuildingType.TOWER">Torre</option>
@@ -156,9 +137,7 @@
           </select>
 
           <!-- Status Filter -->
-          <select
-            [value]="statusFilter()"
-            (change)="onStatusFilterChange($event)"
+          <select [value]="statusFilter()" (change)="onStatusFilterChange($event)"
             class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 min-w-[180px]">
             <option value="">Todos los estados</option>
             <option [value]="BuildingStatus.ACTIVE">Activo</option>
@@ -168,8 +147,7 @@
           </select>
 
           <!-- Clear Filters -->
-          <button
-            (click)="clearFilters()"
+          <button (click)="clearFilters()"
             class="btn btn-outline rounded-2xl border-neutral-300 text-neutral-700 hover:bg-neutral-100">
             <i class="ri-filter-off-line text-base"></i>
             Limpiar
@@ -179,171 +157,160 @@
 
       <!-- Message when no condominium selected -->
       @if (needsCondoSelection()) {
-        <div class="glass rounded-2xl shadow-lg p-12 border border-white/20 text-center">
-          <div class="flex flex-col items-center gap-4 max-w-md mx-auto">
-            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-warning/20 to-warning/10 flex items-center justify-center">
-              <i class="ri-building-2-line text-5xl text-warning"></i>
-            </div>
-            <div>
-              <h3 class="text-xl font-bold text-neutral-900 mb-2">Selecciona un Condominio</h3>
-              <p class="text-neutral-600 mb-4">
-                Para visualizar y gestionar edificios, por favor selecciona un condominio desde el selector en la barra superior.
-              </p>
-            </div>
-            <div class="flex items-center gap-2 text-sm text-neutral-500">
-              <i class="ri-information-line text-base"></i>
-              <span>Puedes seleccionar "Todos los Condominios" para ver una vista general</span>
-            </div>
+      <div class="glass rounded-2xl shadow-lg p-12 border border-white/20 text-center">
+        <div class="flex flex-col items-center gap-4 max-w-md mx-auto">
+          <div
+            class="w-20 h-20 rounded-full bg-gradient-to-br from-warning/20 to-warning/10 flex items-center justify-center">
+            <i class="ri-building-2-line text-5xl text-warning"></i>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-neutral-900 mb-2">Selecciona un Condominio</h3>
+            <p class="text-neutral-600 mb-4">
+              Para visualizar y gestionar edificios, por favor selecciona un condominio desde el selector en la barra
+              superior.
+            </p>
+          </div>
+          <div class="flex items-center gap-2 text-sm text-neutral-500">
+            <i class="ri-information-line text-base"></i>
+            <span>Puedes seleccionar "Todos los Condominios" para ver una vista general</span>
           </div>
         </div>
+      </div>
       } @else {
-        <!-- Buildings Table -->
-        <div class="glass rounded-2xl shadow-lg overflow-hidden border border-white/20">
-          <div class="overflow-x-auto">
-            <table class="table w-full">
-              <thead class="bg-white/50 backdrop-blur-sm">
-                <tr class="border-b border-neutral-200">
-                  <th class="text-neutral-900 font-semibold">Edificio</th>
-                  <th class="text-neutral-900 font-semibold">Tipo</th>
-                  <th class="text-neutral-900 font-semibold">Dirección Principal</th>
-                  <th class="text-neutral-900 font-semibold">Viviendas</th>
-                  <th class="text-neutral-900 font-semibold">Ocupación</th>
-                  <th class="text-neutral-900 font-semibold">Áreas Comunes</th>
-                  <th class="text-neutral-900 font-semibold">Estado</th>
-                  <th class="text-neutral-900 font-semibold">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                @if (loading()) {
-                  <tr>
-                    <td colspan="8" class="text-center py-12">
-                      <span class="loading loading-spinner loading-lg text-primary"></span>
-                      <p class="text-neutral-600 mt-2">Cargando edificios...</p>
-                    </td>
-                  </tr>
-                } @else if (error()) {
-                  <tr>
-                    <td colspan="8" class="text-center py-12">
-                      <div class="flex flex-col items-center gap-4">
-                        <i class="ri-error-warning-line text-5xl text-error"></i>
-                        <div class="max-w-md">
-                          <p class="text-neutral-900 font-semibold mb-2">Error al cargar edificios</p>
-                          <p class="text-neutral-600 text-sm">{{ error() }}</p>
-                          <button 
-                            (click)="loadBuildings()" 
-                            class="btn btn-primary btn-sm rounded-xl mt-4">
-                            <i class="ri-refresh-line text-base"></i>
-                            Reintentar
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                } @else if (filteredBuildings().length === 0) {
-                  <tr>
-                    <td colspan="8" class="text-center py-12">
-                      <i class="ri-building-line text-5xl text-neutral-300 mb-2"></i>
-                      <p class="text-neutral-600">No se encontraron edificios</p>
-                    </td>
-                  </tr>
-                } @else {
-                @for (building of filteredBuildings(); track building._id || building.id || $index) {
-                  <tr class="hover:bg-white/30 transition-colors border-b border-neutral-100 cursor-pointer"
-                      (click)="navigateToUnits(building)">
-                    <td>
-                      <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                          <i class="ri-building-line text-lg text-primary"></i>
-                        </div>
-                        <div>
-                          <p class="font-semibold text-neutral-900">{{ building.name }}</p>
-                          @if (building.num_floors) {
-                            <p class="text-xs text-neutral-600">{{ building.num_floors }} pisos</p>
-                          }
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span class="badge rounded-lg text-xs" [class]="getTypeBadgeClass(building.type)">
-                        {{ getTypeLabel(building.type) }}
-                      </span>
-                    </td>
-                    <td>
-                      <p class="text-sm text-neutral-800">{{ building.mainEntranceAddress }}</p>
-                    </td>
-                    <td>
-                      <div class="text-center">
-                        <p class="font-semibold text-neutral-900">{{ building.totalUnits }}</p>
-                        <p class="text-xs text-neutral-600">{{ building.occupiedUnits }} ocupadas</p>
-                      </div>
-                    </td>
-                    <td>
-                      <div class="flex items-center gap-2">
-                        <div class="radial-progress text-primary text-xs" 
-                             [style.--value]="building.occupancyRate || 0" 
-                             [style.--size]="'2.5rem'"
-                             [style.--thickness]="'3px'">
-                          {{ (building.occupancyRate || 0).toFixed(0) }}%
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      @if (building.hasCommonAreas) {
-                        <div class="flex items-center gap-1 text-success">
-                          <i class="ri-check-line text-base"></i>
-                          <span class="text-xs font-medium">Sí</span>
-                        </div>
-                        @if (building.commonAreaRentalRate) {
-                          <p class="text-xs text-neutral-600">{{ formatCurrency(building.commonAreaRentalRate) }}/evento</p>
-                        }
-                      } @else {
-                        <div class="flex items-center gap-1 text-neutral-400">
-                          <i class="ri-close-line text-base"></i>
-                          <span class="text-xs">No</span>
-                        </div>
+      <!-- Buildings Table -->
+      <div class="glass rounded-2xl shadow-lg overflow-hidden border border-white/20">
+        <div class="overflow-x-auto">
+          <table class="table w-full">
+            <thead class="bg-white/50 backdrop-blur-sm">
+              <tr class="border-b border-neutral-200">
+                <th class="text-neutral-900 font-semibold">Edificio</th>
+                <th class="text-neutral-900 font-semibold">Tipo</th>
+                <th class="text-neutral-900 font-semibold">Dirección Principal</th>
+                <th class="text-neutral-900 font-semibold">Viviendas</th>
+                <th class="text-neutral-900 font-semibold">Ocupación</th>
+                <th class="text-neutral-900 font-semibold">Áreas Comunes</th>
+                <th class="text-neutral-900 font-semibold">Estado</th>
+                <th class="text-neutral-900 font-semibold">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (loading()) {
+              <tr>
+                <td colspan="8" class="text-center py-12">
+                  <span class="loading loading-spinner loading-lg text-primary"></span>
+                  <p class="text-neutral-600 mt-2">Cargando edificios...</p>
+                </td>
+              </tr>
+              } @else if (error()) {
+              <tr>
+                <td colspan="8" class="text-center py-12">
+                  <div class="flex flex-col items-center gap-4">
+                    <i class="ri-error-warning-line text-5xl text-error"></i>
+                    <div class="max-w-md">
+                      <p class="text-neutral-900 font-semibold mb-2">Error al cargar edificios</p>
+                      <p class="text-neutral-600 text-sm">{{ error() }}</p>
+                      <button (click)="loadBuildings()" class="btn btn-primary btn-sm rounded-xl mt-4">
+                        <i class="ri-refresh-line text-base"></i>
+                        Reintentar
+                      </button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              } @else if (filteredBuildings().length === 0) {
+              <tr>
+                <td colspan="8" class="text-center py-12">
+                  <i class="ri-building-line text-5xl text-neutral-300 mb-2"></i>
+                  <p class="text-neutral-600">No se encontraron edificios</p>
+                </td>
+              </tr>
+              } @else {
+              @for (building of filteredBuildings(); track building._id || building.id || $index) {
+              <tr class="hover:bg-white/30 transition-colors border-b border-neutral-100 cursor-pointer"
+                (click)="navigateToUnits(building)">
+                <td>
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                      <i class="ri-building-line text-lg text-primary"></i>
+                    </div>
+                    <div>
+                      <p class="font-semibold text-neutral-900">{{ building.name }}</p>
+                      @if (building.num_floors) {
+                      <p class="text-xs text-neutral-600">{{ building.num_floors }} pisos</p>
                       }
-                    </td>
-                    <td>
-                      <span class="badge rounded-lg text-xs" [class]="getStatusBadgeClass(building.status)">
-                        {{ getStatusLabel(building.status) }}
-                      </span>
-                    </td>
-                    <td (click)="$event.stopPropagation()">
-                      <div class="flex gap-1">
-                        <button
-                          (click)="navigateToUnits(building)"
-                          class="btn btn-sm btn-ghost rounded-lg text-primary hover:bg-primary/10"
-                          title="Ver unidades">
-                          <i class="ri-home-4-line text-base"></i>
-                        </button>
-                        <button
-                          (click)="navigateToPaymentConfig(building)"
-                          class="btn btn-sm btn-ghost rounded-lg text-success hover:bg-success/10"
-                          title="Configurar pagos">
-                          <i class="ri-money-dollar-circle-line text-base"></i>
-                        </button>
-                        <button
-                          (click)="openViewModal(building)"
-                          class="btn btn-sm btn-ghost rounded-lg text-info hover:bg-info/10"
-                          title="Ver detalles">
-                          <i class="ri-eye-line text-base"></i>
-                        </button>
-                        <button
-                          (click)="openEditModal(building)"
-                          class="btn btn-sm btn-ghost rounded-lg text-warning hover:bg-warning/10"
-                          title="Editar">
-                          <i class="ri-edit-line text-base"></i>
-                        </button>
-                        <button
-                          (click)="openDeleteModal(building)"
-                          class="btn btn-sm btn-ghost rounded-lg text-error hover:bg-error/10"
-                          title="Eliminar">
-                          <i class="ri-delete-bin-line text-base"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                }
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge rounded-lg text-xs" [class]="getTypeBadgeClass(building.type)">
+                    {{ getTypeLabel(building.type) }}
+                  </span>
+                </td>
+                <td>
+                  <p class="text-sm text-neutral-800">{{ building.mainEntranceAddress }}</p>
+                </td>
+                <td>
+                  <div class="text-center">
+                    <p class="font-semibold text-neutral-900">{{ building.totalUnits }}</p>
+                    <p class="text-xs text-neutral-600">{{ building.occupiedUnits }} ocupadas</p>
+                  </div>
+                </td>
+                <td>
+                  <div class="flex items-center gap-2">
+                    <div class="radial-progress text-primary text-xs" [style.--value]="building.occupancyRate || 0"
+                      [style.--size]="'2.5rem'" [style.--thickness]="'3px'">
+                      {{ (building.occupancyRate || 0).toFixed(0) }}%
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  @if (building.hasCommonAreas) {
+                  <div class="flex items-center gap-1 text-success">
+                    <i class="ri-check-line text-base"></i>
+                    <span class="text-xs font-medium">Sí</span>
+                  </div>
+                  @if (building.commonAreaRentalRate) {
+                  <p class="text-xs text-neutral-600">{{ formatCurrency(building.commonAreaRentalRate) }}/evento</p>
+                  }
+                  } @else {
+                  <div class="flex items-center gap-1 text-neutral-400">
+                    <i class="ri-close-line text-base"></i>
+                    <span class="text-xs">No</span>
+                  </div>
+                  }
+                </td>
+                <td>
+                  <span class="badge rounded-lg text-xs" [class]="getStatusBadgeClass(building.status)">
+                    {{ getStatusLabel(building.status) }}
+                  </span>
+                </td>
+                <td (click)="$event.stopPropagation()">
+                  <div class="flex gap-1">
+                    <button (click)="navigateToUnits(building)"
+                      class="btn btn-sm btn-ghost rounded-lg text-primary hover:bg-primary/10" title="Ver unidades">
+                      <i class="ri-home-4-line text-base"></i>
+                    </button>
+                    <button (click)="navigateToPaymentConfig(building)"
+                      class="btn btn-sm btn-ghost rounded-lg text-success hover:bg-success/10" title="Configurar pagos">
+                      <i class="ri-money-dollar-circle-line text-base"></i>
+                    </button>
+                    <button (click)="openViewModal(building)"
+                      class="btn btn-sm btn-ghost rounded-lg text-info hover:bg-info/10" title="Ver detalles">
+                      <i class="ri-eye-line text-base"></i>
+                    </button>
+                    <button (click)="openEditModal(building)"
+                      class="btn btn-sm btn-ghost rounded-lg text-warning hover:bg-warning/10" title="Editar">
+                      <i class="ri-edit-line text-base"></i>
+                    </button>
+                    <button (click)="openDeleteModal(building)"
+                      class="btn btn-sm btn-ghost rounded-lg text-error hover:bg-error/10" title="Eliminar">
+                      <i class="ri-delete-bin-line text-base"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              }
               }
             </tbody>
           </table>
@@ -351,38 +318,31 @@
 
         <!-- Pagination -->
         @if (totalPages() > 1) {
-          <div class="flex justify-between items-center p-4 bg-white/50 border-t border-neutral-200">
-            <p class="text-sm text-neutral-600">
-              Mostrando {{ (currentPage() - 1) * pageSize() + 1 }} - 
-              {{ Math.min(currentPage() * pageSize(), totalItems()) }} de {{ totalItems() }} edificios
-            </p>
-            
-            <div class="flex gap-2">
-              <button
-                (click)="previousPage()"
-                [disabled]="currentPage() === 1"
-                class="btn btn-sm btn-outline rounded-lg border-neutral-300 text-neutral-700 disabled:opacity-50">
-                <i class="ri-arrow-left-s-line text-base"></i>
-              </button>
-              
-              @for (page of [].constructor(totalPages()); track $index) {
-                <button
-                  (click)="goToPage($index + 1)"
-                  [class.btn-primary]="currentPage() === $index + 1"
-                  [class.btn-outline]="currentPage() !== $index + 1"
-                  class="btn btn-sm rounded-lg">
-                  {{ $index + 1 }}
-                </button>
-              }
-              
-              <button
-                (click)="nextPage()"
-                [disabled]="currentPage() === totalPages()"
-                class="btn btn-sm btn-outline rounded-lg border-neutral-300 text-neutral-700 disabled:opacity-50">
-                <i class="ri-arrow-right-s-line text-base"></i>
-              </button>
-            </div>
+        <div class="flex justify-between items-center p-4 bg-white/50 border-t border-neutral-200">
+          <p class="text-sm text-neutral-600">
+            Mostrando {{ (currentPage() - 1) * pageSize() + 1 }} -
+            {{ Math.min(currentPage() * pageSize(), totalItems()) }} de {{ totalItems() }} edificios
+          </p>
+
+          <div class="flex gap-2">
+            <button (click)="previousPage()" [disabled]="currentPage() === 1"
+              class="btn btn-sm btn-outline rounded-lg border-neutral-300 text-neutral-700 disabled:opacity-50">
+              <i class="ri-arrow-left-s-line text-base"></i>
+            </button>
+
+            @for (page of [].constructor(totalPages()); track $index) {
+            <button (click)="goToPage($index + 1)" [class.btn-primary]="currentPage() === $index + 1"
+              [class.btn-outline]="currentPage() !== $index + 1" class="btn btn-sm rounded-lg">
+              {{ $index + 1 }}
+            </button>
+            }
+
+            <button (click)="nextPage()" [disabled]="currentPage() === totalPages()"
+              class="btn btn-sm btn-outline rounded-lg border-neutral-300 text-neutral-700 disabled:opacity-50">
+              <i class="ri-arrow-right-s-line text-base"></i>
+            </button>
           </div>
+        </div>
         }
       </div>
       }
@@ -391,484 +351,411 @@
 
   <!-- Create/Edit Modal -->
   @if (showModal()) {
-    <div class="modal modal-open">
-      <div class="modal-box max-w-4xl glass border border-white/20">
-        <h3 class="font-bold text-xl text-neutral-900 mb-4 flex items-center gap-2">
-          <i class="ri-building-line text-primary"></i>
-          @if (modalMode() === 'create') {
-            Crear Nuevo Edificio
-          } @else if (modalMode() === 'edit') {
-            Editar Edificio
-          } @else {
-            Detalles del Edificio
-          }
-        </h3>
-
-        @if (modalMode() === 'view' && selectedBuilding()) {
-          <!-- View Mode -->
-          <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-              <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Nombre</span></label>
-                <p class="text-neutral-900">{{ selectedBuilding()!.name }}</p>
-              </div>
-              <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Tipo</span></label>
-                <p class="text-neutral-900">{{ getTypeLabel(selectedBuilding()!.type) }}</p>
-              </div>
-            </div>
-
-            <div class="form-control">
-              <label class="label"><span class="label-text text-neutral-700 font-medium">Dirección Principal</span></label>
-              <p class="text-neutral-900">{{ selectedBuilding()!.mainEntranceAddress }}</p>
-            </div>
-
-            <div class="grid grid-cols-3 gap-4">
-              <div>
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Total Viviendas</span></label>
-                <p class="text-neutral-900">{{ selectedBuilding()!.totalUnits }}</p>
-              </div>
-              @if (selectedBuilding()!.num_floors) {
-                <div>
-                  <label class="label"><span class="label-text text-neutral-700 font-medium">Pisos</span></label>
-                  <p class="text-neutral-900">{{ selectedBuilding()!.num_floors }}</p>
-                </div>
-              }
-              <div>
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Año Construcción</span></label>
-                <p class="text-neutral-900">{{ selectedBuilding()!.yearBuilt || '-' }}</p>
-              </div>
-            </div>
-
-            <div class="divider text-neutral-600">Áreas Comunes</div>
-
-            <div class="form-control">
-              <label class="label"><span class="label-text text-neutral-700 font-medium">¿Tiene Áreas Comunes?</span></label>
-              <p class="text-neutral-900">{{ selectedBuilding()!.hasCommonAreas ? 'Sí' : 'No' }}</p>
-            </div>
-
-            @if (selectedBuilding()!.hasCommonAreas) {
-              <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Descripción</span></label>
-                <p class="text-neutral-900">{{ selectedBuilding()!.commonAreasDescription || '-' }}</p>
-              </div>
-              <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Tarifa de Renta</span></label>
-                <p class="text-neutral-900">{{ formatCurrency(selectedBuilding()!.commonAreaRentalRate || 0) }}</p>
-              </div>
-            }
-
-            @if (selectedBuilding()!.securityFeatures && selectedBuilding()!.securityFeatures!.length > 0) {
-              <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Seguridad</span></label>
-                <div class="flex flex-wrap gap-2">
-                  @for (feature of selectedBuilding()!.securityFeatures; track $index) {
-                    <span class="badge badge-outline badge-primary rounded-lg">{{ feature }}</span>
-                  }
-                </div>
-              </div>
-            }
-
-            @if (selectedBuilding()!.amenities && selectedBuilding()!.amenities!.length > 0) {
-              <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Amenidades</span></label>
-                <div class="flex flex-wrap gap-2">
-                  @for (amenity of selectedBuilding()!.amenities; track $index) {
-                    <span class="badge badge-outline badge-secondary rounded-lg">{{ amenity }}</span>
-                  }
-                </div>
-              </div>
-            }
-          </div>
+  <div class="modal modal-open">
+    <div class="modal-box max-w-4xl glass border border-white/20">
+      <h3 class="font-bold text-xl text-neutral-900 mb-4 flex items-center gap-2">
+        <i class="ri-building-line text-primary"></i>
+        @if (modalMode() === 'create') {
+        Crear Nuevo Edificio
+        } @else if (modalMode() === 'edit') {
+        Editar Edificio
         } @else {
-          <!-- Create/Edit Mode -->
-          <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-            <!-- Condominio Selection -->
-            <div class="form-control">
-              <label class="label"><span class="label-text text-neutral-700 font-medium">Condominio <span class="text-error">*</span></span></label>
-              <div class="flex gap-2">
-                <select
-                  [value]="building().condominiumId"
-                  (change)="updateFormField('condominiumId', $any($event.target).value)"
-                  class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 flex-1">
-                  <option value="">Seleccionar condominio...</option>
-                  @for (condo of availableCondominiums(); track condo._id || condo.id || $index) {
-                    <option [value]="condo._id || condo.id">{{ condo.name }}</option>
-                  }
-                </select>
-                <button
-                  type="button"
-                  (click)="openCondoModal()"
-                  class="btn btn-outline btn-primary rounded-2xl gap-2"
-                  title="Crear nuevo condominio">
-                  <i class="ri-add-line text-base"></i>
-                  Nuevo
-                </button>
-              </div>
-              @if (availableCondominiums().length === 0) {
-                <div class="alert alert-info rounded-2xl mt-2">
-                  <i class="ri-information-line text-base"></i>
-                  <span class="text-sm">No hay condominios disponibles. Crea uno nuevo para continuar.</span>
-                </div>
-              }
-            </div>
+        Detalles del Edificio
+        }
+      </h3>
 
-            <!-- Basic Info -->
-            <div class="grid grid-cols-2 gap-4">
-              <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Nombre <span class="text-error">*</span></span></label>
-                <input
-                  type="text"
-                  [value]="building().name"
-                  (input)="updateFormField('name', $any($event.target).value)"
-                  class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                  placeholder="Ej: Torre A, Privada Los Robles"
-                />
-              </div>
+      @if (modalMode() === 'view' && selectedBuilding()) {
+      <!-- View Mode -->
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text text-neutral-700 font-medium">Nombre</span></label>
+            <p class="text-neutral-900">{{ selectedBuilding()!.name }}</p>
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text text-neutral-700 font-medium">Tipo</span></label>
+            <p class="text-neutral-900">{{ getTypeLabel(selectedBuilding()!.type) }}</p>
+          </div>
+        </div>
 
-              <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Tipo <span class="text-error">*</span></span></label>
-                <select
-                  [value]="building().type"
-                  (change)="updateFormField('type', $any($event.target).value)"
-                  class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900">
-                  <option [value]="BuildingType.TOWER">Torre</option>
-                  <option [value]="BuildingType.BUILDING">Edificio</option>
-                  <option [value]="BuildingType.PRIVATE_RESIDENCE">Privada</option>
-                  <option [value]="BuildingType.CLUSTER">Conjunto</option>
-                </select>
-              </div>
-            </div>
+        <div class="form-control">
+          <label class="label"><span class="label-text text-neutral-700 font-medium">Dirección Principal</span></label>
+          <p class="text-neutral-900">{{ selectedBuilding()!.mainEntranceAddress }}</p>
+        </div>
 
-            <div class="form-control">
-              <label class="label"><span class="label-text text-neutral-700 font-medium">Dirección de Acceso Principal <span class="text-error">*</span></span></label>
-              <input
-                type="text"
-                [value]="building().mainEntranceAddress"
-                (input)="updateFormField('mainEntranceAddress', $any($event.target).value)"
-                class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                placeholder="Ej: Av. Principal #123, Col. Centro"
-              />
-            </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="label"><span class="label-text text-neutral-700 font-medium">Total Viviendas</span></label>
+            <p class="text-neutral-900">{{ selectedBuilding()!.totalUnits }}</p>
+          </div>
+          @if (selectedBuilding()!.num_floors) {
+          <div>
+            <label class="label"><span class="label-text text-neutral-700 font-medium">Pisos</span></label>
+            <p class="text-neutral-900">{{ selectedBuilding()!.num_floors }}</p>
+          </div>
+          }
+          <div>
+            <label class="label"><span class="label-text text-neutral-700 font-medium">Año Construcción</span></label>
+            <p class="text-neutral-900">{{ selectedBuilding()!.yearBuilt || '-' }}</p>
+          </div>
+        </div>
 
-            <div class="grid grid-cols-4 gap-4">
-              <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Viviendas <span class="text-error">*</span></span></label>
-                <input
-                  type="number"
-                  [value]="building().totalUnits"
-                  (input)="updateFormField('totalUnits', +$any($event.target).value)"
-                  class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                  min="1"
-                />
-              </div>
+        <div class="divider text-neutral-600">Áreas Comunes</div>
 
-              <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Pisos</span></label>
-                <input
-                  type="number"
-                  [value]="building().num_floors"
-                  (input)="updateFormField('num_floors', +$any($event.target).value)"
-                  class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                  min="1"
-                />
-              </div>
+        <div class="form-control">
+          <label class="label"><span class="label-text text-neutral-700 font-medium">¿Tiene Áreas
+              Comunes?</span></label>
+          <p class="text-neutral-900">{{ selectedBuilding()!.hasCommonAreas ? 'Sí' : 'No' }}</p>
+        </div>
 
-              <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Año</span></label>
-                <input
-                  type="number"
-                  [value]="building().yearBuilt"
-                  (input)="updateFormField('yearBuilt', +$any($event.target).value)"
-                  class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                  min="1900"
-                  max="2100"
-                />
-              </div>
+        @if (selectedBuilding()!.hasCommonAreas) {
+        <div class="form-control">
+          <label class="label"><span class="label-text text-neutral-700 font-medium">Descripción</span></label>
+          <p class="text-neutral-900">{{ selectedBuilding()!.commonAreasDescription || '-' }}</p>
+        </div>
+        <div class="form-control">
+          <label class="label"><span class="label-text text-neutral-700 font-medium">Tarifa de Renta</span></label>
+          <p class="text-neutral-900">{{ formatCurrency(selectedBuilding()!.commonAreaRentalRate || 0) }}</p>
+        </div>
+        }
 
-              <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Estado</span></label>
-                <select
-                  [value]="building().status"
-                  (change)="updateFormField('status', $any($event.target).value)"
-                  class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900">
-                  <option [value]="BuildingStatus.ACTIVE">Activo</option>
-                  <option [value]="BuildingStatus.UNDER_CONSTRUCTION">En Construcción</option>
-                  <option [value]="BuildingStatus.UNDER_MAINTENANCE">En Mantenimiento</option>
-                  <option [value]="BuildingStatus.INACTIVE">Inactivo</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="divider text-neutral-600">Áreas Comunes</div>
-
-            <div class="form-control">
-              <label class="label cursor-pointer justify-start gap-3">
-                <input
-                  type="checkbox"
-                  [checked]="building().hasCommonAreas"
-                  (change)="updateFormField('hasCommonAreas', $any($event.target).checked)"
-                  class="checkbox checkbox-primary"
-                />
-                <span class="label-text text-neutral-700 font-medium">¿Tiene áreas comunes para rentar?</span>
-              </label>
-            </div>
-
-            @if (building().hasCommonAreas) {
-              <div class="grid grid-cols-2 gap-4">
-                <div class="form-control col-span-2">
-                  <label class="label"><span class="label-text text-neutral-700 font-medium">Descripción de Áreas Comunes</span></label>
-                  <textarea
-                    [value]="building().commonAreasDescription"
-                    (input)="updateFormField('commonAreasDescription', $any($event.target).value)"
-                    class="textarea textarea-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                    rows="2"
-                    placeholder="Ej: Salón de eventos, gimnasio, alberca">
-                  </textarea>
-                </div>
-
-                <div class="form-control">
-                  <label class="label"><span class="label-text text-neutral-700 font-medium">Tarifa de Renta</span></label>
-                  <input
-                    type="number"
-                    [value]="building().commonAreaRentalRate"
-                    (input)="updateFormField('commonAreaRentalRate', +$any($event.target).value)"
-                    class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                    placeholder="Precio por evento"
-                    min="0"
-                  />
-                </div>
-              </div>
+        @if (selectedBuilding()!.securityFeatures && selectedBuilding()!.securityFeatures!.length > 0) {
+        <div class="form-control">
+          <label class="label"><span class="label-text text-neutral-700 font-medium">Seguridad</span></label>
+          <div class="flex flex-wrap gap-2">
+            @for (feature of selectedBuilding()!.securityFeatures; track $index) {
+            <span class="badge badge-outline badge-primary rounded-lg">{{ feature }}</span>
             }
-
-            <div class="divider text-neutral-600">Información Adicional</div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Estacionamientos</span></label>
-                <input
-                  type="number"
-                  [value]="building().parkingSpots"
-                  (input)="updateFormField('parkingSpots', +$any($event.target).value)"
-                  class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                  min="0"
-                />
-              </div>
-
-              <div class="form-control">
-                <label class="label"><span class="label-text text-neutral-700 font-medium">Elevadores</span></label>
-                <input
-                  type="number"
-                  [value]="building().elevators"
-                  (input)="updateFormField('elevators', +$any($event.target).value)"
-                  class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                  min="0"
-                />
-              </div>
-            </div>
-
-            <!-- Security Features -->
-            <div class="form-control">
-              <label class="label"><span class="label-text text-neutral-700 font-medium">Características de Seguridad</span></label>
-              <div class="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  [value]="newSecurityFeature()"
-                  (input)="newSecurityFeature.set($any($event.target).value)"
-                  (keydown.enter)="addSecurityFeature(); $event.preventDefault()"
-                  class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 flex-1"
-                  placeholder="Ej: Cámaras 24/7, Acceso controlado"
-                />
-                <button
-                  type="button"
-                  (click)="addSecurityFeature()"
-                  class="btn btn-primary rounded-2xl">
-                  <i class="ri-add-line text-base"></i>
-                </button>
-              </div>
-              <div class="flex flex-wrap gap-2">
-                @for (feature of building().securityFeatures; track $index) {
-                  <div class="badge badge-lg badge-primary gap-2 rounded-lg">
-                    {{ feature }}
-                    <button
-                      type="button"
-                      (click)="removeSecurityFeature($index)"
-                      class="btn btn-xs btn-ghost btn-circle">
-                      <i class="ri-close-line text-sm"></i>
-                    </button>
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- Amenities -->
-            <div class="form-control">
-              <label class="label"><span class="label-text text-neutral-700 font-medium">Amenidades</span></label>
-              <div class="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  [value]="newAmenity()"
-                  (input)="newAmenity.set($any($event.target).value)"
-                  (keydown.enter)="addAmenity(); $event.preventDefault()"
-                  class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 flex-1"
-                  placeholder="Ej: Gimnasio, Alberca, Jardín"
-                />
-                <button
-                  type="button"
-                  (click)="addAmenity()"
-                  class="btn btn-secondary rounded-2xl">
-                  <i class="ri-add-line text-base"></i>
-                </button>
-              </div>
-              <div class="flex flex-wrap gap-2">
-                @for (amenity of building().amenities; track $index) {
-                  <div class="badge badge-lg badge-secondary gap-2 rounded-lg">
-                    {{ amenity }}
-                    <button
-                      type="button"
-                      (click)="removeAmenity($index)"
-                      class="btn btn-xs btn-ghost btn-circle">
-                      <i class="ri-close-line text-sm"></i>
-                    </button>
-                  </div>
-                }
-              </div>
-            </div>
-
-            <div class="form-control">
-              <label class="label"><span class="label-text text-neutral-700 font-medium">Descripción General</span></label>
-              <textarea
-                [value]="building().description"
-                (input)="updateFormField('description', $any($event.target).value)"
-                class="textarea textarea-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
-                rows="3"
-                placeholder="Descripción adicional del edificio">
-              </textarea>
-            </div>
           </div>
+        </div>
         }
 
-        @if (error()) {
-          <div class="alert alert-error rounded-2xl mt-4">
-            <i class="ri-error-warning-line text-base"></i>
-            <span>{{ error() }}</span>
+        @if (selectedBuilding()!.amenities && selectedBuilding()!.amenities!.length > 0) {
+        <div class="form-control">
+          <label class="label"><span class="label-text text-neutral-700 font-medium">Amenidades</span></label>
+          <div class="flex flex-wrap gap-2">
+            @for (amenity of selectedBuilding()!.amenities; track $index) {
+            <span class="badge badge-outline badge-secondary rounded-lg">{{ amenity }}</span>
+            }
           </div>
+        </div>
         }
-
-        <div class="modal-action">
-          <button
-            (click)="closeModal()"
-            class="btn btn-outline rounded-2xl border-neutral-300 text-neutral-700">
-            {{ modalMode() === 'view' ? 'Cerrar' : 'Cancelar' }}
-          </button>
-          @if (modalMode() !== 'view') {
-            <button
-              (click)="saveBuilding()"
-              [disabled]="loading()"
-              class="btn btn-primary rounded-2xl">
-              @if (loading()) {
-                <span class="loading loading-spinner"></span>
+      </div>
+      } @else {
+      <!-- Create/Edit Mode -->
+      <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+        <!-- Condominio Selection -->
+        <div class="form-control">
+          <label class="label"><span class="label-text text-neutral-700 font-medium">Condominio <span
+                class="text-error">*</span></span></label>
+          <div class="flex gap-2">
+            <select [value]="building().condominiumId"
+              (change)="updateFormField('condominiumId', $any($event.target).value)"
+              class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 flex-1">
+              <option value="">Seleccionar condominio...</option>
+              @for (condo of availableCondominiums(); track condo._id || condo.id || $index) {
+              <option [value]="condo._id || condo.id">{{ condo.name }}</option>
               }
-              {{ modalMode() === 'create' ? 'Crear Edificio' : 'Guardar Cambios' }}
+            </select>
+            <button type="button" (click)="openCondoModal()" class="btn btn-outline btn-primary rounded-2xl gap-2"
+              title="Crear nuevo condominio">
+              <i class="ri-add-line text-base"></i>
+              Nuevo
             </button>
+          </div>
+          @if (availableCondominiums().length === 0) {
+          <div class="alert alert-info rounded-2xl mt-2">
+            <i class="ri-information-line text-base"></i>
+            <span class="text-sm">No hay condominios disponibles. Crea uno nuevo para continuar.</span>
+          </div>
           }
         </div>
+
+        <!-- Basic Info -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text text-neutral-700 font-medium">Nombre <span
+                  class="text-error">*</span></span></label>
+            <input type="text" [value]="building().name" (input)="updateFormField('name', $any($event.target).value)"
+              class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
+              placeholder="Ej: Torre A, Privada Los Robles" />
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text text-neutral-700 font-medium">Tipo <span
+                  class="text-error">*</span></span></label>
+            <select [value]="building().type" (change)="updateFormField('type', $any($event.target).value)"
+              class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900">
+              <option [value]="BuildingType.TOWER">Torre</option>
+              <option [value]="BuildingType.BUILDING">Edificio</option>
+              <option [value]="BuildingType.PRIVATE_RESIDENCE">Privada</option>
+              <option [value]="BuildingType.CLUSTER">Conjunto</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-control">
+          <label class="label"><span class="label-text text-neutral-700 font-medium">Dirección de Acceso Principal <span
+                class="text-error">*</span></span></label>
+          <input type="text" [value]="building().mainEntranceAddress"
+            (input)="updateFormField('mainEntranceAddress', $any($event.target).value)"
+            class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
+            placeholder="Ej: Av. Principal #123, Col. Centro" />
+        </div>
+
+        <div class="grid grid-cols-4 gap-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text text-neutral-700 font-medium">Viviendas <span
+                  class="text-error">*</span></span></label>
+            <input type="number" [value]="building().totalUnits"
+              (input)="updateFormField('totalUnits', +$any($event.target).value)"
+              class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900" min="1" />
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text text-neutral-700 font-medium">Pisos</span></label>
+            <input type="number" [value]="building().num_floors"
+              (input)="updateFormField('num_floors', +$any($event.target).value)"
+              class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900" min="1" />
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text text-neutral-700 font-medium">Año</span></label>
+            <input type="number" [value]="building().yearBuilt"
+              (input)="updateFormField('yearBuilt', +$any($event.target).value)"
+              class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900" min="1900"
+              max="2100" />
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text text-neutral-700 font-medium">Estado</span></label>
+            <select [value]="building().status" (change)="updateFormField('status', $any($event.target).value)"
+              class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900">
+              <option [value]="BuildingStatus.ACTIVE">Activo</option>
+              <option [value]="BuildingStatus.UNDER_CONSTRUCTION">En Construcción</option>
+              <option [value]="BuildingStatus.UNDER_MAINTENANCE">En Mantenimiento</option>
+              <option [value]="BuildingStatus.INACTIVE">Inactivo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="divider text-neutral-600">Áreas Comunes</div>
+
+        <div class="form-control">
+          <label class="label cursor-pointer justify-start gap-3">
+            <input type="checkbox" [checked]="building().hasCommonAreas"
+              (change)="updateFormField('hasCommonAreas', $any($event.target).checked)"
+              class="checkbox checkbox-primary" />
+            <span class="label-text text-neutral-700 font-medium">¿Tiene áreas comunes para rentar?</span>
+          </label>
+        </div>
+
+        @if (building().hasCommonAreas) {
+        <div class="grid grid-cols-2 gap-4">
+          <div class="form-control col-span-2">
+            <label class="label"><span class="label-text text-neutral-700 font-medium">Descripción de Áreas
+                Comunes</span></label>
+            <textarea [value]="building().commonAreasDescription"
+              (input)="updateFormField('commonAreasDescription', $any($event.target).value)"
+              class="textarea textarea-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900" rows="2"
+              placeholder="Ej: Salón de eventos, gimnasio, alberca">
+                  </textarea>
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text text-neutral-700 font-medium">Tarifa de Renta</span></label>
+            <input type="number" [value]="building().commonAreaRentalRate"
+              (input)="updateFormField('commonAreaRentalRate', +$any($event.target).value)"
+              class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900"
+              placeholder="Precio por evento" min="0" />
+          </div>
+        </div>
+        }
+
+        <div class="divider text-neutral-600">Información Adicional</div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text text-neutral-700 font-medium">Estacionamientos</span></label>
+            <input type="number" [value]="building().parkingSpots"
+              (input)="updateFormField('parkingSpots', +$any($event.target).value)"
+              class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900" min="0" />
+          </div>
+
+          <div class="form-control">
+            <label class="label"><span class="label-text text-neutral-700 font-medium">Elevadores</span></label>
+            <input type="number" [value]="building().elevators"
+              (input)="updateFormField('elevators', +$any($event.target).value)"
+              class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900" min="0" />
+          </div>
+        </div>
+
+        <!-- Security Features -->
+        <div class="form-control">
+          <label class="label"><span class="label-text text-neutral-700 font-medium">Características de
+              Seguridad</span></label>
+          <div class="flex gap-2 mb-2">
+            <input type="text" [value]="newSecurityFeature()"
+              (input)="newSecurityFeature.set($any($event.target).value)"
+              (keydown.enter)="addSecurityFeature(); $event.preventDefault()"
+              class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 flex-1"
+              placeholder="Ej: Cámaras 24/7, Acceso controlado" />
+            <button type="button" (click)="addSecurityFeature()" class="btn btn-primary rounded-2xl">
+              <i class="ri-add-line text-base"></i>
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            @for (feature of building().securityFeatures; track $index) {
+            <div class="badge badge-lg badge-primary gap-2 rounded-lg">
+              {{ feature }}
+              <button type="button" (click)="removeSecurityFeature($index)" class="btn btn-xs btn-ghost btn-circle">
+                <i class="ri-close-line text-sm"></i>
+              </button>
+            </div>
+            }
+          </div>
+        </div>
+
+        <!-- Amenities -->
+        <div class="form-control">
+          <label class="label"><span class="label-text text-neutral-700 font-medium">Amenidades</span></label>
+          <div class="flex gap-2 mb-2">
+            <input type="text" [value]="newAmenity()" (input)="newAmenity.set($any($event.target).value)"
+              (keydown.enter)="addAmenity(); $event.preventDefault()"
+              class="input input-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 flex-1"
+              placeholder="Ej: Gimnasio, Alberca, Jardín" />
+            <button type="button" (click)="addAmenity()" class="btn btn-secondary rounded-2xl">
+              <i class="ri-add-line text-base"></i>
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            @for (amenity of building().amenities; track $index) {
+            <div class="badge badge-lg badge-secondary gap-2 rounded-lg">
+              {{ amenity }}
+              <button type="button" (click)="removeAmenity($index)" class="btn btn-xs btn-ghost btn-circle">
+                <i class="ri-close-line text-sm"></i>
+              </button>
+            </div>
+            }
+          </div>
+        </div>
+
+        <div class="form-control">
+          <label class="label"><span class="label-text text-neutral-700 font-medium">Descripción General</span></label>
+          <textarea [value]="building().description" (input)="updateFormField('description', $any($event.target).value)"
+            class="textarea textarea-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900" rows="3"
+            placeholder="Descripción adicional del edificio">
+              </textarea>
+        </div>
+      </div>
+      }
+
+      @if (error()) {
+      <div class="alert alert-error rounded-2xl mt-4">
+        <i class="ri-error-warning-line text-base"></i>
+        <span>{{ error() }}</span>
+      </div>
+      }
+
+      <div class="modal-action">
+        <button (click)="closeModal()" class="btn btn-outline rounded-2xl border-neutral-300 text-neutral-700">
+          {{ modalMode() === 'view' ? 'Cerrar' : 'Cancelar' }}
+        </button>
+        @if (modalMode() !== 'view') {
+        <button (click)="saveBuilding()" [disabled]="loading()" class="btn btn-primary rounded-2xl">
+          @if (loading()) {
+          <span class="loading loading-spinner"></span>
+          }
+          {{ modalMode() === 'create' ? 'Crear Edificio' : 'Guardar Cambios' }}
+        </button>
+        }
       </div>
     </div>
+  </div>
   }
 
   <!-- Delete Confirmation Modal -->
   @if (showDeleteModal()) {
-    <div class="modal modal-open">
-      <div class="modal-box glass border border-white/20">
-        <h3 class="font-bold text-lg text-neutral-900 mb-4 flex items-center gap-2">
-          <i class="ri-delete-bin-line text-error"></i>
-          Confirmar Eliminación
-        </h3>
-        
-        <p class="text-neutral-700 mb-4">
-          ¿Está seguro de que desea eliminar el edificio 
-          <strong class="text-neutral-900">{{ buildingToDelete()?.name }}</strong>?
-        </p>
-        
-        <div class="alert alert-warning rounded-2xl">
-          <i class="ri-alert-line text-base"></i>
-          <span class="text-sm">Esta acción no se puede deshacer.</span>
-        </div>
+  <div class="modal modal-open">
+    <div class="modal-box glass border border-white/20">
+      <h3 class="font-bold text-lg text-neutral-900 mb-4 flex items-center gap-2">
+        <i class="ri-delete-bin-line text-error"></i>
+        Confirmar Eliminación
+      </h3>
 
-        <div class="modal-action">
-          <button
-            (click)="closeDeleteModal()"
-            [disabled]="isDeleting()"
-            class="btn btn-outline rounded-2xl border-neutral-300 text-neutral-700">
-            Cancelar
-          </button>
-          <button
-            (click)="confirmDelete()"
-            [disabled]="isDeleting()"
-            class="btn btn-error rounded-2xl">
-            @if (isDeleting()) {
-              <span class="loading loading-spinner"></span>
-            }
-            Eliminar
-          </button>
-        </div>
+      <p class="text-neutral-700 mb-4">
+        ¿Está seguro de que desea eliminar el edificio
+        <strong class="text-neutral-900">{{ buildingToDelete()?.name }}</strong>?
+      </p>
+
+      <div class="alert alert-warning rounded-2xl">
+        <i class="ri-alert-line text-base"></i>
+        <span class="text-sm">Esta acción no se puede deshacer.</span>
+      </div>
+
+      <div class="modal-action">
+        <button (click)="closeDeleteModal()" [disabled]="isDeleting()"
+          class="btn btn-outline rounded-2xl border-neutral-300 text-neutral-700">
+          Cancelar
+        </button>
+        <button (click)="confirmDelete()" [disabled]="isDeleting()" class="btn btn-error rounded-2xl">
+          @if (isDeleting()) {
+          <span class="loading loading-spinner"></span>
+          }
+          Eliminar
+        </button>
       </div>
     </div>
+  </div>
   }
 
   <!-- Create Condominium Modal - Simplified Version -->
   @if (showCondoModal()) {
-    <div class="modal modal-open">
-      <div class="modal-box glass border border-white/20">
-        <h3 class="font-bold text-lg text-neutral-900 mb-4 flex items-center gap-2">
-          <i class="ri-community-line text-primary"></i>
+  <div class="modal modal-open">
+    <div class="modal-box glass border border-white/20">
+      <h3 class="font-bold text-lg text-neutral-900 mb-4 flex items-center gap-2">
+        <i class="ri-community-line text-primary"></i>
+        Ir a Condominios
+      </h3>
+
+      <div class="text-center py-6">
+        <div
+          class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mb-4">
+          <i class="ri-community-line text-4xl text-primary"></i>
+        </div>
+        <p class="text-neutral-900 mb-4">
+          Para crear un nuevo condominio, por favor diríjase a la sección de Condominios donde podrá gestionar toda la
+          información detallada.
+        </p>
+      </div>
+
+      <div class="modal-action">
+        <button (click)="closeCondoModal()" class="btn btn-outline rounded-2xl border-neutral-300 text-neutral-700">
+          Cancelar
+        </button>
+        <button routerLink="/condominios" (click)="closeCondoModal()" class="btn btn-primary rounded-2xl">
+          <i class="ri-arrow-right-line text-base"></i>
           Ir a Condominios
-        </h3>
-
-        <div class="text-center py-6">
-          <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mb-4">
-            <i class="ri-community-line text-4xl text-primary"></i>
-          </div>
-          <p class="text-neutral-900 mb-4">
-            Para crear un nuevo condominio, por favor diríjase a la sección de Condominios donde podrá gestionar toda la información detallada.
-          </p>
-        </div>
-
-        <div class="modal-action">
-          <button
-            (click)="closeCondoModal()"
-            class="btn btn-outline rounded-2xl border-neutral-300 text-neutral-700">
-            Cancelar
-          </button>
-          <button
-            routerLink="/condominios"
-            (click)="closeCondoModal()"
-            class="btn btn-primary rounded-2xl">
-            <i class="ri-arrow-right-line text-base"></i>
-            Ir a Condominios
-          </button>
-        </div>
+        </button>
       </div>
     </div>
+  </div>
   }
 
   <!-- Toast Notification -->
   @if (showToast()) {
-    <div class="toast toast-top toast-end z-50">
-      <div class="alert rounded-2xl shadow-lg border"
-           [class.alert-success]="toastType() === 'success'"
-           [class.alert-error]="toastType() === 'error'"
-           [class.alert-info]="toastType() === 'info'">
-        @if (toastType() === 'success') {
-          <i class="ri-checkbox-circle-line text-lg"></i>
-        } @else if (toastType() === 'error') {
-          <i class="ri-error-warning-line text-lg"></i>
-        } @else {
-          <i class="ri-information-line text-lg"></i>
-        }
-        <span>{{ toastMessage() }}</span>
-      </div>
+  <div class="toast toast-top toast-end z-50">
+    <div class="alert rounded-2xl shadow-lg border" [class.alert-success]="toastType() === 'success'"
+      [class.alert-error]="toastType() === 'error'" [class.alert-info]="toastType() === 'info'">
+      @if (toastType() === 'success') {
+      <i class="ri-checkbox-circle-line text-lg"></i>
+      } @else if (toastType() === 'error') {
+      <i class="ri-error-warning-line text-lg"></i>
+      } @else {
+      <i class="ri-information-line text-lg"></i>
+      }
+      <span>{{ toastMessage() }}</span>
     </div>
+  </div>
   }
 </div>

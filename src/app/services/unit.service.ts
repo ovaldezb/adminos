@@ -1,15 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, delay, catchError, map } from 'rxjs';
-import { 
-  Unit, 
-  UnitDetails, 
+import {
+  Unit,
+  UnitDetails,
   UnitStatus,
   UnitOccupancyStatus,
-  PropertyType, 
-  CreateUnitDto, 
-  UpdateUnitDto, 
-  UnitStatistics 
+  PropertyType,
+  CreateUnitDto,
+  UpdateUnitDto,
+  UnitStatistics
 } from '../models/unit.model';
 import { ApiResponse, PaginatedResponse, PaginationParams } from '../models/api.model';
 import { environment } from '../../environments/environment';
@@ -29,7 +29,7 @@ export class UnitService {
     let params = new HttpParams()
       .set('buildingId', buildingId)
       .set('unitNumber', unitNumber);
-    
+
     if (excludeId) {
       params = params.set('excludeId', excludeId);
     }
@@ -85,11 +85,11 @@ export class UnitService {
 
     // Corregir la URL según las lambdas: GET /unit/{buildingId} para obtener unidades por edificio
     const url = params?.buildingId ? `${this.apiUrl}/${params.buildingId}` : this.apiUrl;
-    
+
     return this.http.get<ApiResponse<BackendUnitsResponse>>(url, { params: httpParams }).pipe(
       map((response) => {
         console.log('[UnitService] Raw backend response:', response);
-        
+
         if (!response.success || !response.data) {
           return {
             success: false,
@@ -178,7 +178,7 @@ export class UnitService {
       'for_sale': UnitStatus.FOR_SALE,
       'for_rent': UnitStatus.FOR_RENT,
     };
-    
+
     return statusMap[backendStatus] || UnitStatus.VACANT;
   }
 
@@ -200,7 +200,7 @@ export class UnitService {
       'loft': PropertyType.LOFT,
       'townhouse': PropertyType.TOWNHOUSE,
     };
-    
+
     return typeMap[backendPropertyType] || PropertyType.APARTMENT;
   }
 
@@ -234,7 +234,7 @@ export class UnitService {
     console.log('[UnitService] createUnit - apiUrl property:', this.apiUrl);
     console.log('[UnitService] createUnit - environment.apiUrl:', environment.apiUrl);
     console.log('[UnitService] createUnit - Full URL will be:', this.apiUrl);
-    
+
     // Map frontend field names to backend field names
     const backendData = {
       ...unitData,
@@ -245,16 +245,16 @@ export class UnitService {
       // Map propertyType to backend format (uppercase)
       propertyType: this.mapFrontendPropertyTypeToBackend(unitData.propertyType)
     };
-    
+
     // Remove frontend field names
     delete (backendData as any).parkingSpaces;
     delete (backendData as any).storageSpaces;
-    
+
     console.log('[UnitService] createUnit - Mapped data for backend:', backendData);
     console.log('[UnitService] createUnit - Backend residents:', backendData.residents);
     console.log('[UnitService] createUnit - About to POST to:', this.apiUrl);
     console.log('=== END DEBUG ===');
-    
+
     return this.http.post<ApiResponse<Unit>>(this.apiUrl, backendData).pipe(
       map((response) => {
         console.log('[UnitService] createUnit - Response:', response);
@@ -294,7 +294,7 @@ export class UnitService {
     console.log('[UnitService] updateUnit - apiUrl property:', this.apiUrl);
     console.log('[UnitService] updateUnit - environment.apiUrl:', environment.apiUrl);
     console.log('[UnitService] updateUnit - Full URL will be:', `${this.apiUrl}/${id}`);
-    
+
     // Map frontend field names to backend field names
     const backendData = {
       ...updates,
@@ -305,20 +305,25 @@ export class UnitService {
       status: updates.status ? this.mapFrontendStatusToBackend(updates.status) : 'VACANT',
       // Map propertyType to backend format (uppercase)
       propertyType: updates.propertyType ? this.mapFrontendPropertyTypeToBackend(updates.propertyType) : 'APARTMENT',
-      // Convertir residentes a IDs si es necesario o mantenerlos como objetos
-      residentsId: updates.residents ? updates.residents.map(r => r.id).filter(id => id) : []
+      // Usar residentsId si se proporciona, de lo contrario mapear desde objects residents
+      residentsId: updates.residentsId || (updates.residents ? updates.residents.map(r => r.id).filter(id => id) : undefined)
     };
-    
+
+    // Si residentsId sigue siendo undefined, no lo incluimos en el update (para no sobreescribir con valores vacíos si no se envió nada)
+    if (backendData.residentsId === undefined) {
+      delete (backendData as any).residentsId;
+    }
+
     // Remove frontend field names
     delete (backendData as any).parkingSpaces;
     delete (backendData as any).storageSpaces;
     delete (backendData as any).residents; // Usar residentsId en su lugar
-    
+
     console.log('[UnitService] updateUnit - Mapped data for backend:', backendData);
     console.log('[UnitService] updateUnit - Backend residentsId:', backendData.residentsId);
     console.log('[UnitService] updateUnit - About to PUT to:', `${this.apiUrl}/${id}`);
     console.log('=== END DEBUG ===');
-    
+
     return this.http.put<ApiResponse<UnitDetails>>(`${this.apiUrl}/${id}`, backendData).pipe(
       map((response) => {
         console.log('[UnitService] updateUnit - Response:', response);
@@ -353,7 +358,7 @@ export class UnitService {
       [UnitStatus.FOR_SALE]: 'ACTIVE',
       [UnitStatus.FOR_RENT]: 'ACTIVE',
     };
-    
+
     return statusMap[frontendStatus] || 'VACANT';
   }
 
@@ -366,10 +371,10 @@ export class UnitService {
       [PropertyType.PENTHOUSE]: 'PENTHOUSE',
       [PropertyType.DUPLEX]: 'DUPLEX',
       [PropertyType.STUDIO]: 'STUDIO',
-      [PropertyType.LOFT]: 'STUDIO', // Backend no tiene LOFT, usar STUDIO
-      [PropertyType.TOWNHOUSE]: 'HOUSE',
+      [PropertyType.LOFT]: 'LOFT',
+      [PropertyType.TOWNHOUSE]: 'TOWNHOUSE',
     };
-    
+
     return typeMap[frontendPropertyType] || 'APARTMENT';
   }
 

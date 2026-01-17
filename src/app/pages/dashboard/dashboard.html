@@ -122,7 +122,7 @@
 
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          @for (stat of stats(); track stat.label) {
+          @for (stat of stats(); track stat.icon) {
             <div [class]="'glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 ' + (isAnimating() ? 'stat-card-update' : '')">
               <div class="flex items-start justify-between mb-4">
                 <div [class]="'w-14 h-14 rounded-2xl bg-gradient-to-br ' + stat.bgColor + ' flex items-center justify-center'">
@@ -156,7 +156,7 @@
             </div>
             
             <div [class]="'space-y-3 ' + (isAnimating() ? 'content-transition' : '')">
-              @for (activity of recentActivity(); track activity.title) {
+              @for (activity of recentActivity(); track $index) {
                 <div class="flex items-start gap-4 p-4 rounded-xl hover:bg-white/50 transition-all">
                   <div [class]="'w-12 h-12 rounded-xl flex items-center justify-center text-white flex-shrink-0 ' + activity.color">
                     <i [class]="activity.icon + ' text-base'"></i>
