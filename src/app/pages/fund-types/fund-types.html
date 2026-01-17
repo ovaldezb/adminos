@@ -1,0 +1,583 @@
+<div class="min-h-screen bg-gradient-to-br from-neutral-50 via-sky-50 to-violet-50">
+  <!-- Navbar -->
+  <app-navbar
+    (toggleSidebar)="toggleSidebar()"
+  />
+
+  <div class="flex relative">
+    <!-- Sidebar -->
+    <div 
+      class="fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto"
+      [class.-translate-x-full]="!sidebarOpen()"
+      [class.translate-x-0]="sidebarOpen()"
+    >
+      <app-side-menu
+        [isOpen]="sidebarOpen()"
+        [selectedCondo]="selectedCondo()"
+        (close)="sidebarOpen.set(false)"
+      />
+    </div>
+
+    <!-- Overlay para móvil -->
+    @if (sidebarOpen()) {
+      <div 
+        class="fixed inset-0 bg-neutral-900/50 backdrop-blur-sm z-30 lg:hidden"
+        (click)="sidebarOpen.set(false)"
+      ></div>
+    }
+
+    <!-- Main Content -->
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300 min-h-screen">
+      
+      <!-- Breadcrumbs -->
+      <app-breadcrumbs [items]="breadcrumbs()" />
+      
+      <!-- Header Section -->
+      <div class="glass rounded-2xl p-6 shadow-lg mb-6 border border-white/20">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+              <i class="ri-money-dollar-circle-line text-2xl text-primary"></i>
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold text-neutral-900">Tipos de Fondos</h1>
+              <p class="text-sm text-neutral-600">Configuración de categorías de pagos y cuotas</p>
+            </div>
+          </div>
+          
+          <button 
+            (click)="openCreateModal()" 
+            class="btn btn-primary rounded-2xl gap-2 shadow-lg hover:shadow-xl transition-all">
+            <i class="ri-add-line text-base"></i>
+            Nuevo Tipo de Fondo
+          </button>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <!-- Total Fund Types -->
+          <div class="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-neutral-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs text-neutral-600 mb-1">Total Tipos</p>
+                <p class="text-2xl font-bold text-neutral-900">{{ filteredFundTypes().length }}</p>
+              </div>
+              <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <i class="ri-file-list-3-line text-lg text-primary"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active -->
+          <div class="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-neutral-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs text-neutral-600 mb-1">Activos</p>
+                <p class="text-2xl font-bold text-neutral-900">{{ activeFundTypesCount() }}</p>
+              </div>
+              <div class="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                <i class="ri-check-double-line text-lg text-success"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recurring -->
+          <div class="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-neutral-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs text-neutral-600 mb-1">Recurrentes</p>
+                <p class="text-2xl font-bold text-neutral-900">{{ recurringFundTypesCount() }}</p>
+              </div>
+              <div class="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
+                <i class="ri-refresh-line text-lg text-info"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Categories -->
+          <div class="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-neutral-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs text-neutral-600 mb-1">Categorías</p>
+                <p class="text-2xl font-bold text-neutral-900">{{ categories.length }}</p>
+              </div>
+              <div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+                <i class="ri-stack-line text-lg text-secondary"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters Section -->
+      <div class="glass rounded-2xl p-4 shadow-lg mb-6 border border-white/20">
+        <div class="flex flex-wrap gap-3">
+          <!-- Search -->
+          <div class="flex-1 min-w-[200px] relative">
+            <input
+              type="text"
+              placeholder="Buscar tipo de fondo..."
+              [value]="searchTerm()"
+              (input)="onSearchChange($event)"
+              class="input input-bordered w-full rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 placeholder:text-neutral-500 pl-10"
+            />
+            <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg"></i>
+          </div>
+
+          <!-- Category Filter -->
+          <select
+            [value]="categoryFilter()"
+            (change)="onCategoryFilterChange($event)"
+            class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 min-w-[180px]">
+            <option value="">Todas las categorías</option>
+            @for (cat of categories; track cat.value) {
+              <option [value]="cat.value">{{ cat.label }}</option>
+            }
+          </select>
+
+          <!-- Active Filter -->
+          <select
+            [value]="activeFilter()"
+            (change)="onActiveFilterChange($event)"
+            class="select select-bordered rounded-2xl bg-white/70 border-neutral-300 text-neutral-900 min-w-[150px]">
+            <option value="all">Todos</option>
+            <option value="active">Activos</option>
+            <option value="inactive">Inactivos</option>
+          </select>
+
+          <!-- Clear Filters -->
+          <button
+            (click)="clearFilters()"
+            class="btn btn-outline rounded-2xl border-neutral-300 text-neutral-700 hover:bg-neutral-100">
+            <i class="ri-filter-off-line text-base"></i>
+            Limpiar
+          </button>
+        </div>
+      </div>
+
+      <!-- Fund Types Grid -->
+      <div class="glass rounded-2xl shadow-lg overflow-hidden border border-white/20">
+        @if (loading()) {
+          <div class="p-12 text-center">
+            <span class="loading loading-spinner loading-lg text-primary"></span>
+            <p class="text-neutral-600 mt-2">Cargando tipos de fondos...</p>
+          </div>
+        } @else if (error()) {
+          <div class="p-12 text-center">
+            <div class="flex flex-col items-center gap-4">
+              <i class="ri-error-warning-line text-5xl text-error"></i>
+              <div class="max-w-md">
+                <p class="text-neutral-900 font-semibold mb-2">Error al cargar tipos de fondos</p>
+                <p class="text-neutral-600 text-sm">{{ error() }}</p>
+                <button 
+                  (click)="loadFundTypes()" 
+                  class="btn btn-primary btn-sm rounded-xl mt-4">
+                  <i class="ri-refresh-line text-base"></i>
+                  Reintentar
+                </button>
+              </div>
+            </div>
+          </div>
+        } @else if (filteredFundTypes().length === 0) {
+          <div class="p-12 text-center">
+            <i class="ri-money-dollar-circle-line text-5xl text-neutral-300 mb-2"></i>
+            <p class="text-neutral-600">No se encontraron tipos de fondos</p>
+            <button 
+              (click)="openCreateModal()" 
+              class="btn btn-primary btn-sm rounded-xl mt-4">
+              <i class="ri-add-line text-base"></i>
+              Crear Tipo de Fondo
+            </button>
+          </div>
+        } @else {
+          <!-- Fund Types Cards Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
+            @for (fundType of filteredFundTypes(); track fundType.id) {
+              <div class="bg-white rounded-xl p-4 border border-neutral-200 hover:shadow-lg transition-all cursor-pointer group"
+                   (click)="openViewModal(fundType)">
+                <!-- Header -->
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div [class]="'w-10 h-10 rounded-lg flex items-center justify-center ' + getColorBgClass(fundType.color)">
+                      <i [class]="fundType.icon + ' text-lg ' + getColorTextClass(fundType.color)"></i>
+                    </div>
+                    <div>
+                      <h3 class="font-semibold text-neutral-900 text-sm">{{ fundType.name }}</h3>
+                      <p class="text-xs text-neutral-500">{{ fundType.code }}</p>
+                    </div>
+                  </div>
+                  <span [class]="'badge badge-xs rounded-full ' + (fundType.isActive ? 'badge-success' : 'badge-neutral')">
+                    {{ fundType.isActive ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </div>
+                
+                <!-- Description -->
+                <p class="text-xs text-neutral-600 mb-3 line-clamp-2">{{ fundType.description }}</p>
+                
+                <!-- Category & Recurring -->
+                <div class="flex items-center gap-2 mb-3">
+                  <span [class]="'badge badge-sm rounded-lg border ' + getCategoryBadgeClass(fundType.category)">
+                    {{ getCategoryLabel(fundType.category) }}
+                  </span>
+                  @if (fundType.isRecurring) {
+                    <span class="badge badge-sm rounded-lg bg-info/10 text-info border-info/20">
+                      <i class="ri-refresh-line text-xs mr-1"></i>
+                      Recurrente
+                    </span>
+                  }
+                </div>
+                
+                <!-- Default Amount -->
+                @if (fundType.defaultAmount) {
+                  <div class="flex items-center justify-between text-sm">
+                    <span class="text-neutral-600">Monto por defecto:</span>
+                    <span class="font-semibold text-neutral-900">{{ formatCurrency(fundType.defaultAmount) }}</span>
+                  </div>
+                }
+                
+                <!-- Actions -->
+                <div class="flex gap-2 mt-3 pt-3 border-t border-neutral-100 opacity-0 group-hover:opacity-100 transition-opacity"
+                     (click)="$event.stopPropagation()">
+                  <button
+                    (click)="openEditModal(fundType)"
+                    class="btn btn-xs btn-ghost rounded-lg text-warning hover:bg-warning/10 flex-1">
+                    <i class="ri-edit-line text-base"></i>
+                    Editar
+                  </button>
+                  <button
+                    (click)="openDeleteModal(fundType)"
+                    class="btn btn-xs btn-ghost rounded-lg text-error hover:bg-error/10 flex-1">
+                    <i class="ri-delete-bin-line text-base"></i>
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Pagination -->
+          @if (totalPages() > 1) {
+            <div class="flex justify-between items-center p-4 bg-white/50 border-t border-neutral-200">
+              <p class="text-sm text-neutral-600">
+                Mostrando {{ (currentPage() - 1) * pageSize() + 1 }} - 
+                {{ Math.min(currentPage() * pageSize(), totalItems()) }} de {{ totalItems() }} tipos de fondos
+              </p>
+              
+              <div class="flex gap-2">
+                <button
+                  (click)="previousPage()"
+                  [disabled]="currentPage() === 1"
+                  class="btn btn-sm btn-outline rounded-lg border-neutral-300 text-neutral-700 disabled:opacity-50">
+                  <i class="ri-arrow-left-s-line text-base"></i>
+                </button>
+                
+                @for (page of [].constructor(totalPages()); track $index) {
+                  <button
+                    (click)="goToPage($index + 1)"
+                    [class.btn-primary]="currentPage() === $index + 1"
+                    [class.btn-outline]="currentPage() !== $index + 1"
+                    class="btn btn-sm rounded-lg">
+                    {{ $index + 1 }}
+                  </button>
+                }
+                
+                <button
+                  (click)="nextPage()"
+                  [disabled]="currentPage() === totalPages()"
+                  class="btn btn-sm btn-outline rounded-lg border-neutral-300 text-neutral-700 disabled:opacity-50">
+                  <i class="ri-arrow-right-s-line text-base"></i>
+                </button>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </main>
+  </div>
+
+  <!-- Create/Edit Modal -->
+  @if (showModal()) {
+    <div class="modal modal-open">
+      <div class="modal-box max-w-2xl bg-white border border-primary/10 shadow-xl">
+        <h3 class="font-bold text-xl text-neutral-900 mb-4 flex items-center gap-2">
+          <i class="ri-money-dollar-circle-line text-primary"></i>
+          @if (modalMode() === 'create') {
+            Crear Nuevo Tipo de Fondo
+          } @else if (modalMode() === 'edit') {
+            Editar Tipo de Fondo
+          } @else {
+            Detalles del Tipo de Fondo
+          }
+        </h3>
+
+        @if (modalMode() === 'view') {
+          <!-- View Mode -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-4 p-4 bg-neutral-50 rounded-xl">
+              <div [class]="'w-16 h-16 rounded-xl flex items-center justify-center ' + getColorBgClass(selectedFundType()!.color)">
+                <i [class]="selectedFundType()!.icon + ' text-3xl ' + getColorTextClass(selectedFundType()!.color)"></i>
+              </div>
+              <div>
+                <h4 class="text-xl font-bold text-neutral-900">{{ selectedFundType()?.name }}</h4>
+                <p class="text-neutral-600">{{ selectedFundType()?.code }}</p>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-xs text-neutral-500 mb-1">Categoría</p>
+                <span [class]="'badge rounded-lg border ' + getCategoryBadgeClass(selectedFundType()!.category)">
+                  {{ getCategoryLabel(selectedFundType()!.category) }}
+                </span>
+              </div>
+              <div>
+                <p class="text-xs text-neutral-500 mb-1">Estado</p>
+                <span [class]="'badge rounded-lg ' + (selectedFundType()?.isActive ? 'badge-success' : 'badge-neutral')">
+                  {{ selectedFundType()?.isActive ? 'Activo' : 'Inactivo' }}
+                </span>
+              </div>
+              <div>
+                <p class="text-xs text-neutral-500 mb-1">Tipo de Cargo</p>
+                <span class="badge rounded-lg bg-info/10 text-info border-info/20">
+                  {{ selectedFundType()?.isRecurring ? 'Recurrente' : 'Único' }}
+                </span>
+              </div>
+              <div>
+                <p class="text-xs text-neutral-500 mb-1">Monto por Defecto</p>
+                <p class="font-semibold text-neutral-900">{{ formatCurrency(selectedFundType()?.defaultAmount) }}</p>
+              </div>
+            </div>
+            
+            <div>
+              <p class="text-xs text-neutral-500 mb-1">Descripción</p>
+              <p class="text-neutral-700">{{ selectedFundType()?.description }}</p>
+            </div>
+          </div>
+        } @else {
+          <!-- Create/Edit Form -->
+          <div class="space-y-4">
+            <!-- Name and Code -->
+            <div class="grid grid-cols-2 gap-4">
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold text-neutral-900">Nombre *</span>
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="formData.name"
+                  placeholder="Ej: Mantenimiento Ordinario"
+                  class="input input-bordered rounded-xl bg-white border-neutral-300 text-neutral-900 placeholder:text-neutral-500"
+                />
+              </div>
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold text-neutral-900">Código *</span>
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="formData.code"
+                  placeholder="Ej: MANT"
+                  class="input input-bordered rounded-xl bg-white border-neutral-300 text-neutral-900 placeholder:text-neutral-500 uppercase"
+                  maxlength="10"
+                />
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold text-neutral-900">Descripción</span>
+              </label>
+              <textarea
+                [(ngModel)]="formData.description"
+                placeholder="Describe el propósito de este tipo de fondo..."
+                class="textarea textarea-bordered rounded-xl bg-white border-neutral-300 text-neutral-900 placeholder:text-neutral-500"
+                rows="2"
+              ></textarea>
+            </div>
+
+            <!-- Category and Color -->
+            <div class="grid grid-cols-2 gap-4">
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold text-neutral-900">Categoría *</span>
+                </label>
+                <select
+                  [(ngModel)]="formData.category"
+                  class="select select-bordered rounded-xl bg-white border-neutral-300 text-neutral-900">
+                  @for (cat of categories; track cat.value) {
+                    <option [value]="cat.value">{{ cat.label }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold text-neutral-900">Color</span>
+                </label>
+                <select
+                  [(ngModel)]="formData.color"
+                  class="select select-bordered rounded-xl bg-white border-neutral-300 text-neutral-900">
+                  @for (color of colors; track color.value) {
+                    <option [value]="color.value">{{ color.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <!-- Icon Selection -->
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold text-neutral-900">Ícono</span>
+              </label>
+              <div class="flex flex-wrap gap-2">
+                @for (iconOption of availableIcons; track iconOption.icon) {
+                  <button
+                    type="button"
+                    (click)="formData.icon = iconOption.icon"
+                    [class]="'btn btn-sm rounded-lg ' + (formData.icon === iconOption.icon ? 'btn-primary' : 'btn-ghost')"
+                    [title]="iconOption.label">
+                    <i [class]="iconOption.icon + ' text-lg'"></i>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Amount and Options -->
+            <div class="grid grid-cols-2 gap-4">
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold text-neutral-900">Monto por Defecto</span>
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="formData.defaultAmount"
+                  placeholder="0.00"
+                  class="input input-bordered rounded-xl bg-white border-neutral-300 text-neutral-900 placeholder:text-neutral-500"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold text-neutral-900">Prioridad</span>
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="formData.priority"
+                  placeholder="1"
+                  class="input input-bordered rounded-xl bg-white border-neutral-300 text-neutral-900"
+                  min="1"
+                />
+              </div>
+            </div>
+
+            <!-- Checkboxes -->
+            <div class="flex gap-6">
+              <div class="form-control">
+                <label class="label cursor-pointer gap-2">
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="formData.isRecurring"
+                    class="checkbox checkbox-primary rounded-lg"
+                  />
+                  <span class="label-text text-neutral-900">Es cargo recurrente</span>
+                </label>
+              </div>
+              <div class="form-control">
+                <label class="label cursor-pointer gap-2">
+                  <input
+                    type="checkbox"
+                    [(ngModel)]="formData.isActive"
+                    class="checkbox checkbox-success rounded-lg"
+                  />
+                  <span class="label-text text-neutral-900">Activo</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Modal Actions -->
+        <div class="modal-action">
+          <button (click)="closeModal()" class="btn btn-ghost rounded-2xl text-neutral-700">
+            Cancelar
+          </button>
+          @if (modalMode() !== 'view') {
+            <button 
+              (click)="saveForm()" 
+              [disabled]="loading()"
+              class="btn btn-primary rounded-2xl gap-2">
+              @if (loading()) {
+                <span class="loading loading-spinner loading-sm"></span>
+              }
+              <i class="ri-save-line text-base"></i>
+              {{ modalMode() === 'create' ? 'Crear' : 'Guardar' }}
+            </button>
+          } @else {
+            <button 
+              (click)="openEditModal(selectedFundType()!)" 
+              class="btn btn-primary rounded-2xl gap-2">
+              <i class="ri-edit-line text-base"></i>
+              Editar
+            </button>
+          }
+        </div>
+      </div>
+      <div class="modal-backdrop bg-neutral-900/50 backdrop-blur-sm" (click)="closeModal()"></div>
+    </div>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteModal()) {
+    <div class="modal modal-open">
+      <div class="modal-box bg-white border border-error/20 shadow-xl">
+        <h3 class="font-bold text-xl text-neutral-900 mb-4 flex items-center gap-2">
+          <i class="ri-error-warning-line text-error"></i>
+          Confirmar Eliminación
+        </h3>
+        
+        <p class="text-neutral-700 mb-4">
+          ¿Estás seguro de que deseas eliminar el tipo de fondo 
+          <strong class="text-neutral-900">{{ fundTypeToDelete()?.name }}</strong>?
+        </p>
+        
+        <div class="bg-error/5 border border-error/20 rounded-xl p-3 text-sm text-error">
+          <i class="ri-alert-line text-base mr-1"></i>
+          Esta acción no se puede deshacer. Cualquier pago asociado a este tipo de fondo perderá su referencia.
+        </div>
+
+        <div class="modal-action">
+          <button (click)="closeDeleteModal()" class="btn btn-ghost rounded-2xl text-neutral-700">
+            Cancelar
+          </button>
+          <button 
+            (click)="confirmDelete()" 
+            [disabled]="isDeleting()"
+            class="btn btn-error rounded-2xl gap-2">
+            @if (isDeleting()) {
+              <span class="loading loading-spinner loading-sm"></span>
+            }
+            <i class="ri-delete-bin-line text-base"></i>
+            Eliminar
+          </button>
+        </div>
+      </div>
+      <div class="modal-backdrop bg-neutral-900/50 backdrop-blur-sm" (click)="closeDeleteModal()"></div>
+    </div>
+  }
+
+  <!-- Toast Notification -->
+  @if (showToast()) {
+    <div class="toast toast-top toast-end z-50">
+      <div [class]="'alert shadow-lg rounded-2xl ' + 
+        (toastType() === 'success' ? 'alert-success' : 
+         toastType() === 'error' ? 'alert-error' : 'alert-info')">
+        <i [class]="
+          toastType() === 'success' ? 'ri-check-line text-lg' :
+          toastType() === 'error' ? 'ri-error-warning-line text-lg' : 'ri-information-line text-lg'
+        "></i>
+        <span>{{ toastMessage() }}</span>
+      </div>
+    </div>
+  }
+</div>

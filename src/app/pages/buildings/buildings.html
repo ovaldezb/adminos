@@ -2,7 +2,6 @@
   <!-- Navbar -->
   <app-navbar
     (toggleSidebar)="toggleSidebar()"
-    (condoChanged)="onCondoSelected($event)"
   />
 
   <div class="flex relative">
@@ -30,10 +29,15 @@
     <!-- Main Content -->
     <main class="flex-1 p-4 sm:p-6 lg:p-8 transition-all duration-300 min-h-screen">
       
+      <!-- Debug Info (remover después) -->
+      <!-- <div class="bg-yellow-100 p-2 mb-2 text-xs">
+        condoId: {{ condominiumId() }} | 
+        condo: {{ currentCondominium()?.name || 'null' }} |
+        breadcrumbs: {{ breadcrumbs().length }}
+      </div> -->
+      
       <!-- Breadcrumbs -->
-      @if (breadcrumbs().length > 0) {
-        <app-breadcrumbs [items]="breadcrumbs()" />
-      }
+      <app-breadcrumbs [items]="breadcrumbs()" />
       
       <!-- Header Section -->
       <div class="glass rounded-2xl p-6 shadow-lg mb-6 border border-white/20">
@@ -49,7 +53,14 @@
             </div>
             <div>
               <h1 class="text-2xl font-bold text-neutral-900">Edificios y Torres</h1>
-              <p class="text-sm text-neutral-600">{{ currentCondominium()?.name || 'Cargando...' }}</p>
+              @if (currentCondominium()) {
+                <p class="text-sm text-neutral-600">{{ currentCondominium()?.name }}</p>
+              } @else if (condominiumId()) {
+                <p class="text-sm text-neutral-500 flex items-center gap-2">
+                  <span class="loading loading-spinner loading-xs"></span>
+                  Cargando condominio...
+                </p>
+              }
             </div>
           </div>
           
@@ -304,6 +315,12 @@
                           class="btn btn-sm btn-ghost rounded-lg text-primary hover:bg-primary/10"
                           title="Ver unidades">
                           <i class="ri-home-4-line text-base"></i>
+                        </button>
+                        <button
+                          (click)="navigateToPaymentConfig(building)"
+                          class="btn btn-sm btn-ghost rounded-lg text-success hover:bg-success/10"
+                          title="Configurar pagos">
+                          <i class="ri-money-dollar-circle-line text-base"></i>
                         </button>
                         <button
                           (click)="openViewModal(building)"

@@ -1,20 +1,17 @@
-import { Component, signal, output, input, effect, computed, OnInit } from '@angular/core';
+import { Component, signal, output, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { CondoSelectorComponent } from '../condo-selector/condo-selector';
-import { Condominium, Notification, User } from '../../models';
-import { CondominiumService, AuthService, NotificationService } from '../../services';
+import { Notification, User } from '../../models';
+import { AuthService, NotificationService } from '../../services';
 
 @Component({
   selector: 'app-navbar',
-  imports: [CommonModule, RouterLink, CondoSelectorComponent],
+  imports: [CommonModule, RouterLink],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css'
 })
 export class NavbarComponent implements OnInit {
   protected readonly toggleSidebar = output<void>();
-  protected readonly condoChanged = output<Condominium | null>();
-  readonly showCondoSelector = input<boolean>(true);
   protected readonly showNotifications = signal(false);
   protected readonly showProfile = signal(false);
   
@@ -28,16 +25,9 @@ export class NavbarComponent implements OnInit {
   );
 
   constructor(
-    private condominiumService: CondominiumService,
     private authService: AuthService,
     private notificationService: NotificationService
-  ) {
-    // Sincronizar con el servicio global (si otro componente cambia la selección)
-    effect(() => {
-      const globalCondo = this.condominiumService.selectedCondominium();
-      // Aquí se podría actualizar el selector si es necesario
-    });
-  }
+  ) {}
 
   ngOnInit(): void {
     this.loadCurrentUser();
@@ -146,12 +136,5 @@ export class NavbarComponent implements OnInit {
     if (minutes < 60) return `Hace ${minutes} min`;
     if (hours < 24) return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
     return `Hace ${days} día${days > 1 ? 's' : ''}`;
-  }
-
-  onCondoSelected(condo: Condominium | null): void {
-    // Actualizar el servicio global
-    this.condominiumService.setSelectedCondominium(condo);
-    // Emitir el evento para componentes que escuchen directamente
-    this.condoChanged.emit(condo);
   }
 }

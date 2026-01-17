@@ -1,4 +1,4 @@
-import { Component, signal, computed, effect } from '@angular/core';
+import { Component, signal, computed, effect, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
@@ -25,7 +25,7 @@ import {
   imports: [CommonModule, FormsModule, NavbarComponent, SideMenuComponent, RouterLink, BreadcrumbsComponent],
   templateUrl: './buildings.html'
 })
-export class BuildingsComponent {
+export class BuildingsComponent implements OnInit, OnDestroy {
   protected readonly sidebarOpen = signal(window.innerWidth >= 1024); // Abierto solo en desktop
   protected readonly userName = signal('Administrador');
   protected readonly selectedCondo = signal<Condominium | null>(null);
@@ -38,12 +38,20 @@ export class BuildingsComponent {
   // Breadcrumbs
   protected readonly breadcrumbs = computed<BreadcrumbItem[]>(() => {
     const condo = this.currentCondominium();
-    if (!condo) return [];
+    const condoId = this.condominiumId();
     
-    return [
-      { label: 'Condominios', route: '/condominios', icon: 'ri-community-line' },
-      { label: condo.name, icon: 'ri-building-line' }
-    ];
+    const items: BreadcrumbItem[] = [];
+    
+    // Condominio (con enlace a la lista de condominios)
+    if (condo) {
+      items.push({ label: condo.name, route: '/condominios', icon: 'ri-community-line' });
+      // Edificios (página actual, sin enlace)
+      items.push({ label: 'Edificios', icon: 'ri-building-line' });
+    } else if (condoId) {
+      items.push({ label: 'Cargando...', route: '/condominios', icon: 'ri-loader-4-line' });
+    }
+    
+    return items;
   });
   
   // Expose Math for template
@@ -142,6 +150,9 @@ export class BuildingsComponent {
   // Enums for template
   protected readonly BuildingType = BuildingType;
   protected readonly BuildingStatus = BuildingStatus;
+
+  // Event listeners para limpieza
+  private condominiumCreatedListener?: (event: Event) => void;
   
   // Computed filtered buildings
   protected readonly filteredBuildings = computed(() => {
@@ -198,21 +209,50 @@ export class BuildingsComponent {
     private buildingService: BuildingService,
     private condominiumService: CondominiumService
   ) {
-    // Get condominiumId from route
-    effect(() => {
-      this.route.params.subscribe(params => {
-        console.log('🚪 Route params:', params);
-        const condoId = params['condoId'];
-        if (condoId) {
-          this.condominiumId.set(condoId);
-          this.loadCondominiumDetails(condoId);
-          this.loadBuildings();
-        }
-      });
-    });
-    
     // Load condominiums for dropdown
     this.loadCondominiums();
+    
+    // Escuchar eventos de condominios creados para actualizar la lista automáticamente
+    this.setupCondominiumCreatedListener();
+  }
+
+  ngOnInit(): void {
+    // Get condominiumId from route
+    this.route.params.subscribe(params => {
+      console.log('🚪 Route params:', params);
+      const condoId = params['condoId'];
+      if (condoId) {
+        console.log('🏠 Setting condominiumId:', condoId);
+        this.condominiumId.set(condoId);
+        
+        // Primero cargar la lista de condominios para tener acceso al nombre
+        this.condominiumService.getAllCondominiums().subscribe({
+          next: (response) => {
+            if (response.success && response.data) {
+              this.availableCondominiums.set(response.data);
+              // Buscar el condominio actual por ID
+              const currentCondo = response.data.find((c: any) => 
+                c._id === condoId || c.id === condoId
+              );
+              if (currentCondo) {
+                console.log('🏠 Found condominium:', currentCondo.name);
+                this.currentCondominium.set(currentCondo);
+                this.selectedCondo.set(currentCondo);
+              } else {
+                console.warn('⚠️ Condominium not found in list, trying API call');
+                this.loadCondominiumDetails(condoId);
+              }
+            }
+          },
+          error: (err) => {
+            console.error('Error loading condominiums:', err);
+            this.loadCondominiumDetails(condoId);
+          }
+        });
+        
+        this.loadBuildings();
+      }
+    });
   }
 
   toggleSidebar(): void {
@@ -244,15 +284,18 @@ export class BuildingsComponent {
   }
 
   loadCondominiumDetails(condoId: string): void {
+    console.log('🏠 Loading condominium details for ID:', condoId);
     this.condominiumService.getCondominiumById(condoId).subscribe({
       next: (response) => {
+        console.log('🏠 Condominium details response:', response);
         if (response.success && response.data) {
+          console.log('🏠 Setting currentCondominium:', response.data.name);
           this.currentCondominium.set(response.data);
           this.selectedCondo.set(response.data);
         }
       },
       error: (err) => {
-        console.error('Error loading condominium details:', err);
+        console.error('❌ Error loading condominium details:', err);
         this.showToastMessage('Error al cargar los detalles del condominio', 'error');
       }
     });
@@ -358,6 +401,93 @@ export class BuildingsComponent {
     this.newAmenity.set('');
   }
 
+  // Método para notificar la creación de un nuevo edificio
+  private notifyBuildingCreated(newBuilding: any): void {
+    // Crear un evento personalizado para notificar a otros componentes
+    const event = new CustomEvent('buildingCreated', {
+      detail: {
+        building: newBuilding,
+        condominiumId: this.condominiumId()
+      }
+    });
+    window.dispatchEvent(event);
+    
+    console.log('🔔 Evento buildingCreated emitido:', event.detail);
+  }
+
+  // Mostrar acciones adicionales después de crear un edificio
+  private showBuildingCreatedActions(newBuilding: any): void {
+    const buildingId = newBuilding.id || newBuilding._id;
+    const condoId = this.condominiumId();
+    
+    if (buildingId && condoId) {
+      console.log('🎯 Edificio creado - ofreciendo navegación a unidades');
+      
+      // Mostrar toast con opción de navegación
+      setTimeout(() => {
+        const shouldNavigate = confirm(
+          `Edificio "${newBuilding.name}" creado exitosamente.\\n\\n¿Deseas ir directamente a gestionar las unidades de este edificio?`
+        );
+        
+        if (shouldNavigate) {
+          this.router.navigate(['/condominios', condoId, 'edificios', buildingId, 'unidades']);
+        }
+      }, 1000); // Esperar un segundo para que se vea el toast de éxito
+    }
+  }
+
+  // Configurar listener para eventos de condominios creados
+  private setupCondominiumCreatedListener(): void {
+    console.log('[Buildings] Configurando listener para eventos de condominios creados...');
+    
+    // Crear listener function que puede ser removido después
+    this.condominiumCreatedListener = (event: any) => {
+      const eventData = event.detail;
+      console.log('🏘️ [Buildings] Condominio creado detectado:', eventData);
+      
+      // Actualizar la lista de condominios disponibles
+      console.log('🔄 [Buildings] Actualizando lista de condominios...');
+      this.loadCondominiums();
+      
+      // Si el modal está abierto, preseleccionar el nuevo condominio
+      if (this.showModal() && this.modalMode() === 'create') {
+        setTimeout(() => {
+          console.log('✨ [Buildings] Preseleccionando nuevo condominio en formulario...');
+          this.preselectNewCondominium(eventData.condominium);
+        }, 500); // Esperar un poco para que se cargue la lista
+      }
+    };
+    
+    // Registrar el listener
+    window.addEventListener('condominiumCreated', this.condominiumCreatedListener);
+  }
+
+  // Preseleccionar el condominio recién creado en el formulario
+  private preselectNewCondominium(newCondominium: any): void {
+    console.log('🎯 [Buildings] Preseleccionando condominio:', newCondominium);
+    
+    const condoId = newCondominium.id || newCondominium._id;
+    if (condoId) {
+      const currentCondoId = this.building().condominiumId;
+      
+      // Solo preseleccionar si no hay condominio ya seleccionado o si está vacío
+      if (!currentCondoId || currentCondoId === '') {
+        // Actualizar el formulario con el nuevo condominio
+        this.building.update(current => ({
+          ...current,
+          condominiumId: condoId
+        }));
+        
+        console.log('✅ [Buildings] Condominio preseleccionado:', condoId);
+        this.showToastMessage(`Condominio "${newCondominium.name}" seleccionado automáticamente`, 'success');
+      } else {
+        // Si ya hay un condominio seleccionado, solo mostrar notificación
+        console.log('ℹ️ [Buildings] Condominio ya seleccionado, solo notificando');
+        this.showToastMessage(`Nuevo condominio "${newCondominium.name}" disponible en la lista`, 'info');
+      }
+    }
+  }
+
   saveBuilding(): void {
     const data = this.building();
     console.log('💾 Saving building with data:', data);
@@ -374,6 +504,19 @@ export class BuildingsComponent {
             this.showToastMessage('Edificio creado exitosamente', 'success');
             this.closeModal();
             this.loadBuildings();
+            
+            // Actualizar la lista de edificios disponibles después de crear uno nuevo
+            this.loadCondominiums();
+            
+            // Emitir evento para notificar a otros componentes sobre el nuevo edificio
+            if (response.data) {
+              console.log('🏢 Nuevo edificio creado:', response.data);
+              // El edificio recién creado estará disponible en la próxima carga
+              this.notifyBuildingCreated(response.data);
+              
+              // Ofrecer navegación rápida a las unidades del nuevo edificio
+              this.showBuildingCreatedActions(response.data);
+            }
           } else {
             this.showToastMessage(response.error?.message || 'Error al crear el edificio', 'error');
           }
@@ -692,6 +835,13 @@ export class BuildingsComponent {
     return true;
   }
 
+  ngOnDestroy(): void {
+    // Limpiar event listeners para evitar memory leaks
+    if (this.condominiumCreatedListener) {
+      window.removeEventListener('condominiumCreated', this.condominiumCreatedListener);
+    }
+  }
+
   // Utility methods
   getTypeBadgeClass(type: BuildingType): string {
     const classes: Record<BuildingType, string> = {
@@ -757,8 +907,16 @@ export class BuildingsComponent {
   // Navigation
   navigateToUnits(building: BuildingDetails): void {
     const condoId = this.condominiumId();
-    const buildingId = this.getCondoId({ id: building.id, _id: building._id } as any);
+    const buildingId = building.id || building._id;
+    console.log('[Buildings] navigateToUnits - condoId:', condoId, 'buildingId:', buildingId);
     this.router.navigate(['/condominios', condoId, 'edificios', buildingId, 'unidades']);
+  }
+
+  navigateToPaymentConfig(building: BuildingDetails): void {
+    const condoId = this.condominiumId();
+    const buildingId = building.id || building._id;
+    console.log('[Buildings] navigateToPaymentConfig - condoId:', condoId, 'buildingId:', buildingId);
+    this.router.navigate(['/condominios', condoId, 'edificios', buildingId, 'configurar-pagos']);
   }
 
   goBackToCondominiums(): void {

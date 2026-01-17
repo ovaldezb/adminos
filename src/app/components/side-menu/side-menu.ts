@@ -10,6 +10,7 @@ interface MenuItem {
   route: string;
   badge?: string;
   badgeColor?: string;
+  children?: MenuItem[];
 }
 
 @Component({
@@ -22,6 +23,9 @@ export class SideMenuComponent {
   readonly isOpen = input<boolean>(false);
   readonly selectedCondo = input<Condominium | null>(null);
   readonly close = output<void>();
+  
+  // Controla qué menú está expandido
+  protected readonly expandedMenu = signal<string | null>(null);
   
   protected readonly menuItems = signal<MenuItem[]>([
     { 
@@ -83,7 +87,24 @@ export class SideMenuComponent {
     { 
       icon: 'ri-settings-3-fill', 
       label: 'Configuración', 
-      route: '/configuracion'
+      route: '/configuracion',
+      children: [
+        {
+          icon: 'ri-money-dollar-circle-line',
+          label: 'Tipos de Fondos',
+          route: '/configuracion/tipos-de-fondos'
+        },
+        {
+          icon: 'ri-user-settings-line',
+          label: 'Usuarios',
+          route: '/configuracion/usuarios'
+        },
+        {
+          icon: 'ri-settings-4-line',
+          label: 'General',
+          route: '/configuracion/general'
+        }
+      ]
     }
   ]);
 
@@ -100,8 +121,21 @@ export class SideMenuComponent {
   }
 
   onMenuClick(item: MenuItem): void {
-    // Navigate to the selected menu item
-    this.router.navigate([item.route]);
+    // Si tiene hijos, expandir/contraer el menú
+    if (item.children && item.children.length > 0) {
+      if (this.expandedMenu() === item.route) {
+        this.expandedMenu.set(null);
+      } else {
+        this.expandedMenu.set(item.route);
+      }
+    } else {
+      // Navigate to the selected menu item
+      this.router.navigate([item.route]);
+    }
+  }
+
+  isMenuExpanded(item: MenuItem): boolean {
+    return this.expandedMenu() === item.route;
   }
 
   getCondoInfo() {

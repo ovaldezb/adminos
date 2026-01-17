@@ -2,7 +2,7 @@
 <nav class="glass sticky top-0 z-50 border-b border-white/20">
   <div class="navbar px-4 lg:px-6">
     
-    <!-- Left Section - Menu Toggle & Logo -->
+    <!-- Left Section - Menu Toggle -->
     <div class="navbar-start">
       <button 
         (click)="onToggleSidebar()"
@@ -10,83 +10,48 @@
       >
         <i class="ri-menu-line text-2xl text-neutral-700"></i>
       </button>
-      
-      <!-- Logo for Desktop -->
-      <div class="hidden lg:flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-          <i class="ri-building-4-fill text-xl text-white"></i>
-        </div>
-        <div>
-          <h2 class="text-xl font-bold text-neutral-800">CondoAdmin</h2>
-          <p class="text-xs text-neutral-500">Gestión Integral</p>
-        </div>
-      </div>
     </div>
 
-    <!-- Center Section - Condo Selector & Search (Desktop) -->
+    <!-- Center Section - Quick Stats -->
     <div class="navbar-center hidden lg:flex gap-3">
-      <!-- Condo Selector -->
-      @if (showCondoSelector()) {
-        <app-condo-selector (condoSelected)="onCondoSelected($event)" />
-      }
-      
-      <!-- Search -->
-      <div class="form-control w-72">
-        <div class="relative">
-          <input 
-            type="text" 
-            placeholder="Buscar..." 
-            class="input input-bordered w-full rounded-2xl pl-12 bg-white/80 focus:bg-white transition-all"
-          />
-          <i class="ri-search-line absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 text-xl"></i>
+      <div class="glass rounded-2xl p-3 px-4">
+        <div class="flex items-center gap-6">
+          <!-- Cobranza del Mes -->
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
+              <i class="ri-pulse-fill text-xl text-success"></i>
+            </div>
+            <div>
+              <p class="text-xs text-neutral-500 font-semibold">Cobranza del Mes</p>
+              <div class="flex items-center gap-2">
+                <p class="text-lg font-bold text-success">94%</p>
+                <progress class="progress progress-success w-20 h-1.5" value="94" max="100"></progress>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Divider -->
+          <div class="h-10 w-px bg-neutral-200"></div>
+          
+          <!-- Pagos Pendientes -->
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
+              <i class="ri-money-dollar-circle-fill text-xl text-warning"></i>
+            </div>
+            <div>
+              <p class="text-xs text-neutral-500 font-semibold">Pagos Pendientes</p>
+              <div class="flex items-center gap-2">
+                <p class="text-lg font-bold text-warning">42</p>
+                <progress class="progress progress-warning w-20 h-1.5" value="42" max="100"></progress>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Right Section - Actions & Profile -->
     <div class="navbar-end gap-2">
-      
-      <!-- Search Button (Mobile) -->
-      <button class="btn btn-ghost btn-circle lg:hidden hover:bg-white/50">
-        <i class="ri-search-line text-xl text-neutral-700"></i>
-      </button>
-
-      <!-- Quick Add Button -->
-      <div class="dropdown dropdown-end">
-        <button tabindex="0" class="btn btn-primary rounded-2xl hidden sm:flex">
-          <i class="ri-add-fill text-xl"></i>
-          Nuevo
-        </button>
-        <button tabindex="0" class="btn btn-ghost btn-circle sm:hidden hover:bg-white/50">
-          <i class="ri-add-fill text-xl text-neutral-700"></i>
-        </button>
-        <ul tabindex="0" class="dropdown-content menu glass rounded-2xl shadow-2xl w-64 p-3 mt-2">
-          <li>
-            <a class="rounded-xl text-neutral-700 hover:bg-white/50">
-              <i class="ri-file-add-fill text-primary text-lg"></i>
-              Nueva Factura
-            </a>
-          </li>
-          <li>
-            <a class="rounded-xl text-neutral-700 hover:bg-white/50">
-              <i class="ri-money-dollar-circle-fill text-success text-lg"></i>
-              Registrar Pago
-            </a>
-          </li>
-          <li>
-            <a class="rounded-xl text-neutral-700 hover:bg-white/50">
-              <i class="ri-user-add-fill text-secondary text-lg"></i>
-              Nuevo Residente
-            </a>
-          </li>
-          <li>
-            <a class="rounded-xl text-neutral-700 hover:bg-white/50">
-              <i class="ri-home-4-fill text-info text-lg"></i>
-              Nueva Unidad
-            </a>
-          </li>
-        </ul>
-      </div>
 
       <!-- Notifications -->
       <div class="dropdown dropdown-end">
