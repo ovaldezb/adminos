@@ -5,6 +5,7 @@ export interface MonthlyAmount {
 
 export interface PaymentConfig {
     id?: string;
+    _id?: string;
     buildingId: string;
     paymentYear: number;
     monthlyAmounts: MonthlyAmount[];

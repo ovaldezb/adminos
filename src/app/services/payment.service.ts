@@ -36,6 +36,15 @@ export class PaymentService {
     );
   }
 
+  updatePaymentConfig(id: string, config: PaymentConfig): Observable<ApiResponse<PaymentConfig>> {
+    return this.http.put<ApiResponse<PaymentConfig>>(`${this.configUrl}/${id}`, config).pipe(
+      catchError((error) => {
+        console.error('Error updating payment config:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
 
 
   /**

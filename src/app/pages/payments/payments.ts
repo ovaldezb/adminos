@@ -79,6 +79,7 @@ export class PaymentsComponent {
   protected readonly configAnnualTotal = signal(0);
   protected readonly configMonthlyAmounts = signal<number[]>(new Array(12).fill(0));
   protected readonly configBuildingId = signal('');
+  protected readonly configId = signal<string | null>(null);
 
   protected readonly monthNames = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -159,6 +160,41 @@ export class PaymentsComponent {
     this.filteredPayments().filter((p) => p.status === PaymentStatus.CONFIRMED).length
   );
 
+  loadPaymentConfig(buildingId: string, year: number): void {
+    this.paymentService.getPaymentConfig(buildingId, year).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.configId.set(response.data.id || response.data._id || null);
+          const amounts = new Array(12).fill(0);
+          let total = 0;
+
+          if (response.data.monthlyAmounts) {
+            response.data.monthlyAmounts.forEach(m => {
+              if (m.month >= 1 && m.month <= 12) {
+                amounts[m.month - 1] = m.amount;
+                total += m.amount;
+              }
+            });
+          }
+
+          this.configMonthlyAmounts.set(amounts);
+          this.configAnnualTotal.set(Number(total.toFixed(2)));
+        } else {
+          // Reset if not found
+          this.configId.set(null);
+          this.configAnnualTotal.set(0);
+          this.configMonthlyAmounts.set(new Array(12).fill(0));
+        }
+      },
+      error: () => {
+        // Reset on error (likely 404 not found)
+        this.configId.set(null);
+        this.configAnnualTotal.set(0);
+        this.configMonthlyAmounts.set(new Array(12).fill(0));
+      }
+    });
+  }
+
   constructor(
     private router: Router,
     private paymentService: PaymentService,
@@ -174,6 +210,15 @@ export class PaymentsComponent {
       // Load buildings for config
       this.loadBuildings();
     });
+
+    // Auto-load config when building or year changes
+    effect(() => {
+      const buildingId = this.configBuildingId();
+      const year = this.configYear();
+      if (buildingId && year) {
+        this.loadPaymentConfig(buildingId, year);
+      }
+    }, { allowSignalWrites: true });
   }
 
   toggleSidebar(): void {
@@ -290,10 +335,15 @@ export class PaymentsComponent {
       }))
     };
 
-    this.paymentService.savePaymentConfig(config).subscribe({
+    const request$ = this.configId()
+      ? this.paymentService.updatePaymentConfig(this.configId()!, config)
+      : this.paymentService.savePaymentConfig(config);
+
+    request$.subscribe({
       next: (response) => {
         if (response.success) {
-          this.showToastMessage('Configuración guardada exitosamente', 'success');
+          const action = this.configId() ? 'actualizada' : 'guardada';
+          this.showToastMessage(`Configuración ${action} exitosamente`, 'success');
           this.closeModal();
         } else {
           this.showToastMessage('Error al guardar la configuración', 'error');
