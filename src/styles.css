@@ -10,21 +10,21 @@
   /* Primary: Vibrant Sky Blue - More saturated and modern */
   --color-primary: #0284c7;
   --color-primary-content: #ffffff;
-  
+
   /* Secondary: Rich Violet - More bold and attractive */
   --color-secondary: #7c3aed;
   --color-secondary-content: #ffffff;
-  
+
   /* Semantic Colors - High Contrast & Modern */
   --color-success: #059669;
   --color-warning: #d97706;
   --color-error: #dc2626;
   --color-info: #2563eb;
-  
+
   /* Enhanced Accent Colors for Visual Interest */
   --color-accent: #06b6d4;
   --color-accent-content: #ffffff;
-  
+
   /* Neutral Colors - Improved High Contrast */
   --color-neutral-50: #fafafa;
   --color-neutral-100: #f5f5f5;
@@ -36,12 +36,12 @@
   --color-neutral-700: #404040;
   --color-neutral-800: #262626;
   --color-neutral-900: #171717;
-  
+
   /* Border Radius */
   --radius-2xl: 1rem;
   --radius-xl: 0.75rem;
   --radius-lg: 0.5rem;
-  
+
   /* Container */
   --container-center: true;
   --container-max-width-2xl: 1280px;
@@ -52,7 +52,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   width: 100%;
@@ -67,8 +68,8 @@ html, body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15), 
-              0 0 1px rgb(0 0 0 / 0.03);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15),
+    0 0 1px rgb(0 0 0 / 0.03);
 }
 
 .glass-dark {
@@ -76,8 +77,8 @@ html, body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25), 
-              0 0 1px rgb(0 0 0 / 0.1);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25),
+    0 0 1px rgb(0 0 0 / 0.1);
   color: #ffffff;
 }
 
@@ -105,6 +106,7 @@ html, body {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -116,6 +118,7 @@ html, body {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -126,6 +129,7 @@ html, body {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -265,7 +269,7 @@ html, body {
   box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
 }
 
-.input-group > span {
+.input-group>span {
   background-color: #f5f5f5 !important;
   border-right: 1px solid #d4d4d4;
   padding: 0.75rem 1rem;
@@ -277,7 +281,7 @@ html, body {
   min-width: 3rem;
 }
 
-.input-group > input {
+.input-group>input {
   border: none !important;
   flex: 1;
   padding: 0.75rem 1rem !important;
@@ -285,7 +289,7 @@ html, body {
   box-shadow: none !important;
 }
 
-.input-group > input::placeholder {
+.input-group>input::placeholder {
   color: #737373 !important;
   font-weight: 400 !important;
 }
@@ -458,7 +462,7 @@ html, body {
   .table {
     font-size: 0.875rem;
   }
-  
+
   .table th,
   .table td {
     padding: 0.5rem;
@@ -467,5 +471,33 @@ html, body {
 
 /* Smooth transitions */
 .transition-all {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0.2, 1);
+}
+
+/* Force form labels to be vertical (above inputs) - STRONG OVERRIDE */
+.form-control>.label,
+.form-control .label.flex-col,
+.form-control label.label {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+}
+
+.form-control>.label .label-text,
+.form-control .label.flex-col .label-text,
+.form-control label.label .label-text {
+  display: block !important;
+  width: 100% !important;
+  margin-bottom: 0.25rem !important;
+}
+
+/* Ensure inputs take full width */
+.form-control>.label+input,
+.form-control>.label+select,
+.form-control>.label+textarea {
+  width: 100% !important;
+  margin-top: 0 !important;
 }

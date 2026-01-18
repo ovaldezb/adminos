@@ -177,6 +177,7 @@ export class UnitService {
       'under_maintenance': UnitStatus.UNDER_MAINTENANCE,
       'for_sale': UnitStatus.FOR_SALE,
       'for_rent': UnitStatus.FOR_RENT,
+      'inactive': UnitStatus.INACTIVE,
     };
 
     return statusMap[backendStatus] || UnitStatus.VACANT;
@@ -357,6 +358,7 @@ export class UnitService {
       [UnitStatus.UNDER_MAINTENANCE]: 'maintenance',
       [UnitStatus.FOR_SALE]: 'active',
       [UnitStatus.FOR_RENT]: 'active',
+      [UnitStatus.INACTIVE]: 'inactive',
     };
 
     return statusMap[frontendStatus] || 'vacant';
@@ -383,7 +385,18 @@ export class UnitService {
    * Backend: DELETE /units/{id} - Sets status to VACANT - Returns { success, message, data: {} }
    */
   deleteUnit(id: string): Observable<ApiResponse<void>> {
-    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`).pipe(
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`, { observe: 'response' }).pipe(
+      map(response => {
+        // If it's a 204 No Content, it's a success
+        if (response.status === 204) {
+          return {
+            success: true,
+            message: 'Unidad eliminada exitosamente',
+            timestamp: new Date()
+          } as ApiResponse<void>;
+        }
+        return response.body || { success: true } as ApiResponse<void>;
+      }),
       catchError((error) => {
         console.error(`Error deleting unit ${id} in backend:`, error);
         return of({

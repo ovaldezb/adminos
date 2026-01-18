@@ -55,7 +55,8 @@ export enum UnitStatus {
   VACANT = 'vacant',
   UNDER_MAINTENANCE = 'under_maintenance',
   FOR_SALE = 'for_sale',
-  FOR_RENT = 'for_rent'
+  FOR_RENT = 'for_rent',
+  INACTIVE = 'inactive'
 }
 
 export enum PropertyType {

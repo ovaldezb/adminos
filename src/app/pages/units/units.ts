@@ -987,12 +987,13 @@ export class UnitsComponent implements OnInit, OnDestroy {
 
     this.unitService.deleteUnit(unit.id).subscribe({
       next: (response) => {
-        if (response.success) {
+        console.log('[Units] Delete response:', response);
+        if (response && response.success) {
           this.showToastMessage('Unidad eliminada exitosamente', 'success');
           this.closeDeleteModal();
           this.loadUnits();
         } else {
-          this.showToastMessage(response.error?.message || 'Error al eliminar la unidad', 'error');
+          this.showToastMessage(response?.error?.message || 'Error al eliminar la unidad', 'error');
           this.isDeleting.set(false);
         }
       },
@@ -1123,20 +1124,22 @@ export class UnitsComponent implements OnInit, OnDestroy {
       [UnitStatus.VACANT]: 'badge-warning',
       [UnitStatus.UNDER_MAINTENANCE]: 'badge-info',
       [UnitStatus.FOR_SALE]: 'badge-secondary',
-      [UnitStatus.FOR_RENT]: 'badge-primary'
+      [UnitStatus.FOR_RENT]: 'badge-primary',
+      [UnitStatus.INACTIVE]: 'badge-error'
     };
-    return classes[status] || 'badge-neutral';
+    return classes[status] || 'badge-success';
   }
 
   getStatusLabel(status: UnitStatus): string {
     const labels: Record<UnitStatus, string> = {
-      [UnitStatus.OCCUPIED]: 'Ocupada',
-      [UnitStatus.VACANT]: 'Vacante',
-      [UnitStatus.UNDER_MAINTENANCE]: 'En Mantenimiento',
-      [UnitStatus.FOR_SALE]: 'En Venta',
-      [UnitStatus.FOR_RENT]: 'En Alquiler'
+      [UnitStatus.OCCUPIED]: 'Activo',
+      [UnitStatus.VACANT]: 'Activo',
+      [UnitStatus.UNDER_MAINTENANCE]: 'Activo',
+      [UnitStatus.FOR_SALE]: 'Activo',
+      [UnitStatus.FOR_RENT]: 'Activo',
+      [UnitStatus.INACTIVE]: 'Inactivo'
     };
-    return labels[status] || status;
+    return labels[status] || 'Activo';
   }
 
   getPropertyTypeLabel(type: PropertyType): string {

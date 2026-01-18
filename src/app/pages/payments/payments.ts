@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
 import { Condominium } from '../../models';
-import { PaymentService, InvoiceService } from '../../services';
+import { PaymentService, InvoiceService, BuildingService } from '../../services';
 import {
   Payment,
   PaymentWithDetails,
@@ -13,6 +13,7 @@ import {
   PaymentStatus,
   InvoiceWithDetails,
   ApiResponse,
+  BuildingDetails
 } from '../../models';
 
 @Component({
@@ -35,6 +36,7 @@ export class PaymentsComponent {
   // Data signals
   protected readonly payments = signal<PaymentWithDetails[]>([]);
   protected readonly pendingInvoices = signal<InvoiceWithDetails[]>([]);
+  protected readonly buildings = signal<BuildingDetails[]>([]);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
 
@@ -51,7 +53,7 @@ export class PaymentsComponent {
 
   // Modal state
   protected readonly showModal = signal(false);
-  protected readonly modalMode = signal<'register' | 'view'>('register');
+  protected readonly modalMode = signal<'register' | 'view' | 'config'>('register');
   protected readonly selectedPayment = signal<PaymentWithDetails | null>(null);
 
   // Toast notifications
@@ -71,6 +73,33 @@ export class PaymentsComponent {
     reference: '',
     notes: '',
   });
+
+  // Configuration State
+  protected readonly configYear = signal(new Date().getFullYear());
+  protected readonly configAnnualTotal = signal(0);
+  protected readonly configMonthlyAmounts = signal<number[]>(new Array(12).fill(0));
+  protected readonly configBuildingId = signal('');
+
+  protected readonly monthNames = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+
+  updateAnnualTotal(amount: number): void {
+    this.configAnnualTotal.set(amount);
+    const monthly = Number((amount / 12).toFixed(2));
+    this.configMonthlyAmounts.set(new Array(12).fill(monthly));
+  }
+
+  updateMonthlyAmount(index: number, amount: number): void {
+    const current = [...this.configMonthlyAmounts()];
+    current[index] = amount;
+    this.configMonthlyAmounts.set(current);
+
+    // Update total to match sum of months
+    const sum = current.reduce((a, b) => a + b, 0);
+    this.configAnnualTotal.set(Number(sum.toFixed(2)));
+  }
 
   // Enums for template
   protected readonly PaymentMethod = PaymentMethod;
@@ -133,13 +162,17 @@ export class PaymentsComponent {
   constructor(
     private router: Router,
     private paymentService: PaymentService,
-    private invoiceService: InvoiceService
+    private invoiceService: InvoiceService,
+    private buildingService: BuildingService
   ) {
     // Load initial data
     effect(() => {
       const condo = this.selectedCondo();
       this.loadPayments();
+      // Load pending invoices
       this.loadPendingInvoices();
+      // Load buildings for config
+      this.loadBuildings();
     });
   }
 
@@ -147,12 +180,13 @@ export class PaymentsComponent {
     this.sidebarOpen.set(!this.sidebarOpen());
   }
 
-  onCondoSelected(condo: Condominium | null): void {
+  /*onCondoSelected(condo: Condominium | null): void {
     this.selectedCondo.set(condo);
     this.currentPage.set(1);
     this.loadPayments();
     this.loadPendingInvoices();
-  }
+    this.loadBuildings();
+  }*/
 
   // CRUD Operations
   loadPayments(): void {
@@ -207,6 +241,20 @@ export class PaymentsComponent {
       });
   }
 
+  loadBuildings(): void {
+    const condoId = this.selectedCondo()?.id;
+    const params = (condoId && condoId !== 'all') ? { condominiumId: condoId } : {};
+
+    this.buildingService.getBuildings(params).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.buildings.set(response.data.items);
+        }
+      },
+      error: (err) => console.error('Error loading buildings:', err)
+    });
+  }
+
   openRegisterModal(): void {
     this.modalMode.set('register');
     this.selectedPayment.set(null);
@@ -222,6 +270,15 @@ export class PaymentsComponent {
       reference: '',
       notes: '',
     });
+    this.showModal.set(true);
+  }
+
+  openConfigModal(): void {
+    this.modalMode.set('config');
+    this.configBuildingId.set('');
+    this.configAnnualTotal.set(0);
+    this.configMonthlyAmounts.set(new Array(12).fill(0));
+    this.loadBuildings();
     this.showModal.set(true);
   }
 

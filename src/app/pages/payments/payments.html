@@ -1,18 +1,13 @@
 <div class="min-h-screen bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-100">
   <!-- Navbar -->
-  <app-navbar
-    (toggleSidebar)="toggleSidebar()"
-  />
+  <app-navbar (toggleSidebar)="toggleSidebar()" />
 
   <div class="flex">
     <!-- Sidebar -->
     <app-side-menu [isOpen]="sidebarOpen()" />
 
     <!-- Main Content -->
-    <main
-      class="flex-1 p-8 transition-all duration-300"
-      [class.ml-64]="sidebarOpen()"
-    >
+    <main class="flex-1 p-8 transition-all duration-300" [class.ml-64]="sidebarOpen()">
       <!-- Header -->
       <div class="mb-8">
         <div class="flex items-center justify-between">
@@ -23,22 +18,25 @@
             </h1>
             <p class="text-neutral-600">{{ getCondoName() }}</p>
           </div>
-          <button
-            class="btn btn-primary rounded-2xl shadow-lg hover:shadow-xl transition-all"
-            (click)="openRegisterModal()"
-          >
-            <i class="ri-add-circle-line text-base"></i>
-            Registrar Pago
-          </button>
+          <div class="flex gap-3">
+            <button class="btn btn-primary rounded-2xl shadow-lg hover:shadow-xl transition-all"
+              (click)="openConfigModal()">
+              <i class="ri-settings-3-line text-base"></i>
+              Configurar Pagos
+            </button>
+            <button class="btn btn-primary rounded-2xl shadow-lg hover:shadow-xl transition-all"
+              (click)="openRegisterModal()">
+              <i class="ri-add-circle-line text-base"></i>
+              Registrar Pago
+            </button>
+          </div>
         </div>
       </div>
 
       <!-- Statistics Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Total Payments -->
-        <div
-          class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1"
-        >
+        <div class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-neutral-600 text-sm font-medium mb-1">
@@ -55,9 +53,7 @@
         </div>
 
         <!-- Total Amount -->
-        <div
-          class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1"
-        >
+        <div class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-neutral-600 text-sm font-medium mb-1">
@@ -74,9 +70,7 @@
         </div>
 
         <!-- Pending Payments -->
-        <div
-          class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1"
-        >
+        <div class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-neutral-600 text-sm font-medium mb-1">
@@ -93,9 +87,7 @@
         </div>
 
         <!-- Confirmed Payments -->
-        <div
-          class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1"
-        >
+        <div class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-neutral-600 text-sm font-medium mb-1">
@@ -124,13 +116,8 @@
               </span>
             </label>
             <div class="relative">
-              <input
-                type="text"
-                [value]="searchTerm()"
-                (input)="onSearchChange($event)"
-                placeholder="Residente, folio, referencia..."
-                class="input input-bordered w-full pl-10 font-medium"
-              />
+              <input type="text" [value]="searchTerm()" (input)="onSearchChange($event)"
+                placeholder="Residente, folio, referencia..." class="input input-bordered w-full pl-10 font-medium" />
               <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg"></i>
             </div>
           </div>
@@ -145,11 +132,8 @@
                   Estado
                 </span>
               </label>
-              <select
-                [value]="statusFilter()"
-                (change)="onStatusFilterChange($event)"
-                class="select select-bordered w-full font-medium"
-              >
+              <select [value]="statusFilter()" (change)="onStatusFilterChange($event)"
+                class="select select-bordered w-full font-medium">
                 <option value="">Todos</option>
                 <option [value]="PaymentStatus.PENDING">Pendiente</option>
                 <option [value]="PaymentStatus.CONFIRMED">Confirmado</option>
@@ -166,16 +150,10 @@
                   Método
                 </span>
               </label>
-              <select
-                [value]="methodFilter()"
-                (change)="onMethodFilterChange($event)"
-                class="select select-bordered w-full font-medium"
-              >
+              <select [value]="methodFilter()" (change)="onMethodFilterChange($event)"
+                class="select select-bordered w-full font-medium">
                 <option value="">Todos</option>
-                <option
-                  *ngFor="let method of paymentMethods"
-                  [value]="method.value"
-                >
+                <option *ngFor="let method of paymentMethods" [value]="method.value">
                   {{ method.label }}
                 </option>
               </select>
@@ -183,10 +161,7 @@
 
             <!-- Clear Filters Button -->
             <div class="flex items-end gap-2">
-              <button
-                class="btn btn-ghost flex-1 sm:flex-none"
-                (click)="clearFilters()"
-              >
+              <button class="btn btn-ghost flex-1 sm:flex-none" (click)="clearFilters()">
                 <i class="ri-filter-off-line"></i>
                 Limpiar
               </button>
@@ -244,12 +219,10 @@
                 <td>
                   <div class="flex items-center gap-3">
                     <div class="avatar placeholder">
-                      <div
-                        class="bg-primary text-primary-content w-10 rounded-full"
-                      >
+                      <div class="bg-primary text-primary-content w-10 rounded-full">
                         <span class="text-xs">{{
                           payment.residentName.charAt(0)
-                        }}</span>
+                          }}</span>
                       </div>
                     </div>
                     <div>
@@ -279,26 +252,19 @@
                     }
                     <span class="text-xs">{{
                       getMethodLabel(payment.paymentMethod)
-                    }}</span>
+                      }}</span>
                   </div>
                 </td>
                 <td class="font-bold text-success text-sm">
                   {{ formatCurrency(payment.amount) }}
                 </td>
                 <td>
-                  <span
-                    class="badge rounded-xl text-xs"
-                    [ngClass]="getStatusBadgeClass(payment.status)"
-                  >
+                  <span class="badge rounded-xl text-xs" [ngClass]="getStatusBadgeClass(payment.status)">
                     {{ getStatusLabel(payment.status) }}
                   </span>
                 </td>
                 <td>
-                  <button
-                    class="btn btn-sm btn-ghost rounded-xl"
-                    (click)="openViewModal(payment)"
-                    title="Ver detalles"
-                  >
+                  <button class="btn btn-sm btn-ghost rounded-xl" (click)="openViewModal(payment)" title="Ver detalles">
                     <i class="ri-eye-line text-lg"></i>
                   </button>
                 </td>
@@ -316,35 +282,23 @@
             totalItems()) }} de {{ totalItems() }} pagos
           </div>
           <div class="join">
-            <button
-              class="join-item btn btn-sm rounded-l-xl"
-              (click)="previousPage()"
-              [disabled]="currentPage() === 1"
-            >
+            <button class="join-item btn btn-sm rounded-l-xl" (click)="previousPage()" [disabled]="currentPage() === 1">
               <i class="ri-arrow-left-s-line"></i>
             </button>
             @for (page of [].constructor(totalPages()); track $index; let i =
             $index) { @if (i + 1 === currentPage() || i + 1 === 1 || i + 1 ===
-            totalPages() || (i + 1 >= currentPage() - 1 && i + 1 <=
-            currentPage() + 1)) {
-            <button
-              class="join-item btn btn-sm"
-              [class.btn-active]="currentPage() === i + 1"
-              (click)="goToPage(i + 1)"
-            >
+            totalPages() || (i + 1 >= currentPage() - 1 && i + 1 <= currentPage() + 1)) { <button
+              class="join-item btn btn-sm" [class.btn-active]="currentPage() === i + 1" (click)="goToPage(i + 1)">
               {{ i + 1 }}
-            </button>
-            } @else if (i + 1 === currentPage() - 2 || i + 1 === currentPage()
-            + 2) {
-            <button class="join-item btn btn-sm btn-disabled">...</button>
-            } }
-            <button
-              class="join-item btn btn-sm rounded-r-xl"
-              (click)="nextPage()"
-              [disabled]="currentPage() === totalPages()"
-            >
-              <i class="ri-arrow-right-s-line"></i>
-            </button>
+              </button>
+              } @else if (i + 1 === currentPage() - 2 || i + 1 === currentPage()
+              + 2) {
+              <button class="join-item btn btn-sm btn-disabled">...</button>
+              } }
+              <button class="join-item btn btn-sm rounded-r-xl" (click)="nextPage()"
+                [disabled]="currentPage() === totalPages()">
+                <i class="ri-arrow-right-s-line"></i>
+              </button>
           </div>
         </div>
         }
@@ -356,17 +310,16 @@
   @if (showModal()) {
   <div class="modal modal-open">
     <div class="modal-box max-w-2xl rounded-2xl glass">
-      <button
-        class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4"
-        (click)="closeModal()"
-      >
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4" (click)="closeModal()">
         ✕
       </button>
 
       <h3 class="font-bold text-2xl mb-6">
         @if (modalMode() === 'register') {
         <i class="ri-add-circle-line mr-2"></i>
-        Registrar Nuevo Pago } @else {
+        Registrar Nuevo Pago } @else if (modalMode() === 'config') {
+        <i class="ri-settings-3-line mr-2"></i>
+        Configuración de Pagos } @else {
         <i class="ri-file-list-3-line mr-2"></i>
         Detalles del Pago }
       </h3>
@@ -383,12 +336,8 @@
                 Factura a Pagar *
               </span>
             </label>
-            <select
-              [value]="formData().invoiceId"
-              (change)="onInvoiceChange($event)"
-              class="select select-bordered w-full rounded-2xl"
-              required
-            >
+            <select [value]="formData().invoiceId" (change)="onInvoiceChange($event)"
+              class="select select-bordered w-full rounded-2xl" required>
               <option value="">Seleccione una factura...</option>
               @for (invoice of pendingInvoices(); track invoice.id) {
               <option [value]="invoice.id">
@@ -407,13 +356,9 @@
                 Fecha de Pago *
               </span>
             </label>
-            <input
-              type="date"
-              [value]="formatDateForInput(formData().paymentDate)"
-              (change)="onDateChange($any($event.target).value)"
-              class="input input-bordered w-full rounded-2xl"
-              required
-            />
+            <input type="date" [value]="formatDateForInput(formData().paymentDate)"
+              (change)="onDateChange($any($event.target).value)" class="input input-bordered w-full rounded-2xl"
+              required />
           </div>
 
           <!-- Amount -->
@@ -424,15 +369,9 @@
                 Monto (MXN) *
               </span>
             </label>
-            <input
-              type="number"
-              [value]="formData().amount"
+            <input type="number" [value]="formData().amount"
               (input)="onFormFieldChange('amount', +$any($event.target).value)"
-              class="input input-bordered w-full rounded-2xl"
-              min="0"
-              step="0.01"
-              required
-            />
+              class="input input-bordered w-full rounded-2xl" min="0" step="0.01" required />
           </div>
 
           <!-- Payment Method -->
@@ -443,12 +382,9 @@
                 Método de Pago *
               </span>
             </label>
-            <select
-              [value]="formData().paymentMethod"
+            <select [value]="formData().paymentMethod"
               (change)="onFormFieldChange('paymentMethod', $any($event.target).value)"
-              class="select select-bordered w-full rounded-2xl"
-              required
-            >
+              class="select select-bordered w-full rounded-2xl" required>
               @for (method of paymentMethods; track method.value) {
               <option [value]="method.value">{{ method.label }}</option>
               }
@@ -463,13 +399,9 @@
                 Referencia
               </span>
             </label>
-            <input
-              type="text"
-              [value]="formData().reference || ''"
+            <input type="text" [value]="formData().reference || ''"
               (input)="onFormFieldChange('reference', $any($event.target).value)"
-              class="input input-bordered w-full rounded-2xl"
-              placeholder="Ej: SPEI-20250903-001"
-            />
+              class="input input-bordered w-full rounded-2xl" placeholder="Ej: SPEI-20250903-001" />
           </div>
 
           <!-- Notes -->
@@ -480,13 +412,9 @@
                 Notas
               </span>
             </label>
-            <textarea
-              [value]="formData().notes || ''"
-              (input)="onFormFieldChange('notes', $any($event.target).value)"
-              class="textarea textarea-bordered w-full rounded-2xl"
-              rows="3"
-              placeholder="Notas adicionales..."
-            ></textarea>
+            <textarea [value]="formData().notes || ''" (input)="onFormFieldChange('notes', $any($event.target).value)"
+              class="textarea textarea-bordered w-full rounded-2xl" rows="3"
+              placeholder="Notas adicionales..."></textarea>
           </div>
         </div>
 
@@ -498,25 +426,91 @@
         }
 
         <div class="modal-action">
-          <button
-            type="button"
-            class="btn btn-outline rounded-2xl"
-            (click)="closeModal()"
-            [disabled]="loading()"
-          >
+          <button type="button" class="btn btn-outline rounded-2xl" (click)="closeModal()" [disabled]="loading()">
             Cancelar
           </button>
-          <button
-            type="submit"
-            class="btn btn-primary rounded-2xl"
-            [disabled]="loading()"
-          >
+          <button type="submit" class="btn btn-primary rounded-2xl" [disabled]="loading()">
             @if (loading()) {
             <span class="loading loading-spinner"></span>
             } Registrar Pago
           </button>
         </div>
       </form>
+      } @else if (modalMode() === 'config') {
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <!-- Building Selection -->
+          <div class="col-span-1 md:col-span-2">
+            <label class="label">
+              <span class="label-text font-semibold text-neutral-900">
+                <i class="ri-building-line mr-2"></i>
+                Edificio / Torre
+              </span>
+            </label>
+            <select [value]="configBuildingId()" (change)="configBuildingId.set($any($event.target).value)"
+              class="select select-bordered w-full rounded-2xl font-medium">
+              <option value="">Seleccione un edificio...</option>
+              @for (building of buildings(); track building.id) {
+              <option [value]="building.id">{{ building.name }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Year Selection -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold text-neutral-900">
+                <i class="ri-calendar-line mr-2"></i>
+                Año Fiscal
+              </span>
+            </label>
+            <input type="number" [value]="configYear()" (input)="configYear.set(+$any($event.target).value)"
+              class="input input-bordered w-full rounded-2xl font-medium" placeholder="Ej: 2026" />
+          </div>
+
+          <!-- Annual Total -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold text-neutral-900">
+                <i class="ri-money-dollar-circle-line mr-2"></i>
+                Monto Anual Total
+              </span>
+            </label>
+            <input type="number" [value]="configAnnualTotal()" (input)="updateAnnualTotal(+$any($event.target).value)"
+              class="input input-bordered w-full rounded-2xl font-medium" placeholder="0.00" min="0" step="0.01" />
+          </div>
+        </div>
+
+        <div class="divider">Desglose Mensual</div>
+
+        <!-- Monthly Breakdown Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          @for (month of monthNames; track $index) {
+          <div class="form-control p-3 bg-base-200/50 rounded-2xl transition-all hover:bg-base-200">
+            <label class="label py-1">
+              <span class="label-text font-medium text-neutral-600 text-xs uppercase tracking-wide">{{ month }}</span>
+            </label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">$</span>
+              <input type="number" [value]="configMonthlyAmounts()[$index]"
+                (input)="updateMonthlyAmount($index, +$any($event.target).value)"
+                class="input input-sm input-ghost w-full pl-6 font-semibold text-neutral-800 focus:bg-white focus:shadow-sm rounded-lg transition-all"
+                placeholder="0.00" min="0" step="0.01" />
+            </div>
+          </div>
+          }
+        </div>
+
+        <div class="modal-action mt-8">
+          <button class="btn btn-ghost rounded-2xl" (click)="closeModal()">
+            Cancelar
+          </button>
+          <button class="btn btn-primary rounded-2xl shadow-lg" (click)="closeModal()">
+            <i class="ri-save-line mr-2"></i>
+            Guardar Configuración
+          </button>
+        </div>
+      </div>
       } @else if (selectedPayment()) {
       <!-- View Details -->
       <div class="space-y-4">
@@ -529,10 +523,7 @@
           </div>
           <div>
             <p class="text-sm text-neutral-600">Estado</p>
-            <span
-              class="badge rounded-xl"
-              [ngClass]="getStatusBadgeClass(selectedPayment()!.status)"
-            >
+            <span class="badge rounded-xl" [ngClass]="getStatusBadgeClass(selectedPayment()!.status)">
               {{ getStatusLabel(selectedPayment()!.status) }}
             </span>
           </div>
@@ -596,14 +587,11 @@
   <!-- Toast Notification -->
   @if (showToast()) {
   <div class="toast toast-top toast-end z-50">
-    <div
-      class="alert rounded-2xl shadow-xl"
-      [ngClass]="{
+    <div class="alert rounded-2xl shadow-xl" [ngClass]="{
         'alert-success': toastType() === 'success',
         'alert-error': toastType() === 'error',
         'alert-info': toastType() === 'info'
-      }"
-    >
+      }">
       @if (toastType() === 'success') {
       <i class="ri-checkbox-circle-line text-base"></i>
       } @else if (toastType() === 'error') {

@@ -1,16 +1,16 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, delay, catchError, map, throwError } from 'rxjs';
-import { 
-  Building, 
-  BuildingDetails, 
-  BuildingType, 
+import {
+  Building,
+  BuildingDetails,
+  BuildingType,
   BuildingStatus,
-  CreateBuildingDto, 
+  CreateBuildingDto,
   UpdateBuildingDto,
   BuildingStatistics,
-  ApiResponse, 
-  PaginatedResponse 
+  ApiResponse,
+  PaginatedResponse
 } from '../models';
 import { environment } from '../../environments/environment';
 
@@ -30,31 +30,36 @@ export class BuildingService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/building`;
 
-  constructor() {}
+  constructor() { }
 
   // Get all buildings - SIMPLE VERSION (sin paginación por ahora)
   // Backend: GET /buildings - Returns { success, message, data: { buildings: [], count } }
   getBuildings(params: GetBuildingsParams = {}): Observable<ApiResponse<PaginatedResponse<BuildingDetails>>> {
-    console.log('🔍 Building Service - Calling GET /building (sin parámetros)');
+    console.log('🔍 Building Service - Calling GET /building');
 
-    return this.http.get<any>(this.apiUrl+'/'+params.condominiumId).pipe(
+    let url = this.apiUrl;
+    if (params.condominiumId && params.condominiumId !== 'all') {
+      url += '/' + params.condominiumId;
+    }
+
+    return this.http.get<any>(url).pipe(
       map(response => {
         console.log('✅ Building Service - Raw response:', response);
-        
+
         // La Lambda retorna { success, message, data: { buildings: [], count } }
         // Necesitamos transformarlo a formato PaginatedResponse
         const rawBuildings = response.data?.buildings || [];
         const total = response.data?.count || 0;
-        
+
         // Normalizar buildings: copiar _id a id si id está vacío
         const buildings = rawBuildings.map((building: any) => ({
           ...building,
           id: building.id || building._id, // Usar _id si id está vacío
           _id: building._id // Mantener _id también
         }));
-        
+
         console.log('✅ Building Service - Normalized buildings:', buildings);
-        
+
         const paginatedResponse: ApiResponse<PaginatedResponse<BuildingDetails>> = {
           success: response.success,
           message: response.message,
@@ -69,7 +74,7 @@ export class BuildingService {
           },
           timestamp: response.timestamp || new Date()
         };
-        
+
         console.log('✅ Transformed response:', paginatedResponse);
         return paginatedResponse;
       }),
@@ -81,7 +86,7 @@ export class BuildingService {
           error: error.error,
           url: error.url
         });
-        
+
         // Si es error 500, probablemente el backend tiene un problema
         if (error.status === 500) {
           console.error('⚠️ Backend error 500 - Posibles causas:');
@@ -90,7 +95,7 @@ export class BuildingService {
           console.error('  3. Parámetros inválidos');
           console.error('  4. Permisos IAM insuficientes');
         }
-        
+
         // Re-throw el error para que el componente lo maneje
         return throwError(() => error);
       })
@@ -145,7 +150,7 @@ export class BuildingService {
   // Backend: GET /buildings/statistics?condominiumId=xxx
   getBuildingStatistics(condominiumId?: string): Observable<ApiResponse<BuildingStatistics>> {
     let httpParams = new HttpParams();
-    
+
     if (condominiumId && condominiumId !== 'all') {
       httpParams = httpParams.set('condominiumId', condominiumId);
     }

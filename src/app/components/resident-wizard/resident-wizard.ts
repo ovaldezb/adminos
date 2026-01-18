@@ -2,13 +2,13 @@ import { Component, signal, computed, OnInit, Input, Output, EventEmitter, effec
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, AsyncValidatorFn } from '@angular/forms';
 import { Observable, of, debounceTime, switchMap, map, catchError, timer } from 'rxjs';
-import { 
-  BuildingService, 
-  UnitService, 
-  AssignmentService, 
-  CondominiumService 
+import {
+  BuildingService,
+  UnitService,
+  AssignmentService,
+  CondominiumService
 } from '../../services';
-import { 
+import {
   Building,
   BuildingDetails,
   CreateBuildingDto,
@@ -92,10 +92,10 @@ export class ResidentWizardComponent implements OnInit {
   protected readonly UnitStatus = UnitStatus;
   protected readonly PropertyType = PropertyType;
   protected readonly PersonType = PersonType;
-  
+
   // Helper properties
   protected readonly currentYear = new Date().getFullYear();
-  
+
   // Computed validations
   protected readonly hasValidCondominium = computed(() => {
     return !!this.condominiumId && this.condominiumId !== '' && this.condominiumId !== 'all';
@@ -144,7 +144,7 @@ export class ResidentWizardComponent implements OnInit {
     private condominiumService: CondominiumService
   ) {
     this.initializeForms();
-    
+
     // Auto-load data when condominium changes
     effect(() => {
       if (this.condominiumId) {
@@ -280,7 +280,7 @@ export class ResidentWizardComponent implements OnInit {
   // Form validator toggles
   private toggleBuildingFormValidators(isCreating: boolean): void {
     const buildingFields = ['name', 'type', 'mainEntranceAddress', 'totalUnits'];
-    
+
     buildingFields.forEach(field => {
       const control = this.step1Form.get(field);
       if (control) {
@@ -298,7 +298,7 @@ export class ResidentWizardComponent implements OnInit {
 
   private toggleUnitFormValidators(isCreating: boolean): void {
     const unitFields = ['unitNumber', 'floor', 'area', 'bedrooms', 'bathrooms', 'parkingSpaces', 'monthlyFee'];
-    
+
     unitFields.forEach(field => {
       const control = this.step2Form.get(field);
       if (control) {
@@ -317,7 +317,7 @@ export class ResidentWizardComponent implements OnInit {
 
   private toggleOwnerFormValidators(isCreating: boolean): void {
     const ownerFields = ['ownerFirstName', 'ownerLastName', 'ownerEmail', 'ownerPhone'];
-    
+
     ownerFields.forEach(field => {
       const control = this.step3Form.get(field);
       if (control) {
@@ -335,7 +335,7 @@ export class ResidentWizardComponent implements OnInit {
 
   private toggleResidentFormValidators(isCreating: boolean): void {
     const residentFields = ['residentFirstName', 'residentLastName', 'residentEmail', 'residentPhone'];
-    
+
     residentFields.forEach(field => {
       const control = this.step3Form.get(field);
       if (control) {
@@ -354,7 +354,7 @@ export class ResidentWizardComponent implements OnInit {
   private toggleResidentRequirement(isRequired: boolean): void {
     const residentSelection = this.step3Form.get('selectedResidentId');
     const residentCreation = this.step3Form.get('isCreatingResident');
-    
+
     if (isRequired) {
       // Require either selection or creation
       residentSelection?.addValidators(this.requiredIfNotCreating('isCreatingResident'));
@@ -428,7 +428,7 @@ export class ResidentWizardComponent implements OnInit {
   // Data loading methods
   private loadBuildings(): void {
     this.loadingBuildings.set(true);
-    
+
     this.buildingService.getBuildings().subscribe({
       next: (response) => {
         if (response.success && response.data) {
@@ -445,7 +445,7 @@ export class ResidentWizardComponent implements OnInit {
 
   private loadUnitsByBuilding(buildingId: string): void {
     this.loadingUnits.set(true);
-    
+
     this.unitService.getUnits({
       page: 1,
       buildingId,
@@ -467,7 +467,7 @@ export class ResidentWizardComponent implements OnInit {
 
   private loadOwners(): void {
     this.loadingOwners.set(true);
-    
+
     this.assignmentService.getPersons({
       page: 1,
       type: PersonType.OWNER,
@@ -489,7 +489,7 @@ export class ResidentWizardComponent implements OnInit {
 
   private loadResidents(): void {
     this.loadingResidents.set(true);
-    
+
     this.assignmentService.getPersons({
       page: 1,
       type: PersonType.RESIDENT,
@@ -513,11 +513,11 @@ export class ResidentWizardComponent implements OnInit {
   nextStep(): void {
     if (this.currentStep() < this.totalSteps) {
       const nextStep = this.currentStep() + 1;
-      
+
       if (nextStep === 2 && this.selectedBuildingId()) {
         this.loadUnitsByBuilding(this.selectedBuildingId());
       }
-      
+
       this.currentStep.set(nextStep);
     }
   }
@@ -646,7 +646,7 @@ export class ResidentWizardComponent implements OnInit {
   quickCreateOwner(): void {
     const ownerControls = ['ownerFirstName', 'ownerLastName', 'ownerEmail', 'ownerPhone'];
     const hasValidOwnerData = ownerControls.every(field => this.step3Form.get(field)?.valid);
-    
+
     if (!hasValidOwnerData) return;
 
     const ownerData: CreatePersonDto = {
@@ -677,7 +677,7 @@ export class ResidentWizardComponent implements OnInit {
   quickCreateResident(): void {
     const residentControls = ['residentFirstName', 'residentLastName', 'residentEmail', 'residentPhone'];
     const hasValidResidentData = residentControls.every(field => this.step3Form.get(field)?.valid);
-    
+
     if (!hasValidResidentData) return;
 
     const residentData: CreatePersonDto = {
@@ -786,7 +786,7 @@ export class ResidentWizardComponent implements OnInit {
           resident,
           assignment: assignmentResponse.data
         };
-        
+
         this.onComplete.emit(completedData);
         this.resetWizard();
       } else {
@@ -935,11 +935,11 @@ export class ResidentWizardComponent implements OnInit {
     this.ownerInhabits.set(true);
     this.isSubmitting.set(false);
     this.submitError.set(null);
-    
+
     this.step1Form.reset();
     this.step2Form.reset();
     this.step3Form.reset();
-    
+
     // Reset form defaults
     this.step1Form.patchValue({
       isCreatingBuilding: false,
@@ -987,23 +987,25 @@ export class ResidentWizardComponent implements OnInit {
   }
 
   getUnitStatusBadgeClass(status: UnitStatus): string {
-    const classes = {
+    const classes: Record<UnitStatus, string> = {
       [UnitStatus.VACANT]: 'badge-success',
       [UnitStatus.OCCUPIED]: 'badge-warning',
       [UnitStatus.UNDER_MAINTENANCE]: 'badge-error',
       [UnitStatus.FOR_SALE]: 'badge-info',
-      [UnitStatus.FOR_RENT]: 'badge-secondary'
+      [UnitStatus.FOR_RENT]: 'badge-secondary',
+      [UnitStatus.INACTIVE]: 'badge-error'
     };
     return classes[status] || 'badge-neutral';
   }
 
   getUnitStatusLabel(status: UnitStatus): string {
-    const labels = {
+    const labels: Record<UnitStatus, string> = {
       [UnitStatus.VACANT]: 'Disponible',
       [UnitStatus.OCCUPIED]: 'Ocupada',
       [UnitStatus.UNDER_MAINTENANCE]: 'Mantenimiento',
       [UnitStatus.FOR_SALE]: 'En Venta',
-      [UnitStatus.FOR_RENT]: 'En Renta'
+      [UnitStatus.FOR_RENT]: 'En Renta',
+      [UnitStatus.INACTIVE]: 'Inactivo'
     };
     return labels[status] || status;
   }
