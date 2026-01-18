@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of, delay, catchError, map } from 'rxjs';
-import { Payment, PaymentWithDetails, PaymentMethod, PaymentStatus } from '../models/payment.model';
-import { ApiResponse, PaginatedResponse, PaginationParams } from '../models/api.model';
+import { Observable, of, delay, catchError, map, throwError } from 'rxjs';
+import { PaymentConfig } from '../models/payment-config.model';
 import { environment } from '../../environments/environment';
+import { ApiResponse, PaginationParams, PaymentStatus, PaginatedResponse, PaymentWithDetails, Payment } from '../models';
 
 @Injectable({
   providedIn: 'root',
@@ -11,8 +11,32 @@ import { environment } from '../../environments/environment';
 export class PaymentService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/payments`;
+  private readonly configUrl = `${environment.apiUrl}/payment-config`;
 
-  
+
+  savePaymentConfig(config: PaymentConfig): Observable<ApiResponse<PaymentConfig>> {
+    return this.http.post<ApiResponse<PaymentConfig>>(this.configUrl, config).pipe(
+      catchError((error) => {
+        console.error('Error saving payment config:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  getPaymentConfig(buildingId: string, year: number): Observable<ApiResponse<PaymentConfig>> {
+    const params = new HttpParams()
+      .set('buildingId', buildingId)
+      .set('year', year.toString());
+
+    return this.http.get<ApiResponse<PaymentConfig>>(this.configUrl, { params }).pipe(
+      catchError((error) => {
+        console.error('Error fetching payment config:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+
 
   /**
    * GET /payments - Fetch all payments via backend with pagination

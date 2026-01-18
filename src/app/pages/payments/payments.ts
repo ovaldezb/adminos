@@ -180,14 +180,6 @@ export class PaymentsComponent {
     this.sidebarOpen.set(!this.sidebarOpen());
   }
 
-  /*onCondoSelected(condo: Condominium | null): void {
-    this.selectedCondo.set(condo);
-    this.currentPage.set(1);
-    this.loadPayments();
-    this.loadPendingInvoices();
-    this.loadBuildings();
-  }*/
-
   // CRUD Operations
   loadPayments(): void {
     this.loading.set(true);
@@ -280,6 +272,40 @@ export class PaymentsComponent {
     this.configMonthlyAmounts.set(new Array(12).fill(0));
     this.loadBuildings();
     this.showModal.set(true);
+  }
+
+  saveConfig(): void {
+    if (!this.configBuildingId()) {
+      this.showToastMessage('Por favor seleccione un edificio', 'error');
+      return;
+    }
+
+    this.loading.set(true);
+    const config = {
+      buildingId: this.configBuildingId(),
+      paymentYear: this.configYear(),
+      monthlyAmounts: this.configMonthlyAmounts().map((amount, index) => ({
+        month: index + 1,
+        amount: amount
+      }))
+    };
+
+    this.paymentService.savePaymentConfig(config).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.showToastMessage('Configuración guardada exitosamente', 'success');
+          this.closeModal();
+        } else {
+          this.showToastMessage('Error al guardar la configuración', 'error');
+        }
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Error saving config:', err);
+        this.showToastMessage('Error al guardar la configuración', 'error');
+        this.loading.set(false);
+      }
+    });
   }
 
   openViewModal(payment: PaymentWithDetails): void {

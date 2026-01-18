@@ -12,3 +12,4 @@ export * from './api.model';
 export * from './building.model';
 export * from './assignment.model';
 export * from './fund-type.model';
+export * from './payment-config.model';
