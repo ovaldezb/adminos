@@ -16,6 +16,7 @@ import {
   ApiResponse,
   BuildingDetails,
   PaymentConfig,
+  MonthlyAmount,
   AppPaymentRequest
 } from '../../models';
 
@@ -78,32 +79,61 @@ export class PaymentsComponent {
     notes: '',
   });
 
-  // Configuration State
-  protected readonly configYear = signal(new Date().getFullYear());
-  protected readonly configAnnualTotal = signal(0);
-  protected readonly configMonthlyAmounts = signal<number[]>(new Array(12).fill(0));
-  protected readonly configBuildingId = signal('');
-  protected readonly configId = signal<string | null>(null);
-
   protected readonly monthNames = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ];
 
+  // Configuration State
+  protected readonly configYear = signal(new Date().getFullYear());
+  protected readonly configAnnualTotal = signal(0);
+  protected readonly configMonthlyAmounts = signal<MonthlyAmount[]>(
+    this.monthNames.map((name, i) => ({ month: i + 1, amount: 0, title: name }))
+  );
+  protected readonly configBuildingId = signal('');
+  protected readonly configId = signal<string | null>(null);
+
   updateAnnualTotal(amount: number): void {
-    this.configAnnualTotal.set(amount);
     const monthly = Number((amount / 12).toFixed(2));
-    this.configMonthlyAmounts.set(new Array(12).fill(monthly));
+
+    this.configMonthlyAmounts.update(current =>
+      current.map((item, i) => (i < 12 ? { ...item, amount: monthly } : item))
+    );
+
+    // Update the overall annual total sum (maintenance + special payments)
+    const sum = this.configMonthlyAmounts().reduce((acc, curr) => acc + curr.amount, 0);
+    this.configAnnualTotal.set(Number(sum.toFixed(2)));
   }
 
   updateMonthlyAmount(index: number, amount: number): void {
-    const current = [...this.configMonthlyAmounts()];
-    current[index] = amount;
-    this.configMonthlyAmounts.set(current);
+    this.configMonthlyAmounts.update(current => {
+      const updated = [...current];
+      updated[index] = { ...updated[index], amount };
+      return updated;
+    });
 
     // Update total to match sum of months
-    const sum = current.reduce((a, b) => a + b, 0);
+    const sum = this.configMonthlyAmounts().reduce((acc, curr) => acc + curr.amount, 0);
     this.configAnnualTotal.set(Number(sum.toFixed(2)));
+  }
+
+  updateMonthlyTitle(index: number, title: string): void {
+    this.configMonthlyAmounts.update(current => {
+      const updated = [...current];
+      updated[index] = { ...updated[index], title };
+      return updated;
+    });
+  }
+
+  addSpecialPayment(): void {
+    this.configMonthlyAmounts.update(current => [
+      ...current,
+      {
+        month: current.length + 1,
+        amount: 0,
+        title: 'Nuevo Pago'
+      }
+    ]);
   }
 
   // Enums for template
@@ -169,13 +199,21 @@ export class PaymentsComponent {
       next: (response) => {
         if (response.success && response.data) {
           this.configId.set(response.data.id || response.data._id || null);
-          const amounts = new Array(12).fill(0);
+          const amounts: MonthlyAmount[] = this.monthNames.map((name, i) => ({
+            month: i + 1,
+            amount: 0,
+            title: name
+          }));
           let total = 0;
 
           if (response.data.monthlyAmounts) {
             response.data.monthlyAmounts.forEach(m => {
               if (m.month >= 1 && m.month <= 12) {
-                amounts[m.month - 1] = m.amount;
+                amounts[m.month - 1] = {
+                  month: m.month,
+                  amount: m.amount,
+                  title: m.title || this.monthNames[m.month - 1]
+                };
                 total += m.amount;
               }
             });
@@ -187,19 +225,21 @@ export class PaymentsComponent {
           // Reset if not found
           this.configId.set(null);
           this.configAnnualTotal.set(0);
-          this.configMonthlyAmounts.set(new Array(12).fill(0));
+          this.configMonthlyAmounts.set(
+            this.monthNames.map((name, i) => ({ month: i + 1, amount: 0, title: name }))
+          );
         }
       },
-      error: () => {
-        // Reset on error (likely 404 not found)
+      error: (err) => {
+        console.error('Error fetching payment config:', err);
         this.configId.set(null);
         this.configAnnualTotal.set(0);
-        this.configMonthlyAmounts.set(new Array(12).fill(0));
+        this.configMonthlyAmounts.set(
+          this.monthNames.map((name, i) => ({ month: i + 1, amount: 0, title: name }))
+        );
       }
     });
   }
-
-
 
   // Resident Search State
   protected readonly residentSearchQuery = signal('');
@@ -335,11 +375,12 @@ export class PaymentsComponent {
   }
 
   onMonthSelect(monthIndex: number, amount: number): void {
+    const item = this.selectedResidentConfig()?.monthlyAmounts[monthIndex];
     this.selectedMonth.set(monthIndex);
     this.formData.update(curr => ({
       ...curr,
       amount: amount,
-      notes: `Pago Mantenimiento ${this.monthNames[monthIndex]} ${new Date().getFullYear()}`
+      notes: `Pago ${item?.title || this.monthNames[monthIndex]} ${new Date().getFullYear()}`
     }));
   }
 
@@ -432,11 +473,19 @@ export class PaymentsComponent {
     this.showModal.set(true);
   }
 
+  openViewModal(payment: PaymentWithDetails): void {
+    this.modalMode.set('view');
+    this.selectedPayment.set(payment);
+    this.showModal.set(true);
+  }
+
   openConfigModal(): void {
     this.modalMode.set('config');
     this.configBuildingId.set('');
     this.configAnnualTotal.set(0);
-    this.configMonthlyAmounts.set(new Array(12).fill(0));
+    this.configMonthlyAmounts.set(
+      this.monthNames.map((name, i) => ({ month: i + 1, amount: 0, title: name }))
+    );
     this.loadBuildings();
     this.showModal.set(true);
   }
@@ -448,13 +497,10 @@ export class PaymentsComponent {
     }
 
     this.loading.set(true);
-    const config = {
+    const config: PaymentConfig = {
       buildingId: this.configBuildingId(),
       paymentYear: this.configYear(),
-      monthlyAmounts: this.configMonthlyAmounts().map((amount, index) => ({
-        month: index + 1,
-        amount: amount
-      }))
+      monthlyAmounts: this.configMonthlyAmounts()
     };
 
     const request$ = this.configId()
@@ -478,12 +524,6 @@ export class PaymentsComponent {
         this.loading.set(false);
       }
     });
-  }
-
-  openViewModal(payment: PaymentWithDetails): void {
-    this.modalMode.set('view');
-    this.selectedPayment.set(payment);
-    this.showModal.set(true);
   }
 
   closeModal(): void {

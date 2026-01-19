@@ -1,6 +1,7 @@
 export interface MonthlyAmount {
     month: number;
     amount: number;
+    title?: string;
 }
 
 export interface PaymentConfig {

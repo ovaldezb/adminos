@@ -212,7 +212,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (payment of filteredPayments(); track payment.id) {
+              @for (payment of filteredPayments(); track $index) {
               <tr class="hover">
                 <td class="font-mono text-sm hidden md:table-cell">{{ payment.paymentNumber }}</td>
                 <td class="hidden lg:table-cell text-sm">{{ formatDate(payment.paymentDate) }}</td>
@@ -350,7 +350,7 @@
               @if (residentSearchResults().length > 0) {
               <ul
                 class="absolute z-50 menu p-2 shadow-lg bg-base-100 rounded-box w-full mt-1 border border-base-200 max-h-60 overflow-y-auto">
-                @for (resident of residentSearchResults(); track resident.id) {
+                @for (resident of residentSearchResults(); track $index) {
                 <li>
                   <a (click)="selectResident(resident)" class="flex flex-col items-start gap-1 py-3">
                     <span class="font-medium">{{ resident.firstName }} {{ resident.lastName }}</span>
@@ -386,15 +386,15 @@
 
             @if (selectedResidentConfig()) {
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 bg-base-200/50 p-4 rounded-2xl">
-              @for (month of monthNames; track $index) {
-              @let amount = selectedResidentConfig()!.monthlyAmounts[$index].amount;
+              @for (item of selectedResidentConfig()!.monthlyAmounts; track $index) {
               <div class="form-control">
                 <label
                   class="label cursor-pointer flex-col items-center gap-2 p-3 rounded-xl border border-transparent hover:bg-base-100 hover:border-base-300 transition-all has-[:checked]:bg-white has-[:checked]:shadow-md has-[:checked]:border-primary">
-                  <span class="label-text font-semibold uppercase text-xs tracking-wide">{{ month }}</span>
-                  <span class="text-sm font-medium text-neutral-600">${{ amount }}</span>
+                  <span class="label-text font-semibold uppercase text-xs tracking-wide">{{ item.title ||
+                    monthNames[$index] }}</span>
+                  <span class="text-sm font-medium text-neutral-600">${{ item.amount }}</span>
                   <input type="radio" name="paymentMonth" class="radio radio-sm radio-primary"
-                    [checked]="selectedMonth() === $index" (change)="onMonthSelect($index, amount)" />
+                    [checked]="selectedMonth() === $index" (change)="onMonthSelect($index, item.amount)" />
                 </label>
               </div>
               }
@@ -540,7 +540,7 @@
             <select [value]="configBuildingId()" (change)="configBuildingId.set($any($event.target).value)"
               class="select select-bordered w-full rounded-2xl font-medium">
               <option value="">Seleccione un edificio...</option>
-              @for (building of buildings(); track building.id) {
+              @for (building of buildings(); track $index) {
               <option [value]="building.id">{{ building.name }}</option>
               }
             </select>
@@ -566,23 +566,32 @@
                 Monto Anual Total
               </span>
             </label>
-            <input type="number" [value]="configAnnualTotal()" (input)="updateAnnualTotal(+$any($event.target).value)"
-              class="input input-bordered w-full rounded-2xl font-medium" placeholder="0.00" min="0" step="0.01" />
+            <input type="number" [value]="configAnnualTotal()" (change)="updateAnnualTotal(+$any($event.target).value)"
+              (focus)="$any($event.target).select()" class="input input-bordered w-full rounded-2xl font-medium"
+              placeholder="0.00" min="0" step="0.01" />
           </div>
         </div>
 
-        <div class="divider">Desglose Mensual</div>
+        <div class="flex items-center justify-between mt-6 mb-2">
+          <h4 class="text-sm font-bold uppercase tracking-wider text-neutral-500">Desglose Mensual</h4>
+          <button class="btn btn-primary btn-sm rounded-xl shadow-sm hover:shadow-md transition-all"
+            (click)="addSpecialPayment()">
+            <i class="ri-add-line mr-1 text-lg"></i>
+            Agregar
+          </button>
+        </div>
+        <div class="divider mt-0 mb-6"></div>
 
         <!-- Monthly Breakdown Grid -->
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          @for (month of monthNames; track $index) {
+          @for (month of configMonthlyAmounts(); track $index) {
           <div class="form-control p-3 bg-base-200/50 rounded-2xl transition-all hover:bg-base-200">
-            <label class="label py-1">
-              <span class="label-text font-medium text-neutral-600 text-xs uppercase tracking-wide">{{ month }}</span>
-            </label>
+            <input type="text" [value]="month.title || monthNames[$index]"
+              (input)="updateMonthlyTitle($index, $any($event.target).value)"
+              class="bg-transparent border-none focus:outline-none mb-1 font-medium text-neutral-600 text-[10px] uppercase tracking-wider w-full px-1" />
             <div class="relative">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">$</span>
-              <input type="number" [value]="configMonthlyAmounts()[$index]"
+              <input type="number" [value]="month.amount"
                 (input)="updateMonthlyAmount($index, +$any($event.target).value)"
                 class="input input-sm input-ghost w-full pl-6 font-semibold text-neutral-800 focus:bg-white focus:shadow-sm rounded-lg transition-all"
                 placeholder="0.00" min="0" step="0.01" />
@@ -595,8 +604,13 @@
           <button class="btn btn-ghost rounded-2xl" (click)="closeModal()">
             Cancelar
           </button>
-          <button class="btn btn-primary rounded-2xl shadow-lg" (click)="saveConfig()">
+          <button class="btn btn-primary rounded-2xl shadow-lg" (click)="saveConfig()" [disabled]="loading()">
+            @if (loading()) {
+            <span class="loading loading-spinner mr-2"></span>
+            } @else {
             <i class="ri-save-line mr-2"></i>
+            }
+
             @if (configId()) {
             Actualizar Configuración
             } @else {
