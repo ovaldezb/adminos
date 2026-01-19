@@ -372,6 +372,8 @@ export class PaymentsComponent {
         this.existingResidentPayment.set(null);
       }
     });
+
+    this.openRegisterModal();
   }
 
   onMonthSelect(monthIndex: number, amount: number): void {

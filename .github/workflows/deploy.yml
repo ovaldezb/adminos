@@ -1,0 +1,44 @@
+name: Deploy Frontend to AWS
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_ENV: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+      AWS_REGION: ${{ github.ref == 'refs/heads/main' && vars.PROD_AWS_REGION || vars.DEV_AWS_REGION }}
+      S3_BUCKET: ${{ github.ref == 'refs/heads/main' && vars.PROD_S3_BUCKET || vars.DEV_S3_BUCKET }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build application
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to S3
+        run: |
+          # Sync the build output to S3. 
+          # Note: Adjust 'dist/adminos/browser' if your build output path is different.
+          aws s3 sync dist/adminos/browser s3://${{ env.S3_BUCKET }} --delete

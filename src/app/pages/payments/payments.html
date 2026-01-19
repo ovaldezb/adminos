@@ -33,275 +33,99 @@
         </div>
       </div>
 
-      <!-- Statistics Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Total Payments -->
-        <div class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-neutral-600 text-sm font-medium mb-1">
-                Total Pagos
-              </p>
-              <p class="text-3xl font-bold text-neutral-800">
-                {{ totalPayments() }}
-              </p>
-            </div>
-            <div class="bg-blue-500/20 p-4 rounded-2xl">
-              <i class="ri-file-list-3-line text-2xl text-blue-600"></i>
-            </div>
-          </div>
-        </div>
+      <!-- Resident Search Header Section -->
+      <div class="max-w-4xl mx-auto mt-12 mb-12 text-center">
+        <h2 class="text-3xl font-extrabold text-neutral-800 mb-4">
+          Control de Cobranza por Residente
+        </h2>
+        <p class="text-neutral-600 mb-8 max-w-2xl mx-auto">
+          Busca un residente para consultar su historial de pagos, registrar nuevas mensualidades o configurar cobros
+          especiales.
+        </p>
 
-        <!-- Total Amount -->
-        <div class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-neutral-600 text-sm font-medium mb-1">
-                Monto Total
-              </p>
-              <p class="text-3xl font-bold text-green-600">
-                {{ formatCurrency(totalAmount()) }}
-              </p>
+        <!-- Search Bar -->
+        <div class="relative max-w-2xl mx-auto">
+          <div class="relative group">
+            <input type="text" [value]="residentSearchQuery()" (input)="onResidentSearchInput($event)"
+              placeholder="Nombre del residente, unidad o torre..."
+              class="input input-lg input-bordered w-full pl-14 h-20 rounded-3xl shadow-2xl focus:shadow-primary/20 bg-white border-2 border-transparent focus:border-primary transition-all text-xl font-medium" />
+            <div class="absolute left-5 top-1/2 -translate-y-1/2">
+              <i class="ri-search-2-line text-3xl text-primary transition-transform group-focus-within:scale-110"></i>
             </div>
-            <div class="bg-green-500/20 p-4 rounded-2xl">
-              <i class="ri-money-dollar-circle-line text-2xl text-green-600"></i>
+            @if (isSearchingResident()) {
+            <div class="absolute right-5 top-1/2 -translate-y-1/2">
+              <span class="loading loading-spinner loading-md text-primary"></span>
             </div>
-          </div>
-        </div>
-
-        <!-- Pending Payments -->
-        <div class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-neutral-600 text-sm font-medium mb-1">
-                Pendientes
-              </p>
-              <p class="text-3xl font-bold text-yellow-600">
-                {{ totalPending() }}
-              </p>
-            </div>
-            <div class="bg-yellow-500/20 p-4 rounded-2xl">
-              <i class="ri-time-line text-2xl text-yellow-600"></i>
-            </div>
-          </div>
-        </div>
-
-        <!-- Confirmed Payments -->
-        <div class="glass rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-neutral-600 text-sm font-medium mb-1">
-                Confirmados
-              </p>
-              <p class="text-3xl font-bold text-blue-600">
-                {{ totalConfirmed() }}
-              </p>
-            </div>
-            <div class="bg-blue-500/20 p-4 rounded-2xl">
-              <i class="ri-checkbox-circle-line text-2xl text-blue-600"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Filters Section -->
-      <div class="glass rounded-2xl p-6 shadow-xl mb-8">
-        <div class="flex flex-col gap-4">
-          <!-- Search -->
-          <div class="w-full">
-            <label class="label mb-2">
-              <span class="label-text font-semibold text-neutral-900">
-                <i class="ri-search-line mr-2"></i>
-                Buscar Pago
-              </span>
-            </label>
-            <div class="relative">
-              <input type="text" [value]="searchTerm()" (input)="onSearchChange($event)"
-                placeholder="Residente, folio, referencia..." class="input input-bordered w-full pl-10 font-medium" />
-              <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg"></i>
-            </div>
+            }
           </div>
 
-          <!-- Filters Row -->
-          <div class="flex flex-col sm:flex-row gap-4">
-            <!-- Status Filter -->
-            <div class="flex-1">
-              <label class="label mb-2">
-                <span class="label-text font-semibold text-neutral-900">
-                  <i class="ri-filter-line mr-2"></i>
-                  Estado
-                </span>
-              </label>
-              <select [value]="statusFilter()" (change)="onStatusFilterChange($event)"
-                class="select select-bordered w-full font-medium">
-                <option value="">Todos</option>
-                <option [value]="PaymentStatus.PENDING">Pendiente</option>
-                <option [value]="PaymentStatus.CONFIRMED">Confirmado</option>
-                <option [value]="PaymentStatus.REJECTED">Rechazado</option>
-                <option [value]="PaymentStatus.REFUNDED">Reembolsado</option>
-              </select>
+          <!-- Searching State -->
+          @if (isSearchingResident() && residentSearchResults().length === 0) {
+          <div
+            class="absolute z-50 mt-4 w-full bg-white rounded-3xl shadow-2xl border border-primary/10 p-12 text-center animate-in fade-in slide-in-from-top-4 duration-300">
+            <div class="relative inline-block">
+              <span class="loading loading-spinner loading-lg text-primary"></span>
+              <div class="absolute inset-0 loading loading-spinner loading-lg text-primary opacity-30 blur-sm"></div>
             </div>
+            <p class="text-neutral-500 mt-4 font-medium italic">Buscando residentes...</p>
+          </div>
+          }
 
-            <!-- Method Filter -->
-            <div class="flex-1">
-              <label class="label mb-2">
-                <span class="label-text font-semibold text-neutral-900">
-                  <i class="ri-bank-card-line mr-2"></i>
-                  Método
-                </span>
-              </label>
-              <select [value]="methodFilter()" (change)="onMethodFilterChange($event)"
-                class="select select-bordered w-full font-medium">
-                <option value="">Todos</option>
-                <option *ngFor="let method of paymentMethods" [value]="method.value">
-                  {{ method.label }}
-                </option>
-              </select>
+          <!-- Search Results Dropdown-style -->
+          @if (residentSearchResults().length > 0) {
+          <div
+            class="absolute z-50 mt-4 w-full bg-white rounded-3xl shadow-2xl border border-primary/10 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+            <div class="p-4 bg-primary/5 border-b border-primary/10 flex justify-between items-center">
+              <span class="text-sm font-bold text-primary uppercase tracking-wider">Resultados de búsqueda</span>
+              <span class="badge badge-primary badge-sm font-bold">{{ residentSearchResults().length }}
+                encontrados</span>
             </div>
-
-            <!-- Clear Filters Button -->
-            <div class="flex items-end gap-2">
-              <button class="btn btn-ghost flex-1 sm:flex-none" (click)="clearFilters()">
-                <i class="ri-filter-off-line"></i>
-                Limpiar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Payments Table -->
-      <div class="glass rounded-2xl shadow-xl overflow-hidden">
-        @if (loading()) {
-        <div class="flex flex-col justify-center items-center p-16 bg-gradient-to-br from-sky-50 to-blue-50">
-          <div class="relative">
-            <span class="loading loading-spinner loading-lg text-primary"></span>
-            <div class="absolute inset-0 loading loading-spinner loading-lg text-primary opacity-30 blur-sm"></div>
-          </div>
-          <p class="text-neutral-600 font-medium mt-6">Cargando pagos...</p>
-        </div>
-        } @else if (error()) {
-        <div class="alert alert-error rounded-2xl m-6 shadow-lg">
-          <i class="ri-error-warning-line text-lg"></i>
-          <div>
-            <h3 class="font-bold">Error al cargar</h3>
-            <span>{{ error() }}</span>
-          </div>
-        </div>
-        } @else if (filteredPayments().length === 0) {
-        <div class="text-center p-16 bg-gradient-to-br from-neutral-50 to-neutral-100">
-          <div class="inline-block p-6 bg-white rounded-3xl shadow-lg mb-4">
-            <i class="ri-file-list-3-line text-6xl text-neutral-300"></i>
-          </div>
-          <p class="text-neutral-600 text-lg font-medium">No hay pagos registrados</p>
-          <p class="text-neutral-500 text-sm mt-2">Registra tu primer pago usando el botón superior</p>
-        </div>
-        } @else {
-        <div class="overflow-x-auto">
-          <table class="table table-zebra w-full">
-            <thead>
-              <tr class="bg-base-200/50">
-                <th class="hidden md:table-cell">Folio</th>
-                <th class="hidden lg:table-cell">Fecha</th>
-                <th>Residente</th>
-                <th class="hidden sm:table-cell">Factura</th>
-                <th class="hidden md:table-cell">Método</th>
-                <th>Monto</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (payment of filteredPayments(); track $index) {
-              <tr class="hover">
-                <td class="font-mono text-sm hidden md:table-cell">{{ payment.paymentNumber }}</td>
-                <td class="hidden lg:table-cell text-sm">{{ formatDate(payment.paymentDate) }}</td>
-                <td>
-                  <div class="flex items-center gap-3">
-                    <div class="avatar placeholder">
-                      <div class="bg-primary text-primary-content w-10 rounded-full">
-                        <span class="text-xs">{{
-                          (payment.residentName || '').charAt(0)
-                          }}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div class="font-semibold text-sm">
-                        {{ payment.residentName }}
-                      </div>
-                      <div class="text-xs text-neutral-500">
-                        Unidad {{ payment.unitNumber }}
-                      </div>
+            <ul class="max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20">
+              @for (resident of residentSearchResults(); track $index) {
+              <li class="border-b border-neutral-50 last:border-0">
+                <button (click)="selectResident(resident)"
+                  class="w-full flex items-center gap-6 p-6 hover:bg-primary/5 transition-all text-left group">
+                  <div class="avatar placeholder">
+                    <div
+                      class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 text-white font-bold text-2xl shadow-lg group-hover:scale-110 transition-transform">
+                      <span>{{ resident.firstName.charAt(0) }}{{ resident.lastName.charAt(0) }}</span>
                     </div>
                   </div>
-                </td>
-                <td class="font-mono text-xs hidden sm:table-cell">{{ payment.invoiceNumber }}</td>
-                <td class="hidden md:table-cell">
-                  <div class="flex items-center gap-2">
-                    @if (payment.paymentMethod === PaymentMethod.CASH) {
-                    <i class="ri-wallet-3-line text-lg text-success"></i>
-                    } @else if (payment.paymentMethod ===
-                    PaymentMethod.BANK_TRANSFER) {
-                    <i class="ri-bank-line text-lg text-primary"></i>
-                    } @else if (payment.paymentMethod ===
-                    PaymentMethod.CREDIT_CARD || payment.paymentMethod ===
-                    PaymentMethod.DEBIT_CARD) {
-                    <i class="ri-bank-card-line text-lg text-info"></i>
-                    } @else {
-                    <i class="ri-money-dollar-circle-line text-lg text-neutral-500"></i>
-                    }
-                    <span class="text-xs">{{
-                      getMethodLabel(payment.paymentMethod)
-                      }}</span>
+                  <div class="flex-1">
+                    <h3 class="font-bold text-xl text-neutral-800 group-hover:text-primary transition-colors">
+                      {{ resident.firstName }} {{ resident.lastName }}
+                    </h3>
+                    <div class="flex gap-4 mt-1">
+                      <span class="text-neutral-500 flex items-center gap-1.5 font-medium">
+                        <i class="ri-building-line text-primary"></i>
+                        {{ resident.buildingName || 'N/A' }}
+                      </span>
+                      <span class="text-neutral-500 flex items-center gap-1.5 font-medium">
+                        <i class="ri-door-open-line text-primary"></i>
+                        Unidad {{ resident.unitNumber }}
+                      </span>
+                    </div>
                   </div>
-                </td>
-                <td class="font-bold text-success text-sm">
-                  {{ formatCurrency(payment.amount) }}
-                </td>
-                <td>
-                  <span class="badge rounded-xl text-xs" [ngClass]="getStatusBadgeClass(payment.status)">
-                    {{ getStatusLabel(payment.status) }}
-                  </span>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-ghost rounded-xl" (click)="openViewModal(payment)" title="Ver detalles">
-                    <i class="ri-eye-line text-lg"></i>
-                  </button>
-                </td>
-              </tr>
+                  <div
+                    class="text-primary opacity-0 group-hover:opacity-100 transition-opacity -translate-x-4 group-hover:translate-x-0">
+                    <i class="ri-arrow-right-line text-3xl"></i>
+                  </div>
+                </button>
+              </li>
               }
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination -->
-        <div class="flex justify-between items-center p-6 bg-base-200/30">
-          <div class="text-sm text-neutral-600">
-            Mostrando {{ Math.min((currentPage() - 1) * pageSize() + 1,
-            totalItems()) }} - {{ Math.min(currentPage() * pageSize(),
-            totalItems()) }} de {{ totalItems() }} pagos
+            </ul>
           </div>
-          <div class="join">
-            <button class="join-item btn btn-sm rounded-l-xl" (click)="previousPage()" [disabled]="currentPage() === 1">
-              <i class="ri-arrow-left-s-line"></i>
-            </button>
-            @for (page of [].constructor(totalPages()); track $index; let i =
-            $index) { @if (i + 1 === currentPage() || i + 1 === 1 || i + 1 ===
-            totalPages() || (i + 1 >= currentPage() - 1 && i + 1 <= currentPage() + 1)) { <button
-              class="join-item btn btn-sm" [class.btn-active]="currentPage() === i + 1" (click)="goToPage(i + 1)">
-              {{ i + 1 }}
-              </button>
-              } @else if (i + 1 === currentPage() - 2 || i + 1 === currentPage()
-              + 2) {
-              <button class="join-item btn btn-sm btn-disabled">...</button>
-              } }
-              <button class="join-item btn btn-sm rounded-r-xl" (click)="nextPage()"
-                [disabled]="currentPage() === totalPages()">
-                <i class="ri-arrow-right-s-line"></i>
-              </button>
+          } @else if (residentSearchQuery().length >= 3 && !isSearchingResident()) {
+          <div
+            class="absolute z-50 mt-4 w-full bg-white rounded-3xl shadow-2xl border border-error/10 p-12 text-center animate-in fade-in slide-in-from-top-4 duration-300">
+            <div class="w-20 h-20 bg-error/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i class="ri-user-search-line text-4xl text-error"></i>
+            </div>
+            <h3 class="text-xl font-bold text-neutral-800">No se encontraron residentes</h3>
+            <p class="text-neutral-500 mt-2">Intenta con otro nombre, unidad o torre.</p>
           </div>
+          }
         </div>
-        }
       </div>
     </main>
   </div>
