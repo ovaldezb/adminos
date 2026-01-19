@@ -3,14 +3,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, delay, catchError, map, throwError } from 'rxjs';
 import { PaymentConfig } from '../models/payment-config.model';
 import { environment } from '../../environments/environment';
-import { ApiResponse, PaginationParams, PaymentStatus, PaginatedResponse, PaymentWithDetails, Payment } from '../models';
+import { ApiResponse, PaginationParams, PaymentStatus, PaginatedResponse, PaymentWithDetails, Payment, AppPaymentRequest } from '../models';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PaymentService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = `${environment.apiUrl}/payments`;
+  private readonly apiUrl = `${environment.apiUrl}/payment`;
   private readonly configUrl = `${environment.apiUrl}/payment-config`;
 
 
@@ -121,6 +121,57 @@ export class PaymentService {
             error: {
               code: 'BACKEND_ERROR',
               message: 'Error al registrar el pago en el servidor',
+            },
+            timestamp: new Date(),
+          });
+        })
+      );
+  }
+
+  /**
+   * GET /payment - Get payment by resident and year
+   */
+  getPaymentByResidentAndYear(residentId: string, year: number): Observable<ApiResponse<any>> {
+    const params = new HttpParams()
+      .set('residentId', residentId)
+      .set('year', year.toString());
+
+    return this.http.get<ApiResponse<any>>(this.apiUrl, { params }).pipe(
+      catchError((error) => {
+        console.error('Error fetching payment by resident/year:', error);
+        return of({ success: false, data: null, timestamp: new Date() });
+      })
+    );
+  }
+
+  /**
+   * PUT /payment/:id - Update existing payment record (e.g., append to array)
+   */
+  updatePayment(id: string, payment: AppPaymentRequest): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${this.apiUrl}/${id}`, payment).pipe(
+      catchError((error) => {
+        console.error('Error updating payment:', error);
+        return of({ success: false, error, timestamp: new Date() });
+      })
+    );
+  }
+
+  /**
+   * POST /payments - Create payment with new AppPaymentRequest structure
+   */
+  createPayment(
+    payment: AppPaymentRequest
+  ): Observable<ApiResponse<any>> {
+    return this.http
+      .post<ApiResponse<any>>(this.apiUrl, payment)
+      .pipe(
+        catchError((error) => {
+          console.error('Error creating payment in backend:', error);
+          return of({
+            success: false,
+            error: {
+              code: 'BACKEND_ERROR',
+              message: 'Error al crear el pago en el servidor',
             },
             timestamp: new Date(),
           });

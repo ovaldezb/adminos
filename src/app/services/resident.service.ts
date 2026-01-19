@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, delay, catchError, map } from 'rxjs';
-import { 
-  Resident, 
-  ResidentDetails, 
-  ResidentType, 
+import {
+  Resident,
+  ResidentDetails,
+  ResidentType,
   DocumentType,
   CreateResidentDto,
   UpdateResidentDto,
@@ -55,7 +55,7 @@ export class ResidentService {
     return this.http.get<ApiResponse<BackendResidentsResponse>>(this.apiUrl, { params: httpParams }).pipe(
       map((response) => {
         console.log('[ResidentService] Raw backend response:', response);
-        
+
         if (!response.success || !response.data) {
           return {
             success: false,
@@ -187,6 +187,44 @@ export class ResidentService {
         return of({
           success: false,
           error: { code: 'BACKEND_ERROR', message: 'Error al eliminar el residente' },
+          timestamp: new Date(),
+        });
+      })
+    );
+  }
+  searchResidents(term: string): Observable<ApiResponse<{ residents: ResidentDetails[]; count: number }>> {
+    const params = new HttpParams().set('name', term);
+    return this.http.get<ApiResponse<any>>(this.apiUrl, { params }).pipe(
+      map((response) => {
+        if (!response.success || !response.data) {
+          return {
+            success: false,
+            error: { code: 'NO_DATA', message: 'No se encontraron residentes' },
+            timestamp: new Date(),
+          } as ApiResponse<{ residents: ResidentDetails[]; count: number }>;
+        }
+
+        const residents = (response.data.residents || []).map((r: any) => ({
+          ...r,
+          id: r._id || r.id,
+          isActive: r.status !== 'INACTIVE',
+          totalDebt: r.debt || 0,
+        }));
+
+        return {
+          success: true,
+          data: {
+            residents,
+            count: residents.length
+          },
+          timestamp: new Date()
+        } as ApiResponse<{ residents: ResidentDetails[]; count: number }>;
+      }),
+      catchError((error) => {
+        console.error('Error searching residents:', error);
+        return of({
+          success: false,
+          error: { code: 'BACKEND_ERROR', message: 'Error al buscar residentes' },
           timestamp: new Date(),
         });
       })

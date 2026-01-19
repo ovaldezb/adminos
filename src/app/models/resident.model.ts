@@ -50,6 +50,7 @@ export interface ResidentDetails extends Resident {
   totalDebt: number;
   paymentHistory?: number; // Number of payments
   averagePaymentDelay?: number; // Days
+  unit?: any; // Full unit details populated by backend
 }
 
 // DTOs for creating/updating residents

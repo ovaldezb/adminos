@@ -17,6 +17,21 @@ export interface Payment {
   updatedAt: Date;
 }
 
+// Payment Request for registration
+export interface AppPaymentRequest {
+  residentId: string;
+  payments: PaymentDetailRequest[];
+  year: number;
+}
+
+export interface PaymentDetailRequest {
+  paymentDate: Date;
+  amount: number;
+  reference?: string;
+  paymentType: string;
+  notes?: string;
+}
+
 export enum PaymentMethod {
   CASH = 'cash',
   BANK_TRANSFER = 'bank_transfer',

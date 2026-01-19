@@ -5,7 +5,8 @@ import { Router } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
 import { Condominium } from '../../models';
-import { PaymentService, InvoiceService, BuildingService } from '../../services';
+import { PaymentService, InvoiceService, BuildingService, ResidentService } from '../../services';
+import { ResidentDetails } from '../../models/resident.model';
 import {
   Payment,
   PaymentWithDetails,
@@ -13,7 +14,9 @@ import {
   PaymentStatus,
   InvoiceWithDetails,
   ApiResponse,
-  BuildingDetails
+  BuildingDetails,
+  PaymentConfig,
+  AppPaymentRequest
 } from '../../models';
 
 @Component({
@@ -55,6 +58,7 @@ export class PaymentsComponent {
   protected readonly showModal = signal(false);
   protected readonly modalMode = signal<'register' | 'view' | 'config'>('register');
   protected readonly selectedPayment = signal<PaymentWithDetails | null>(null);
+  protected readonly existingResidentPayment = signal<any | null>(null);
 
   // Toast notifications
   protected readonly showToast = signal(false);
@@ -119,7 +123,7 @@ export class PaymentsComponent {
 
   // Computed filtered payments
   protected readonly filteredPayments = computed(() => {
-    let filtered = this.payments();
+    let filtered = this.payments() || [];
 
     const search = this.searchTerm().toLowerCase();
     if (search) {
@@ -146,18 +150,18 @@ export class PaymentsComponent {
   });
 
   // Computed statistics
-  protected readonly totalPayments = computed(() => this.filteredPayments().length);
+  protected readonly totalPayments = computed(() => (this.filteredPayments() || []).length);
 
   protected readonly totalAmount = computed(() =>
-    this.filteredPayments().reduce((sum, p) => sum + p.amount, 0)
+    (this.filteredPayments() || []).reduce((sum, p) => sum + p.amount, 0)
   );
 
   protected readonly totalPending = computed(() =>
-    this.filteredPayments().filter((p) => p.status === PaymentStatus.PENDING).length
+    (this.filteredPayments() || []).filter((p) => p.status === PaymentStatus.PENDING).length
   );
 
   protected readonly totalConfirmed = computed(() =>
-    this.filteredPayments().filter((p) => p.status === PaymentStatus.CONFIRMED).length
+    (this.filteredPayments() || []).filter((p) => p.status === PaymentStatus.CONFIRMED).length
   );
 
   loadPaymentConfig(buildingId: string, year: number): void {
@@ -195,11 +199,24 @@ export class PaymentsComponent {
     });
   }
 
+
+
+  // Resident Search State
+  protected readonly residentSearchQuery = signal('');
+  protected readonly residentSearchResults = signal<ResidentDetails[]>([]);
+  protected readonly isSearchingResident = signal(false);
+  protected readonly isSearchingPaymentConfig = signal(false);
+  protected readonly selectedResidentName = signal('');
+  protected readonly searchDebounce = signal<any>(null);
+  protected readonly selectedResidentConfig = signal<PaymentConfig | null>(null);
+  protected readonly selectedMonth = signal<number | null>(null);
+
   constructor(
     private router: Router,
     private paymentService: PaymentService,
     private invoiceService: InvoiceService,
-    private buildingService: BuildingService
+    private buildingService: BuildingService,
+    private residentService: ResidentService
   ) {
     // Load initial data
     effect(() => {
@@ -219,6 +236,111 @@ export class PaymentsComponent {
         this.loadPaymentConfig(buildingId, year);
       }
     }, { allowSignalWrites: true });
+  }
+
+
+
+  onResidentSearchInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.residentSearchQuery.set(input.value);
+
+    // Simple debounce
+    if (this.searchDebounce()) {
+      clearTimeout(this.searchDebounce());
+    }
+
+    if (input.value.length >= 3) {
+      const timeout = setTimeout(() => {
+        this.searchResident();
+      }, 500);
+      this.searchDebounce.set(timeout);
+    } else {
+      this.residentSearchResults.set([]);
+    }
+  }
+
+  searchResident(): void {
+    const query = this.residentSearchQuery();
+    if (!query || query.length < 3) return;
+
+    this.isSearchingResident.set(true);
+    this.residentService.searchResidents(query).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.residentSearchResults.set(response.data.residents);
+        } else {
+          this.residentSearchResults.set([]);
+        }
+        this.isSearchingResident.set(false);
+      },
+      error: (err) => {
+        console.error('Error searching residents:', err);
+        this.isSearchingResident.set(false);
+        this.residentSearchResults.set([]);
+      }
+    });
+  }
+
+  selectResident(resident: ResidentDetails): void {
+    this.formData.update(curr => ({
+      ...curr,
+      residentId: resident.id,
+      condominiumId: resident.condominiumId,
+      unitId: typeof resident.unit === 'object' ? resident.unit.id : resident.unitId
+    }));
+    this.selectedResidentName.set(`${resident.firstName} ${resident.lastName}`);
+    this.residentSearchQuery.set('');
+    this.residentSearchResults.set([]);
+
+    // Fetch payment config for resident's building
+    const buildingId = typeof resident.unit === 'object' ? resident.unit.buildingId : resident.buildingId;
+    const currentYear = new Date().getFullYear();
+
+    if (buildingId) {
+      this.isSearchingPaymentConfig.set(true);
+      this.paymentService.getPaymentConfig(buildingId, currentYear).subscribe({
+        next: (response) => {
+          this.isSearchingPaymentConfig.set(false);
+          if (response.success && response.data) {
+            this.selectedResidentConfig.set(response.data);
+          } else {
+            this.selectedResidentConfig.set(null);
+            this.showToastMessage('No se encontró configuración de pagos para esta torre/edificio', 'error');
+          }
+        },
+        error: (err) => {
+          this.isSearchingPaymentConfig.set(false);
+          console.error('Error fetching payment config:', err);
+          this.selectedResidentConfig.set(null);
+          this.showToastMessage('Error al buscar la configuración de pagos', 'error');
+        }
+      });
+    }
+
+    // NEW: Fetch existing payments for this resident and year
+    this.paymentService.getPaymentByResidentAndYear(resident.id, currentYear).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.existingResidentPayment.set(response.data);
+          console.log('Existing payment found:', response.data);
+        } else {
+          this.existingResidentPayment.set(null);
+        }
+      },
+      error: (err) => {
+        console.error('Error loading existing resident payment:', err);
+        this.existingResidentPayment.set(null);
+      }
+    });
+  }
+
+  onMonthSelect(monthIndex: number, amount: number): void {
+    this.selectedMonth.set(monthIndex);
+    this.formData.update(curr => ({
+      ...curr,
+      amount: amount,
+      notes: `Pago Mantenimiento ${this.monthNames[monthIndex]} ${new Date().getFullYear()}`
+    }));
   }
 
   toggleSidebar(): void {
@@ -242,9 +364,9 @@ export class PaymentsComponent {
       .subscribe({
         next: (response: ApiResponse<any>) => {
           if (response.success && response.data) {
-            this.payments.set(response.data.items);
-            this.totalPages.set(response.data.totalPages);
-            this.totalItems.set(response.data.total);
+            this.payments.set(response.data.payments || response.data.items || []);
+            this.totalPages.set(response.data.totalPages || 1);
+            this.totalItems.set(response.data.total || (response.data.payments || []).length || 0);
           }
           this.loading.set(false);
         },
@@ -367,38 +489,116 @@ export class PaymentsComponent {
   closeModal(): void {
     this.showModal.set(false);
     this.selectedPayment.set(null);
+    this.modalMode.set('register'); // Reset to default
+
+    // Reset Data
+    this.formData.set({
+      invoiceId: '',
+      condominiumId: this.selectedCondo()?.id === 'all' ? '' : this.selectedCondo()?.id || '',
+      unitId: '',
+      residentId: '',
+      amount: 0,
+      paymentDate: new Date(),
+      paymentMethod: PaymentMethod.CASH,
+      reference: '',
+      notes: '',
+    });
+
+    // Reset Search & Selection State
+    this.selectedResidentConfig.set(null);
+    this.selectedMonth.set(null);
+    this.residentSearchQuery.set('');
+    this.residentSearchResults.set([]);
+    this.selectedResidentName.set('');
+    this.existingResidentPayment.set(null); // NEW: Reset existingResidentPayment
+    this.isSearchingResident.set(false);
   }
 
   registerPayment(): void {
     const data = this.formData();
+    const currentYear = new Date().getFullYear();
 
-    if (!this.validateForm(data)) {
+    // Validate required fields for new structure
+    if (!data.residentId) {
+      this.error.set('Por favor seleccione un residente');
+      return;
+    }
+    if (this.selectedMonth() === null) {
+      this.error.set('Por favor seleccione una mensualidad');
+      return;
+    }
+    if (!data.amount || data.amount <= 0) {
+      this.error.set('El monto debe ser mayor a cero');
       return;
     }
 
     this.loading.set(true);
+    this.error.set(null); // Reset error before new operation
 
-    this.paymentService.registerPayment(data).subscribe({
-      next: (response: ApiResponse<any>) => {
-        if (response.success) {
-          this.showToastMessage('Pago registrado exitosamente', 'success');
-          this.closeModal();
-          this.loadPayments();
-          this.loadPendingInvoices();
-        } else {
-          this.showToastMessage(
-            response.error?.message || 'Error al registrar el pago',
-            'error'
-          );
+    const existing = this.existingResidentPayment();
+
+    const newPaymentDetail = {
+      paymentDate: data.paymentDate || new Date(),
+      amount: data.amount!,
+      reference: data.reference || undefined,
+      paymentType: data.paymentMethod || PaymentMethod.CASH,
+      notes: data.notes || `Pago Mantenimiento ${this.monthNames[this.selectedMonth()!]} ${currentYear}`
+    };
+
+    if (existing) {
+      // Perform UPDATE (PUT) - Append to existing array
+      const payload: AppPaymentRequest = {
+        residentId: existing.residentId,
+        year: existing.year,
+        payments: [...existing.payments, newPaymentDetail]
+      };
+
+      this.paymentService.updatePayment(existing.id || existing._id!, payload).subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.showToastMessage('Pago registrado correctamente (actualización)', 'success');
+            this.closeModal();
+            this.loadPayments();
+          } else {
+            this.error.set(response.error?.message || 'Error al actualizar el pago');
+          }
+          this.loading.set(false);
+        },
+        error: (err) => {
+          console.error('Error updating payment:', err);
+          this.error.set('Error de conexión al actualizar el pago');
+          this.loading.set(false);
         }
-        this.loading.set(false);
-      },
-      error: (err: any) => {
-        console.error('Error registering payment:', err);
-        this.showToastMessage('Error al registrar el pago', 'error');
-        this.loading.set(false);
-      },
-    });
+      });
+    } else {
+      // Perform CREATE (POST) - New record
+      const payload: AppPaymentRequest = {
+        residentId: data.residentId!,
+        year: currentYear,
+        payments: [newPaymentDetail]
+      };
+
+      this.paymentService.createPayment(payload).subscribe({
+        next: (response: ApiResponse<any>) => {
+          if (response.success) {
+            this.showToastMessage('Pago registrado correctamente', 'success');
+            this.closeModal();
+            this.loadPayments();
+          } else {
+            this.showToastMessage(
+              response.error?.message || 'Error al registrar el pago',
+              'error'
+            );
+          }
+          this.loading.set(false);
+        },
+        error: (err: any) => {
+          console.error('Error creating payment:', err);
+          this.showToastMessage('Error al registrar el pago', 'error');
+          this.loading.set(false);
+        },
+      });
+    }
   }
 
   private showToastMessage(
@@ -416,7 +616,8 @@ export class PaymentsComponent {
   }
 
   private validateForm(data: Partial<Payment>): boolean {
-    if (!data.invoiceId || !data.amount || !data.paymentMethod) {
+    // Legacy validation - kept for potential future use
+    if (!data.residentId || !data.amount) {
       this.error.set('Por favor complete todos los campos obligatorios');
       return false;
     }

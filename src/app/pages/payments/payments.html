@@ -221,7 +221,7 @@
                     <div class="avatar placeholder">
                       <div class="bg-primary text-primary-content w-10 rounded-full">
                         <span class="text-xs">{{
-                          payment.residentName.charAt(0)
+                          (payment.residentName || '').charAt(0)
                           }}</span>
                       </div>
                     </div>
@@ -310,43 +310,133 @@
   @if (showModal()) {
   <div class="modal modal-open">
     <div class="modal-box max-w-2xl rounded-2xl glass">
-      <button class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4" (click)="closeModal()">
-        ✕
-      </button>
-
-      <h3 class="font-bold text-2xl mb-6">
-        @if (modalMode() === 'register') {
-        <i class="ri-add-circle-line mr-2"></i>
-        Registrar Nuevo Pago } @else if (modalMode() === 'config') {
-        <i class="ri-settings-3-line mr-2"></i>
-        Configuración de Pagos } @else {
-        <i class="ri-file-list-3-line mr-2"></i>
-        Detalles del Pago }
-      </h3>
+      <div class="flex items-start justify-between mb-6">
+        <h3 class="font-bold text-2xl">
+          @if (modalMode() === 'register') {
+          <i class="ri-add-circle-line mr-2"></i>
+          Registrar Nuevo Pago } @else if (modalMode() === 'config') {
+          <i class="ri-settings-3-line mr-2"></i>
+          Configuración de Pagos } @else {
+          <i class="ri-file-list-3-line mr-2"></i>
+          Detalles del Pago }
+        </h3>
+        <button class="btn btn-sm btn-circle btn-ghost" (click)="closeModal()">
+          ✕
+        </button>
+      </div>
 
       @if (modalMode() === 'register') {
       <!-- Register Form -->
       <form (ngSubmit)="registerPayment()">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Invoice Selection -->
+          <!-- Resident Search -->
           <div class="col-span-2">
             <label class="label">
               <span class="label-text font-medium">
-                <i class="ri-file-list-line mr-2"></i>
-                Factura a Pagar *
+                <i class="ri-user-search-line mr-2"></i>
+                Buscar Residente
               </span>
             </label>
-            <select [value]="formData().invoiceId" (change)="onInvoiceChange($event)"
-              class="select select-bordered w-full rounded-2xl" required>
-              <option value="">Seleccione una factura...</option>
-              @for (invoice of pendingInvoices(); track invoice.id) {
-              <option [value]="invoice.id">
-                {{ invoice.invoiceNumber }} - {{ invoice.residentName }} -
-                {{ formatCurrency(invoice.totalAmount) }}
-              </option>
+            <div class="relative">
+              <input type="text" [value]="residentSearchQuery()" (input)="onResidentSearchInput($event)"
+                class="input input-bordered w-full rounded-2xl pr-10" placeholder="Nombre del residente..." />
+              @if (isSearchingResident()) {
+              <div class="absolute right-4 top-1/2 -translate-y-1/2 z-10">
+                <span class="loading loading-spinner loading-xs text-primary"></span>
+              </div>
               }
-            </select>
+
+              <!-- Search Results Dropdown -->
+              @if (residentSearchResults().length > 0) {
+              <ul
+                class="absolute z-50 menu p-2 shadow-lg bg-base-100 rounded-box w-full mt-1 border border-base-200 max-h-60 overflow-y-auto">
+                @for (resident of residentSearchResults(); track resident.id) {
+                <li>
+                  <a (click)="selectResident(resident)" class="flex flex-col items-start gap-1 py-3">
+                    <span class="font-medium">{{ resident.firstName }} {{ resident.lastName }}</span>
+                    <div class="flex gap-2 text-xs text-neutral-500">
+                      <span><i class="ri-building-line mr-1"></i>{{ resident.unitNumber || 'Sin Unidad' }}</span>
+                      <span><i class="ri-mail-line mr-1"></i>{{ resident.email }}</span>
+                    </div>
+                  </a>
+                </li>
+                }
+              </ul>
+              }
+            </div>
+            @if (selectedResidentName()) {
+            <div class="mt-2 flex items-center gap-2 text-sm text-success font-medium px-1">
+              <i class="ri-check-circle-line"></i>
+              Residente seleccionado: {{ selectedResidentName() }}
+            </div>
+            }
           </div>
+
+          <!-- Monthly Payment Selection -->
+          <div class="col-span-2">
+            <label class="label">
+              <span class="label-text font-medium text-neutral-600">
+                <i class="ri-calendar-event-line mr-2 text-primary"></i>
+                Mensualidad a Pagar *
+              </span>
+              @if (isSearchingPaymentConfig()) {
+              <span class="loading loading-spinner loading-xs text-primary"></span>
+              }
+            </label>
+
+            @if (selectedResidentConfig()) {
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 bg-base-200/50 p-4 rounded-2xl">
+              @for (month of monthNames; track $index) {
+              @let amount = selectedResidentConfig()!.monthlyAmounts[$index].amount;
+              <div class="form-control">
+                <label
+                  class="label cursor-pointer flex-col items-center gap-2 p-3 rounded-xl border border-transparent hover:bg-base-100 hover:border-base-300 transition-all has-[:checked]:bg-white has-[:checked]:shadow-md has-[:checked]:border-primary">
+                  <span class="label-text font-semibold uppercase text-xs tracking-wide">{{ month }}</span>
+                  <span class="text-sm font-medium text-neutral-600">${{ amount }}</span>
+                  <input type="radio" name="paymentMonth" class="radio radio-sm radio-primary"
+                    [checked]="selectedMonth() === $index" (change)="onMonthSelect($index, amount)" />
+                </label>
+              </div>
+              }
+            </div>
+            } @else {
+            <div class="alert alert-info rounded-2xl">
+              <i class="ri-information-line"></i>
+              <span>Seleccione un residente para ver las mensualidades disponibles.</span>
+            </div>
+            }
+          </div>
+
+          <!-- Existing Payments History -->
+          @if (existingResidentPayment() && existingResidentPayment().payments &&
+          existingResidentPayment().payments.length > 0) {
+          <div class="col-span-2 mt-2">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2 flex items-center gap-2 px-1">
+              <i class="ri-history-line text-primary"></i>
+              Historial de Pagos {{ existingResidentPayment().year }}
+            </h4>
+            <div class="bg-base-200/50 rounded-2xl border border-base-200 overflow-y-auto max-h-40 scrollbar-thin">
+              <table class="table table-xs w-full">
+                <thead>
+                  <tr class="bg-base-200/70">
+                    <th class="py-2">Fecha</th>
+                    <th class="py-2">Monto</th>
+                    <th class="py-2">Nota</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (p of existingResidentPayment().payments; track $index) {
+                  <tr class="hover:bg-base-200/50 border-base-200">
+                    <td class="py-2 text-neutral-600 font-medium">{{ formatDate(p.paymentDate) }}</td>
+                    <td class="py-2 font-bold text-primary">${{ p.amount }}</td>
+                    <td class="py-2 text-neutral-500 max-w-[150px] truncate" [title]="p.notes">{{ p.notes }}</td>
+                  </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+          }
 
           <!-- Payment Date -->
           <div>
