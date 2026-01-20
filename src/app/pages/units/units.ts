@@ -327,11 +327,9 @@ export class UnitsComponent implements OnInit, OnDestroy {
 
       // Solo preseleccionar si no hay edificio ya seleccionado o si está vacío
       if (!currentBuildingId || currentBuildingId === '') {
-        // Actualizar el formulario con el nuevo edificio
         this.formData.update(current => ({
           ...current,
-          buildingId: buildingId,
-          tower: newBuilding.name || 'Torre Principal'
+          buildingId: buildingId
         }));
 
         console.log('✅ [Units] Edificio preseleccionado:', buildingId);
@@ -513,8 +511,7 @@ export class UnitsComponent implements OnInit, OnDestroy {
 
     this.formData.update(current => ({
       ...current,
-      buildingId,
-      tower: towerName
+      buildingId
     }));
 
     console.log('[Units] onBuildingChange - formData after update:', this.formData());
@@ -593,7 +590,7 @@ export class UnitsComponent implements OnInit, OnDestroy {
       condominiumId: currentCondoId || '',
       buildingId: currentBuildingId || '',
       unitNumber: '',
-      tower: this.currentBuilding()?.name || '',
+      tower: '',
       floor: 1,
       area: 0,
       bedrooms: 0,
@@ -629,13 +626,7 @@ export class UnitsComponent implements OnInit, OnDestroy {
             this.loadBuildingsByCondominium(currentCondoId);
           }
 
-          // Si ya tenemos el edificio actual cargado, precargar la torre
-          if (currentBuildingId && this.currentBuilding()) {
-            this.formData.update(current => ({
-              ...current,
-              tower: this.currentBuilding()?.name || 'Torre Principal'
-            }));
-          }
+
 
           this.loading.set(false);
           this.showModal.set(true);
@@ -652,13 +643,7 @@ export class UnitsComponent implements OnInit, OnDestroy {
         this.loadBuildingsByCondominium(currentCondoId);
       }
 
-      // Si ya tenemos el edificio actual cargado, precargar la torre
-      if (currentBuildingId && this.currentBuilding()) {
-        this.formData.update(current => ({
-          ...current,
-          tower: this.currentBuilding()?.name || 'Torre Principal'
-        }));
-      }
+
 
       this.loading.set(false);
       this.showModal.set(true);
@@ -729,7 +714,7 @@ export class UnitsComponent implements OnInit, OnDestroy {
       // Usar el edificio actual de la ruta como fuente de verdad
       const currentBuilding = buildings.find(b => (b.id || b._id) === currentBuildingId);
       const currentCondominium = condominiums.find(c => (c.id || c._id) === currentCondoId);
-      const towerName = currentBuilding?.name || unit.tower || 'Torre Principal';
+      const towerName = unit.tower || '';
 
       console.log('[Units] openEditModal - Setting complete form data:');
       console.log('- Current building from route:', currentBuilding);
@@ -1309,33 +1294,7 @@ export class UnitsComponent implements OnInit, OnDestroy {
     this.router.navigate(['/condominios']);
   }
 
-  // Método de prueba para debuggear signals
-  testResidentsSignal(): void {
-    console.log('=== TEST RESIDENTS SIGNAL ===');
-    console.log('Current unitResidents value:', this.unitResidents());
 
-    // Test 1: Set some test data
-    const testResidents = [
-      { name: 'Test User 1', phone: '123456789', email: 'test1@email.com', isResident: true, isManager: false, isOwner: true },
-      { name: 'Test User 2', phone: '987654321', email: 'test2@email.com', isResident: true, isManager: false, isOwner: false }
-    ];
-
-    this.unitResidents.set(testResidents);
-    console.log('After setting test data:', this.unitResidents());
-
-    // Test 2: Update using the update method
-    this.unitResidents.update(residents => [...residents, {
-      name: 'Test User 3',
-      phone: '555666777',
-      email: 'test3@email.com',
-      isResident: true,
-      isManager: true,
-      isOwner: false
-    }]);
-
-    console.log('After update method:', this.unitResidents());
-    console.log('=== END TEST ===');
-  }
 
   /**
    * Procesa los residentes para una unidad: crea nuevos residentes, actualiza existentes, y actualiza la unidad con sus IDs

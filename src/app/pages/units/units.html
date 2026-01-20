@@ -485,19 +485,13 @@
       <form (ngSubmit)="saveUnit()">
         <!-- Condominio y Edificio Section -->
         <div class="mb-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="p-2 bg-primary/10 rounded-lg">
-              <i class="ri-building-2-line text-xl text-primary"></i>
-            </div>
-            <h3 class="font-bold text-lg text-neutral-800">Ubicación</h3>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 gap-3">
             <!-- Condominio (Mostrar solo si no hay contexto) -->
             @if (!condominiumId()) {
             <div class="form-control">
               <label class="label flex-col items-start">
                 <span class="label-text font-semibold">Condominio</span>
-                <select class="w-full select select-bordered" [value]="formData().condominiumId"
+                <select class="w-full select select-bordered select-sm" [value]="formData().condominiumId"
                   (change)="onCondominiumChange($event)" name="condominiumId">
                   <option value="" [selected]="!formData().condominiumId">Seleccione un condominio</option>
                   @for (condo of availableCondominiums(); track condo.id || condo._id || $index) {
@@ -525,7 +519,7 @@
             <div class="form-control">
               <label class="label flex-col items-start">
                 <span class="label-text font-semibold">Edificio/Torre *</span>
-                <select class="w-full select select-bordered" [value]="formData().buildingId"
+                <select class="w-full select select-bordered select-sm" [value]="formData().buildingId"
                   (change)="onBuildingChange($event)" name="buildingId" required>
                   <option value="" [selected]="!formData().buildingId">
                     Seleccione un edificio
@@ -553,37 +547,23 @@
           </div>
         </div>
 
-        <!-- Información Básica Section -->
-        <div class="mb-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="p-2 bg-secondary/10 rounded-lg">
-              <i class="ri-home-4-line text-xl text-secondary"></i>
-            </div>
-            <h3 class="font-bold text-lg text-neutral-800">Información Básica</h3>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
+        <div class="mb-4">
+          <div class="grid grid-cols-2 gap-3">
             <div class="form-control">
               <label class="label flex-col items-start">
                 <span class="label-text font-semibold">Número de Unidad *</span>
-                <input type="text" class="input input-bordered w-full" [value]="formData().unitNumber"
-                  (input)="onFormFieldChange($event, 'unitNumber')" name="unitNumber"
-                  placeholder="Ej: 101, A-201, Casa 5" required />
+                <input type="text" class="input input-bordered input-sm w-full" [value]="formData().unitNumber"
+                  (input)="onFormFieldChange($event, 'unitNumber')" name="unitNumber" placeholder="Ej: 101, Casa 5"
+                  required />
               </label>
             </div>
 
-            <div class="form-control">
-              <label class="label flex-col items-start">
-                <span class="label-text font-semibold">Torre/Referencia</span>
-                <input type="text" class="input input-bordered w-full" [value]="formData().tower"
-                  (input)="onFormFieldChange($event, 'tower')" name="tower"
-                  placeholder="Se llena automáticamente o personalizable" />
-              </label>
-            </div>
+
 
             <div class="form-control">
               <label class="label flex-col items-start">
                 <span class="label-text font-semibold">Piso *</span>
-                <input type="number" class="input input-bordered w-full" [value]="formData().floor"
+                <input type="number" class="input input-bordered input-sm w-full" [value]="formData().floor"
                   (input)="onFormFieldChange($event, 'floor')" name="floor" required min="1" />
               </label>
             </div>
@@ -591,26 +571,19 @@
             <div class="form-control">
               <label class="label flex-col items-start">
                 <span class="label-text font-semibold">Área (m²) *</span>
-                <input type="number" class="input input-bordered w-full" [value]="formData().area"
+                <input type="number" class="input input-bordered input-sm w-full" [value]="formData().area"
                   (input)="onFormFieldChange($event, 'area')" name="area" required min="0" step="0.01" />
               </label>
             </div>
           </div>
         </div>
 
-        <!-- Tipo y Estado Section -->
-        <div class="mb-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="p-2 bg-accent/10 rounded-lg">
-              <i class="ri-price-tag-3-line text-xl text-accent"></i>
-            </div>
-            <h3 class="font-bold text-lg text-neutral-800">Tipo y Estado</h3>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
+        <div class="mb-4">
+          <div class="grid grid-cols-2 gap-3">
             <div class="form-control">
               <label class="label flex-col items-start">
                 <span class="label-text font-semibold">Tipo *</span>
-                <select class="w-full select select-bordered" [value]="formData().propertyType"
+                <select class="w-full select select-bordered select-sm" [value]="formData().propertyType"
                   (change)="onFormFieldChange($event, 'propertyType')" name="propertyType" required>
                   <option [value]="PropertyType.APARTMENT"
                     [selected]="formData().propertyType === PropertyType.APARTMENT">
@@ -636,7 +609,7 @@
             <div class="form-control">
               <label class="label flex-col items-start">
                 <span class="label-text font-semibold">Estado *</span>
-                <select class="w-full select select-bordered" [value]="formData().status"
+                <select class="w-full select select-bordered select-sm" [value]="formData().status"
                   (change)="onFormFieldChange($event, 'status')" name="status" required>
                   <option [value]="UnitStatus.OCCUPIED" [selected]="formData().status === UnitStatus.OCCUPIED">Ocupada
                   </option>
@@ -655,19 +628,12 @@
           </div>
         </div>
 
-        <!-- Características Section -->
-        <div class="mb-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="p-2 bg-info/10 rounded-lg">
-              <i class="ri-layout-grid-line text-xl text-info"></i>
-            </div>
-            <h3 class="font-bold text-lg text-neutral-800">Características</h3>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
+        <div class="mb-4">
+          <div class="grid grid-cols-2 gap-3">
             <div class="form-control">
               <label class="label flex-col items-start">
                 <span class="label-text font-semibold">Habitaciones *</span>
-                <input type="number" class="input input-bordered w-full" [value]="formData().bedrooms"
+                <input type="number" class="input input-bordered input-sm w-full" [value]="formData().bedrooms"
                   (input)="onFormFieldChange($event, 'bedrooms')" name="bedrooms" required min="0" />
               </label>
             </div>
@@ -675,7 +641,7 @@
             <div class="form-control">
               <label class="label flex-col items-start">
                 <span class="label-text font-semibold">Baños *</span>
-                <input type="number" class="input input-bordered w-full" [value]="formData().bathrooms"
+                <input type="number" class="input input-bordered input-sm w-full" [value]="formData().bathrooms"
                   (input)="onFormFieldChange($event, 'bathrooms')" name="bathrooms" required min="0" />
               </label>
             </div>
@@ -683,7 +649,7 @@
             <div class="form-control">
               <label class="label flex-col items-start">
                 <span class="label-text font-semibold">Estacionamientos *</span>
-                <input type="number" class="input input-bordered w-full" [value]="formData().parkingSpaces"
+                <input type="number" class="input input-bordered input-sm w-full" [value]="formData().parkingSpaces"
                   (input)="onFormFieldChange($event, 'parkingSpaces')" name="parkingSpaces" required min="0" />
               </label>
             </div>
@@ -691,45 +657,28 @@
             <div class="form-control">
               <label class="label flex-col items-start">
                 <span class="label-text font-semibold">Depósitos</span>
-                <input type="number" class="input input-bordered w-full" [value]="formData().storageSpaces"
+                <input type="number" class="input input-bordered input-sm w-full" [value]="formData().storageSpaces"
                   (input)="onFormFieldChange($event, 'storageSpaces')" name="storageSpaces" min="0" />
               </label>
             </div>
           </div>
         </div>
 
-        <!-- Detalles Financieros Section -->
-        <div class="mb-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="p-2 bg-success/10 rounded-lg">
-              <i class="ri-money-dollar-circle-line text-xl text-success"></i>
-            </div>
-            <h3 class="font-bold text-lg text-neutral-800">Detalles Financieros</h3>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
+        <div class="mb-4">
+          <div class="grid grid-cols-2 gap-3">
             <div class="form-control">
               <label class="label flex-col items-start">
                 <span class="label-text font-semibold">Cuota Mensual *</span>
-                <input type="number" class="input input-bordered w-full" [value]="formData().monthlyFee"
+                <input type="number" class="input input-bordered input-sm w-full" [value]="formData().monthlyFee"
                   (input)="onFormFieldChange($event, 'monthlyFee')" name="monthlyFee" required min="0" step="0.01" />
               </label>
             </div>
-          </div>
-        </div>
 
-        <!-- Características Adicionales Section -->
-        <div class="mb-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="p-2 bg-warning/10 rounded-lg">
-              <i class="ri-settings-3-line text-xl text-warning"></i>
-            </div>
-            <h3 class="font-bold text-lg text-neutral-800">Características Adicionales</h3>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
             <div class="form-control">
               <label class="label flex-col items-start">
-                <select class="w-full select select-bordered" (change)="onFormFieldChange($event, 'orientation')"
-                  name="orientation">
+                <span class="label-text font-semibold">Orientación</span>
+                <select class="w-full select select-bordered select-sm" [value]="formData().orientation"
+                  (change)="onFormFieldChange($event, 'orientation')" name="orientation">
                   <option value="" [selected]="!formData().orientation">Seleccionar...</option>
                   <option value="Norte" [selected]="formData().orientation === 'Norte'">Norte</option>
                   <option value="Sur" [selected]="formData().orientation === 'Sur'">Sur</option>
@@ -742,46 +691,15 @@
                 </select>
               </label>
             </div>
-
-            <div class="form-control col-span-2">
-              <label class="label flex-col items-start">
-                <span class="label-text font-semibold">Características Especiales</span>
-              </label>
-              <div class="flex gap-6 mt-2">
-                <label class="cursor-pointer flex items-center gap-2">
-                  <input type="checkbox" class="checkbox checkbox-primary" [checked]="formData().hasBalcony"
-                    (change)="onFormFieldChange($event, 'hasBalcony')" name="hasBalcony" />
-                  <span class="label-text">Tiene Balcón</span>
-                </label>
-
-                <label class="cursor-pointer flex items-center gap-2">
-                  <input type="checkbox" class="checkbox checkbox-primary" [checked]="formData().hasGarden"
-                    (change)="onFormFieldChange($event, 'hasGarden')" name="hasGarden" />
-                  <span class="label-text">Tiene Jardín1</span>
-                </label>
-
-                <label class="cursor-pointer flex items-center gap-2">
-                  <input type="checkbox" class="checkbox checkbox-primary" [checked]="formData().isFurnished"
-                    (change)="onFormFieldChange($event, 'isFurnished')" name="isFurnished" />
-                  <span class="label-text">Amoblado</span>
-                </label>
-              </div>
-            </div>
           </div>
         </div>
 
-        <!-- Descripción Section -->
-        <div class="mb-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="p-2 bg-neutral-200 rounded-lg">
-              <i class="ri-file-text-line text-xl text-neutral-600"></i>
-            </div>
-            <h3 class="font-bold text-lg text-neutral-800">Descripción</h3>
-          </div>
+        <div class="mb-4">
+          <h4 class="font-semibold text-sm text-neutral-600 mb-2">Descripción</h4>
           <div class="form-control">
-            <textarea class="textarea textarea-bordered h-24" [value]="formData().description"
+            <textarea class="textarea textarea-bordered textarea-sm h-20 w-full" [value]="formData().description"
               (input)="onFormFieldChange($event, 'description')" name="description"
-              placeholder="Descripción opcional de la unidad..."></textarea>
+              placeholder="Descripción opcional..."></textarea>
           </div>
         </div>
 
@@ -802,11 +720,7 @@
                 <i class="ri-add-line"></i>
                 Agregar Residente
               </button>
-              <!-- Botón temporal para testing -->
-              <button type="button" class="btn btn-secondary btn-sm gap-2" (click)="testResidentsSignal()">
-                <i class="ri-bug-line"></i>
-                Test Signal
-              </button>
+
             </div>
           </div>
 

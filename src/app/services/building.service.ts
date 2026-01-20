@@ -35,7 +35,6 @@ export class BuildingService {
   // Get all buildings - SIMPLE VERSION (sin paginación por ahora)
   // Backend: GET /buildings - Returns { success, message, data: { buildings: [], count } }
   getBuildings(params: GetBuildingsParams = {}): Observable<ApiResponse<PaginatedResponse<BuildingDetails>>> {
-    console.log('🔍 Building Service - Calling GET /building');
 
     let url = this.apiUrl;
     if (params.condominiumId && params.condominiumId !== 'all') {
@@ -44,7 +43,6 @@ export class BuildingService {
 
     return this.http.get<any>(url).pipe(
       map(response => {
-        console.log('✅ Building Service - Raw response:', response);
 
         // La Lambda retorna { success, message, data: { buildings: [], count } }
         // Necesitamos transformarlo a formato PaginatedResponse
@@ -57,8 +55,6 @@ export class BuildingService {
           id: building.id || building._id, // Usar _id si id está vacío
           _id: building._id // Mantener _id también
         }));
-
-        console.log('✅ Building Service - Normalized buildings:', buildings);
 
         const paginatedResponse: ApiResponse<PaginatedResponse<BuildingDetails>> = {
           success: response.success,
@@ -75,7 +71,6 @@ export class BuildingService {
           timestamp: response.timestamp || new Date()
         };
 
-        console.log('✅ Transformed response:', paginatedResponse);
         return paginatedResponse;
       }),
       catchError((error) => {
