@@ -18,7 +18,8 @@ import {
   PaymentConfig,
   MonthlyAmount,
   AppPaymentRequest,
-  FundConfig
+  FundConfig,
+  FundItem
 } from '../../models';
 
 @Component({
@@ -78,6 +79,7 @@ export class PaymentsComponent {
     paymentMethod: PaymentMethod.CASH,
     reference: '',
     notes: '',
+    fundName: ''
   });
 
   protected readonly monthNames = [
@@ -99,6 +101,7 @@ export class PaymentsComponent {
   protected readonly fundsBuildingId = signal('');
   protected readonly fundsLoading = signal(false);
   protected readonly configFunds = signal<{ name: string }[]>([]);
+  protected readonly isUpdatingFunds = signal(false);
 
   updateAnnualTotal(amount: number): void {
     const monthly = Number((amount / 12).toFixed(2));
@@ -148,7 +151,56 @@ export class PaymentsComponent {
     this.fundsBuildingId.set('');
     this.fundsYear.set(new Date().getFullYear());
     this.configFunds.set([]); // Reset funds list
+    this.isUpdatingFunds.set(false);
     this.showModal.set(true);
+  }
+
+  onFundsBuildingChange(event: Event): void {
+    const buildingId = (event.target as HTMLSelectElement).value;
+    this.fundsBuildingId.set(buildingId);
+    if (buildingId) {
+      this.loadFundsConfig();
+    } else {
+      this.configFunds.set([]);
+    }
+  }
+
+  onFundsYearChange(event: Event): void {
+    const year = +(event.target as HTMLInputElement).value;
+    this.fundsYear.set(year);
+    if (this.fundsBuildingId()) {
+      this.loadFundsConfig();
+    }
+  }
+
+  loadFundsConfig(): void {
+    const buildingId = this.fundsBuildingId();
+    const year = this.fundsYear();
+
+    if (!buildingId) return;
+
+    this.fundsLoading.set(true);
+    this.paymentService.getFunds(buildingId, year).subscribe({
+      next: (response) => {
+        this.fundsLoading.set(false);
+        if (response.success && response.data) {
+          this.isUpdatingFunds.set(true);
+          // Map backend items to frontend structure
+          this.configFunds.set(response.data.fundList.map(f => ({
+            name: f.fundName
+          })));
+        } else {
+          this.isUpdatingFunds.set(false);
+          this.configFunds.set([]);
+        }
+      },
+      error: (err) => {
+        this.fundsLoading.set(false);
+        this.isUpdatingFunds.set(false);
+        console.error('Error loading funds config:', err);
+        this.configFunds.set([]);
+      }
+    });
   }
 
   addFund(): void {
@@ -315,6 +367,7 @@ export class PaymentsComponent {
   protected readonly selectedResidentName = signal('');
   protected readonly searchDebounce = signal<any>(null);
   protected readonly selectedResidentConfig = signal<PaymentConfig | null>(null);
+  protected readonly selectedResidentFunds = signal<FundItem[]>([]);
   protected readonly selectedMonth = signal<number | null>(null);
 
   constructor(
@@ -439,6 +492,23 @@ export class PaymentsComponent {
       }
     });
 
+    // NEW: Fetch funds configuration for resident's building
+    if (buildingId) {
+      this.paymentService.getFunds(buildingId, currentYear).subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            this.selectedResidentFunds.set(response.data.fundList || []);
+          } else {
+            this.selectedResidentFunds.set([]);
+          }
+        },
+        error: (err) => {
+          console.error('Error fetching resident funds:', err);
+          this.selectedResidentFunds.set([]);
+        }
+      });
+    }
+
     this.openRegisterModal(false);
   }
 
@@ -538,6 +608,7 @@ export class PaymentsComponent {
         paymentMethod: PaymentMethod.CASH,
         reference: '',
         notes: '',
+        fundName: ''
       });
     }
     this.showModal.set(true);
@@ -641,6 +712,10 @@ export class PaymentsComponent {
       this.error.set('El monto debe ser mayor a cero');
       return;
     }
+    if (this.selectedResidentFunds().length > 0 && !data.fundName) {
+      this.error.set('Por favor seleccione el fondo a destinar');
+      return;
+    }
 
     this.loading.set(true);
     this.error.set(null); // Reset error before new operation
@@ -652,6 +727,7 @@ export class PaymentsComponent {
       amount: data.amount!,
       reference: data.reference || undefined,
       paymentType: data.paymentMethod || PaymentMethod.CASH,
+      fundName: data.fundName,
       notes: data.notes || `Pago Mantenimiento ${this.monthNames[this.selectedMonth()!]} ${currentYear}`
     };
 

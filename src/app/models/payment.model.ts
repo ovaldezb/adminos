@@ -13,6 +13,7 @@ export interface Payment {
   reference?: string; // Transaction reference
   notes?: string;
   processedBy: string; // Admin user ID
+  fundName?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,6 +30,7 @@ export interface PaymentDetailRequest {
   amount: number;
   reference?: string;
   paymentType: string;
+  fundName?: string;
   notes?: string;
 }
 
