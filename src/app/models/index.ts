@@ -13,3 +13,4 @@ export * from './building.model';
 export * from './assignment.model';
 export * from './fund-type.model';
 export * from './payment-config.model';
+export * from './fund-config.model';

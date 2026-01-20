@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, delay, catchError, map, throwError } from 'rxjs';
-import { PaymentConfig } from '../models/payment-config.model';
+import { PaymentConfig, FundConfig } from '../models';
 import { environment } from '../../environments/environment';
 import { ApiResponse, PaginationParams, PaymentStatus, PaginatedResponse, PaymentWithDetails, Payment, AppPaymentRequest } from '../models';
 
@@ -12,7 +12,30 @@ export class PaymentService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/payment`;
   private readonly configUrl = `${environment.apiUrl}/payment-config`;
+  private readonly fundsUrl = `${environment.apiUrl}/funds`;
 
+
+  saveFunds(config: FundConfig): Observable<ApiResponse<FundConfig>> {
+    return this.http.post<ApiResponse<FundConfig>>(this.fundsUrl, config).pipe(
+      catchError((error) => {
+        console.error('Error saving funds config:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  getFunds(buildingId: string, year: number): Observable<ApiResponse<FundConfig>> {
+    const params = new HttpParams()
+      .set('buildingId', buildingId)
+      .set('year', year.toString());
+
+    return this.http.get<ApiResponse<FundConfig>>(this.fundsUrl, { params }).pipe(
+      catchError((error) => {
+        console.error('Error fetching funds config:', error);
+        return throwError(() => error);
+      })
+    );
+  }
 
   savePaymentConfig(config: PaymentConfig): Observable<ApiResponse<PaymentConfig>> {
     return this.http.post<ApiResponse<PaymentConfig>>(this.configUrl, config).pipe(

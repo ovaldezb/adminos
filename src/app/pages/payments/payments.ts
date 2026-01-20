@@ -17,7 +17,8 @@ import {
   BuildingDetails,
   PaymentConfig,
   MonthlyAmount,
-  AppPaymentRequest
+  AppPaymentRequest,
+  FundConfig
 } from '../../models';
 
 @Component({
@@ -57,7 +58,7 @@ export class PaymentsComponent {
 
   // Modal state
   protected readonly showModal = signal(false);
-  protected readonly modalMode = signal<'register' | 'view' | 'config'>('register');
+  protected readonly modalMode = signal<'register' | 'view' | 'config' | 'funds'>('register');
   protected readonly selectedPayment = signal<PaymentWithDetails | null>(null);
   protected readonly existingResidentPayment = signal<any | null>(null);
 
@@ -92,6 +93,12 @@ export class PaymentsComponent {
   );
   protected readonly configBuildingId = signal('');
   protected readonly configId = signal<string | null>(null);
+
+  // Funds Configuration State
+  protected readonly fundsYear = signal(new Date().getFullYear());
+  protected readonly fundsBuildingId = signal('');
+  protected readonly fundsLoading = signal(false);
+  protected readonly configFunds = signal<{ name: string }[]>([]);
 
   updateAnnualTotal(amount: number): void {
     const monthly = Number((amount / 12).toFixed(2));
@@ -134,6 +141,65 @@ export class PaymentsComponent {
         title: 'Nuevo Pago'
       }
     ]);
+  }
+
+  openFundsModal(): void {
+    this.modalMode.set('funds');
+    this.fundsBuildingId.set('');
+    this.fundsYear.set(new Date().getFullYear());
+    this.configFunds.set([]); // Reset funds list
+    this.showModal.set(true);
+  }
+
+  addFund(): void {
+    this.configFunds.update(prev => [...prev, { name: '' }]);
+  }
+
+  removeFund(index: number): void {
+    this.configFunds.update(prev => prev.filter((_, i) => i !== index));
+  }
+
+  updateFundName(index: number, name: string): void {
+    this.configFunds.update(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], name };
+      return updated;
+    });
+  }
+
+  saveFundsConfig(): void {
+    if (!this.fundsBuildingId()) {
+      this.showToastMessage('Seleccione un edificio/torre', 'error');
+      return;
+    }
+
+    this.fundsLoading.set(true);
+
+    const payload: FundConfig = {
+      buildingId: this.fundsBuildingId(),
+      fiscalYear: this.fundsYear(),
+      fundList: this.configFunds().map((f, index) => ({
+        fundId: index,
+        fundName: f.name
+      }))
+    };
+
+    this.paymentService.saveFunds(payload).subscribe({
+      next: (response) => {
+        this.fundsLoading.set(false);
+        if (response.success) {
+          this.showToastMessage('Configuración de fondos guardada correctamente', 'success');
+          this.closeModal();
+        } else {
+          this.showToastMessage('Error al guardar la configuración de fondos', 'error');
+        }
+      },
+      error: (err) => {
+        this.fundsLoading.set(false);
+        console.error('Error saving funds config:', err);
+        this.showToastMessage('Error de conexión con el servidor', 'error');
+      }
+    });
   }
 
   // Enums for template
@@ -373,7 +439,7 @@ export class PaymentsComponent {
       }
     });
 
-    this.openRegisterModal();
+    this.openRegisterModal(false);
   }
 
   onMonthSelect(monthIndex: number, amount: number): void {
@@ -457,21 +523,23 @@ export class PaymentsComponent {
     });
   }
 
-  openRegisterModal(): void {
+  openRegisterModal(reset = true): void {
     this.modalMode.set('register');
     this.selectedPayment.set(null);
-    this.formData.set({
-      invoiceId: '',
-      condominiumId:
-        this.selectedCondo()?.id === 'all' ? '' : this.selectedCondo()?.id || '',
-      unitId: '',
-      residentId: '',
-      amount: 0,
-      paymentDate: new Date(),
-      paymentMethod: PaymentMethod.CASH,
-      reference: '',
-      notes: '',
-    });
+    if (reset) {
+      this.formData.set({
+        invoiceId: '',
+        condominiumId:
+          this.selectedCondo()?.id === 'all' ? '' : this.selectedCondo()?.id || '',
+        unitId: '',
+        residentId: '',
+        amount: 0,
+        paymentDate: new Date(),
+        paymentMethod: PaymentMethod.CASH,
+        reference: '',
+        notes: '',
+      });
+    }
     this.showModal.set(true);
   }
 
