@@ -1,227 +1,155 @@
 <!-- Navbar Component -->
 <nav class="glass sticky top-0 z-50 border-b border-white/20">
   <div class="navbar px-4 lg:px-6">
-    
+
     <!-- Left Section - Menu Toggle -->
     <div class="navbar-start">
-      <button 
-        (click)="onToggleSidebar()"
-        class="btn btn-ghost btn-circle lg:hidden hover:bg-white/50 transition-all"
-      >
+      <button (click)="onToggleSidebar()" class="btn btn-ghost btn-circle lg:hidden hover:bg-white/50 transition-all">
         <i class="ri-menu-line text-2xl text-neutral-700"></i>
       </button>
     </div>
 
-    <!-- Center Section - Quick Stats -->
-    <div class="navbar-center hidden lg:flex gap-3">
-      <div class="glass rounded-2xl p-3 px-4">
-        <div class="flex items-center gap-6">
-          <!-- Cobranza del Mes -->
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
-              <i class="ri-pulse-fill text-xl text-success"></i>
-            </div>
-            <div>
-              <p class="text-xs text-neutral-500 font-semibold">Cobranza del Mes</p>
-              <div class="flex items-center gap-2">
-                <p class="text-lg font-bold text-success">94%</p>
-                <progress class="progress progress-success w-20 h-1.5" value="94" max="100"></progress>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Divider -->
-          <div class="h-10 w-px bg-neutral-200"></div>
-          
-          <!-- Pagos Pendientes -->
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
-              <i class="ri-money-dollar-circle-fill text-xl text-warning"></i>
-            </div>
-            <div>
-              <p class="text-xs text-neutral-500 font-semibold">Pagos Pendientes</p>
-              <div class="flex items-center gap-2">
-                <p class="text-lg font-bold text-warning">42</p>
-                <progress class="progress progress-warning w-20 h-1.5" value="42" max="100"></progress>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- Right Section - Actions & Profile -->
     <div class="navbar-end gap-2">
 
       <!-- Notifications -->
       <div class="dropdown dropdown-end">
-        <button 
-          tabindex="0" 
-          (click)="toggleNotifications()"
-          class="btn btn-ghost btn-circle hover:bg-white/50 indicator"
-        >
+        <button tabindex="0" (click)="toggleNotifications()"
+          class="btn btn-ghost btn-circle hover:bg-white/50 indicator">
           @if (notificationCount() > 0) {
-            <span class="indicator-item badge badge-error badge-sm rounded-full">
-              {{ notificationCount() }}
-            </span>
+          <span class="indicator-item badge badge-error badge-sm rounded-full">
+            {{ notificationCount() }}
+          </span>
           }
           <i class="ri-notification-3-fill text-xl text-neutral-700"></i>
         </button>
         @if (showNotifications()) {
-          <div 
-            tabindex="0" 
-            class="dropdown-content glass rounded-2xl shadow-2xl w-80 sm:w-96 p-4 mt-2"
-          >
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-bold text-neutral-800">
-                <i class="ri-notification-3-line text-primary mr-2"></i>
-                Notificaciones
-              </h3>
-              <div class="flex gap-1">
-                <button 
-                  (click)="markAllAsRead()"
-                  class="btn btn-xs btn-ghost rounded-xl"
-                  title="Marcar todas como leídas"
-                >
-                  <i class="ri-check-double-line"></i>
-                </button>
-                <button 
-                  (click)="clearNotifications()"
-                  class="btn btn-xs btn-ghost rounded-xl"
-                  title="Limpiar todas"
-                >
-                  <i class="ri-close-line"></i>
-                </button>
-              </div>
+        <div tabindex="0" class="dropdown-content glass rounded-2xl shadow-2xl w-80 sm:w-96 p-4 mt-2">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-neutral-800">
+              <i class="ri-notification-3-line text-primary mr-2"></i>
+              Notificaciones
+            </h3>
+            <div class="flex gap-1">
+              <button (click)="markAllAsRead()" class="btn btn-xs btn-ghost rounded-xl"
+                title="Marcar todas como leídas">
+                <i class="ri-check-double-line"></i>
+              </button>
+              <button (click)="clearNotifications()" class="btn btn-xs btn-ghost rounded-xl" title="Limpiar todas">
+                <i class="ri-close-line"></i>
+              </button>
             </div>
-            
-            <div class="space-y-2 max-h-96 overflow-y-auto">
-              @if (notifications().length === 0) {
-                <div class="text-center py-8 text-neutral-500">
-                  <i class="ri-notification-off-line text-4xl mb-2 block"></i>
-                  <p>No hay notificaciones</p>
+          </div>
+
+          <div class="space-y-2 max-h-96 overflow-y-auto">
+            @if (notifications().length === 0) {
+            <div class="text-center py-8 text-neutral-500">
+              <i class="ri-notification-off-line text-4xl mb-2 block"></i>
+              <p>No hay notificaciones</p>
+            </div>
+            } @else {
+            @for (notification of notifications(); track notification.id) {
+            <div [class]="'p-3 rounded-xl hover:bg-white/50 transition-all cursor-pointer ' + 
+                      (!notification.isRead ? 'bg-primary/5' : '')" (click)="markNotificationAsRead(notification.id)">
+              <div class="flex gap-3">
+                <div [style.background-color]="notification.color + '20'"
+                  class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <i [class]="notification.icon + ' text-xl'" [style.color]="notification.color"></i>
                 </div>
-              } @else {
-                @for (notification of notifications(); track notification.id) {
-                  <div 
-                    [class]="'p-3 rounded-xl hover:bg-white/50 transition-all cursor-pointer ' + 
-                      (!notification.isRead ? 'bg-primary/5' : '')"
-                    (click)="markNotificationAsRead(notification.id)"
-                  >
-                    <div class="flex gap-3">
-                      <div 
-                        [style.background-color]="notification.color + '20'"
-                        class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                      >
-                        <i [class]="notification.icon + ' text-xl'" [style.color]="notification.color"></i>
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-start justify-between gap-2">
-                          <p class="font-semibold text-neutral-800 text-sm">{{ notification.title }}</p>
-                          @if (!notification.isRead) {
-                            <span class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1"></span>
-                          }
-                        </div>
-                        <p class="text-neutral-600 text-xs">{{ notification.message }}</p>
-                        <p class="text-neutral-400 text-xs mt-1">
-                          <i class="ri-time-line"></i>
-                          {{ getRelativeTime(notification.createdAt) }}
-                        </p>
-                      </div>
-                    </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-2">
+                    <p class="font-semibold text-neutral-800 text-sm">{{ notification.title }}</p>
+                    @if (!notification.isRead) {
+                    <span class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1"></span>
+                    }
                   </div>
-                }
-              }
-            </div>
-            
-            @if (notifications().length > 0) {
-              <div class="mt-3 pt-3 border-t border-neutral-200">
-                <a href="#" class="btn btn-sm btn-ghost w-full rounded-xl text-primary">
-                  Ver todas las notificaciones
-                  <i class="ri-arrow-right-line"></i>
-                </a>
+                  <p class="text-neutral-600 text-xs">{{ notification.message }}</p>
+                  <p class="text-neutral-400 text-xs mt-1">
+                    <i class="ri-time-line"></i>
+                    {{ getRelativeTime(notification.createdAt) }}
+                  </p>
+                </div>
               </div>
+            </div>
+            }
             }
           </div>
+
+          @if (notifications().length > 0) {
+          <div class="mt-3 pt-3 border-t border-neutral-200">
+            <a href="#" class="btn btn-sm btn-ghost w-full rounded-xl text-primary">
+              Ver todas las notificaciones
+              <i class="ri-arrow-right-line"></i>
+            </a>
+          </div>
+          }
+        </div>
         }
       </div>
 
       <!-- User Profile -->
       <div class="dropdown dropdown-end">
-        <button 
-          tabindex="0" 
-          (click)="toggleProfile()"
-          class="btn btn-ghost btn-circle avatar hover:bg-white/50"
-        >
+        <button tabindex="0" (click)="toggleProfile()" class="btn btn-ghost btn-circle avatar hover:bg-white/50">
           <div class="w-10 rounded-2xl ring ring-primary ring-offset-base-100 ring-offset-1">
-            <img 
-              [src]="currentUser()?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'" 
-              [alt]="currentUser()?.firstName || 'Usuario'"
-            />
+            <img [src]="currentUser()?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'"
+              [alt]="currentUser()?.firstName || 'Usuario'" />
           </div>
         </button>
         @if (showProfile()) {
-          <ul 
-            tabindex="0" 
-            class="dropdown-content menu glass rounded-2xl shadow-2xl w-64 p-3 mt-2"
-          >
-            <!-- Profile Header -->
-            <li class="menu-title px-3 py-2">
-              <div class="flex items-center gap-3">
-                <div class="avatar">
-                  <div class="w-12 rounded-xl">
-                    <img 
-                      [src]="currentUser()?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'" 
-                      [alt]="currentUser()?.firstName || 'Usuario'" 
-                    />
-                  </div>
-                </div>
-                <div>
-                  <p class="font-bold text-neutral-800">
-                    {{ currentUser()?.firstName || 'Administrador' }} {{ currentUser()?.lastName || '' }}
-                  </p>
-                  <p class="text-xs text-neutral-500">
-                    {{ currentUser()?.email || 'admin@condoadmin.com' }}
-                  </p>
+        <ul tabindex="0" class="dropdown-content menu glass rounded-2xl shadow-2xl w-64 p-3 mt-2">
+          <!-- Profile Header -->
+          <li class="menu-title px-3 py-2">
+            <div class="flex items-center gap-3">
+              <div class="avatar">
+                <div class="w-12 rounded-xl">
+                  <img [src]="currentUser()?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin'"
+                    [alt]="currentUser()?.firstName || 'Usuario'" />
                 </div>
               </div>
-            </li>
-            
-            <div class="divider my-1"></div>
-            
-            <!-- Menu Items -->
-            <li>
-              <a class="rounded-xl text-neutral-700 hover:bg-white/50">
-                <i class="ri-user-fill text-lg"></i>
-                Mi Perfil
-              </a>
-            </li>
-            <li>
-              <a class="rounded-xl text-neutral-700 hover:bg-white/50">
-                <i class="ri-settings-3-fill text-lg"></i>
-                Configuración
-              </a>
-            </li>
-            <li>
-              <a class="rounded-xl text-neutral-700 hover:bg-white/50">
-                <i class="ri-question-line text-lg"></i>
-                Ayuda
-              </a>
-            </li>
-            
-            <div class="divider my-1"></div>
-            
-            <!-- Logout -->
-            <li>
-              <a 
-                routerLink="/login"
-                class="rounded-xl text-error hover:bg-error/10"
-              >
-                <i class="ri-logout-box-line text-lg"></i>
-                Cerrar Sesión
-              </a>
-            </li>
-          </ul>
+              <div>
+                <p class="font-bold text-neutral-800">
+                  {{ currentUser()?.firstName || 'Administrador' }} {{ currentUser()?.lastName || '' }}
+                </p>
+                <p class="text-xs text-neutral-500">
+                  {{ currentUser()?.email || 'admin@condoadmin.com' }}
+                </p>
+              </div>
+            </div>
+          </li>
+
+          <div class="divider my-1"></div>
+
+          <!-- Menu Items -->
+          <li>
+            <a class="rounded-xl text-neutral-700 hover:bg-white/50">
+              <i class="ri-user-fill text-lg"></i>
+              Mi Perfil
+            </a>
+          </li>
+          <li>
+            <a class="rounded-xl text-neutral-700 hover:bg-white/50">
+              <i class="ri-settings-3-fill text-lg"></i>
+              Configuración
+            </a>
+          </li>
+          <li>
+            <a class="rounded-xl text-neutral-700 hover:bg-white/50">
+              <i class="ri-question-line text-lg"></i>
+              Ayuda
+            </a>
+          </li>
+
+          <div class="divider my-1"></div>
+
+          <!-- Logout -->
+          <li>
+            <a routerLink="/login" class="rounded-xl text-error hover:bg-error/10">
+              <i class="ri-logout-box-line text-lg"></i>
+              Cerrar Sesión
+            </a>
+          </li>
+        </ul>
         }
       </div>
     </div>

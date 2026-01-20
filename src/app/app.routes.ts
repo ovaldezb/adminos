@@ -43,6 +43,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/payments/payments').then(m => m.PaymentsComponent)
   },
   {
+    path: 'reportes',
+    loadComponent: () => import('./pages/reports/reports').then(m => m.ReportsComponent)
+  },
+  {
     path: 'configuracion/tipos-de-fondos',
     loadComponent: () => import('./pages/fund-types/fund-types').then(m => m.FundTypesComponent)
   },
