@@ -19,7 +19,8 @@ import {
   MonthlyAmount,
   AppPaymentRequest,
   FundConfig,
-  FundItem
+  FundItem,
+  FundMovement
 } from '../../models';
 
 @Component({
@@ -79,7 +80,8 @@ export class PaymentsComponent {
     paymentMethod: PaymentMethod.CASH,
     reference: '',
     notes: '',
-    fundName: ''
+    fundName: '',
+    buildingId: ''
   });
 
   protected readonly monthNames = [
@@ -445,7 +447,8 @@ export class PaymentsComponent {
       ...curr,
       residentId: resident.id,
       condominiumId: resident.condominiumId,
-      unitId: typeof resident.unit === 'object' ? resident.unit.id : resident.unitId
+      unitId: typeof resident.unit === 'object' ? resident.unit.id : resident.unitId,
+      buildingId: typeof resident.unit === 'object' ? resident.unit.buildingId : resident.buildingId
     }));
     this.selectedResidentName.set(`${resident.firstName} ${resident.lastName}`);
     this.residentSearchQuery.set('');
@@ -608,7 +611,8 @@ export class PaymentsComponent {
         paymentMethod: PaymentMethod.CASH,
         reference: '',
         notes: '',
-        fundName: ''
+        fundName: '',
+        buildingId: ''
       });
     }
     this.showModal.set(true);
@@ -743,6 +747,12 @@ export class PaymentsComponent {
         next: (response) => {
           if (response.success) {
             this.showToastMessage('Pago registrado correctamente (actualización)', 'success');
+
+            // NEW: Trigger Fund Balance Update
+            if (data.buildingId && data.amount && data.fundName) {
+              this.triggerFundMovementUpdate(data.buildingId, data.amount, data.fundName);
+            }
+
             this.closeModal();
             this.loadPayments();
           } else {
@@ -768,6 +778,12 @@ export class PaymentsComponent {
         next: (response: ApiResponse<any>) => {
           if (response.success) {
             this.showToastMessage('Pago registrado correctamente', 'success');
+
+            // NEW: Trigger Fund Balance Update
+            if (data.buildingId && data.amount && data.fundName) {
+              this.triggerFundMovementUpdate(data.buildingId, data.amount, data.fundName);
+            }
+
             this.closeModal();
             this.loadPayments();
           } else {
@@ -952,5 +968,37 @@ export class PaymentsComponent {
       ...current,
       [field]: value,
     }));
+  }
+
+  private triggerFundMovementUpdate(buildingId: string, amount: number, fundName: string): void {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1; // 1-12
+
+    const movement: FundMovement = {
+      buildingId,
+      fiscalYear: currentYear,
+      month: currentMonth,
+      funds: [
+        {
+          fundName,
+          incomes: amount,
+          expenses: 0,
+          previousBalance: 0,
+          finalBalance: 0
+        }
+      ]
+    };
+
+    console.log('Sending fund movement update:', movement);
+    this.paymentService.updateFundMovement(movement).subscribe({
+      next: (response) => {
+        if (response.success) {
+          console.log('Fund movement updated successfully');
+        } else {
+          console.error('Error updating fund movement:', response.error?.message);
+        }
+      },
+      error: (err) => console.error('Error in fund movement update call:', err)
+    });
   }
 }

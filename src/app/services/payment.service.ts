@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, delay, catchError, map, throwError } from 'rxjs';
-import { PaymentConfig, FundConfig } from '../models';
+import { PaymentConfig, FundConfig, FundMovement } from '../models';
 import { environment } from '../../environments/environment';
 import { ApiResponse, PaginationParams, PaymentStatus, PaginatedResponse, PaymentWithDetails, Payment, AppPaymentRequest } from '../models';
 
@@ -13,6 +13,7 @@ export class PaymentService {
   private readonly apiUrl = `${environment.apiUrl}/payment`;
   private readonly configUrl = `${environment.apiUrl}/payment-config`;
   private readonly fundsUrl = `${environment.apiUrl}/funds`;
+  private readonly fundMovementsUrl = `${environment.apiUrl}/fund-movements`;
 
 
   saveFunds(config: FundConfig): Observable<ApiResponse<FundConfig>> {
@@ -284,5 +285,14 @@ export class PaymentService {
           });
         })
       );
+  }
+
+  updateFundMovement(movement: FundMovement): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(this.fundMovementsUrl, movement).pipe(
+      catchError((error) => {
+        console.error('Error updating fund movement:', error);
+        return of({ success: false, error, timestamp: new Date() });
+      })
+    );
   }
 }

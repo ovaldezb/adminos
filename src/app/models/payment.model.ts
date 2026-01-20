@@ -14,6 +14,7 @@ export interface Payment {
   notes?: string;
   processedBy: string; // Admin user ID
   fundName?: string;
+  buildingId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
