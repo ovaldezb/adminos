@@ -1,29 +1,18 @@
 <div class="min-h-screen bg-gradient-to-br from-neutral-50 via-sky-50 to-violet-50">
   <!-- Navbar -->
-  <app-navbar
-    (toggleSidebar)="toggleSidebar()"
-  />
+  <app-navbar (toggleSidebar)="toggleSidebar()" />
 
   <div class="flex relative">
     <!-- Sidebar -->
-    <div 
+    <div
       class="fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto"
-      [class.-translate-x-full]="!sidebarOpen()"
-      [class.translate-x-0]="sidebarOpen()"
-    >
-      <app-side-menu
-        [isOpen]="sidebarOpen()"
-        [selectedCondo]="selectedCondo()"
-        (close)="sidebarOpen.set(false)"
-      />
+      [class.-translate-x-full]="!sidebarOpen()" [class.translate-x-0]="sidebarOpen()">
+      <app-side-menu [isOpen]="sidebarOpen()" [selectedCondo]="selectedCondo()" (close)="sidebarOpen.set(false)" />
     </div>
 
     <!-- Overlay para móvil -->
     @if (sidebarOpen()) {
-      <div 
-        class="fixed inset-0 bg-neutral-900/50 backdrop-blur-sm z-30 lg:hidden"
-        (click)="sidebarOpen.set(false)"
-      ></div>
+    <div class="fixed inset-0 bg-neutral-900/50 backdrop-blur-sm z-30 lg:hidden" (click)="sidebarOpen.set(false)"></div>
     }
 
     <!-- Main Content -->
@@ -32,7 +21,8 @@
       <div class="glass rounded-2xl p-4 sm:p-6 shadow-lg mb-6 border border-white/20">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center flex-shrink-0">
+            <div
+              class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center flex-shrink-0">
               <i class="ri-user-follow-fill text-xl sm:text-2xl text-primary"></i>
             </div>
             <div>
@@ -104,13 +94,13 @@
 
       <!-- Error Alert -->
       @if (error()) {
-        <div class="alert alert-error mb-6 glass shadow-xl">
-          <i class="ri-error-warning-fill text-xl"></i>
-          <span>{{ error() }}</span>
-          <button class="btn btn-sm btn-ghost" (click)="error.set(null)">
-            <i class="ri-close-line"></i>
-          </button>
-        </div>
+      <div class="alert alert-error mb-6 glass shadow-xl">
+        <i class="ri-error-warning-fill text-xl"></i>
+        <span>{{ error() }}</span>
+        <button class="btn btn-sm btn-ghost" (click)="error.set(null)">
+          <i class="ri-close-line"></i>
+        </button>
+      </div>
       }
 
       <!-- Filters & Actions -->
@@ -119,22 +109,14 @@
           <div class="flex flex-col sm:flex-row gap-3 flex-1 w-full">
             <!-- Search Input with Icon -->
             <div class="relative flex-1 min-w-0">
-              <input
-                type="text"
-                placeholder="Buscar residente..."
-                class="input input-bordered w-full text-sm pl-10"
-                [value]="searchTerm()"
-                (input)="onSearchChange($event)"
-              />
+              <input type="text" placeholder="Buscar residente..." class="input input-bordered w-full text-sm pl-10"
+                [value]="searchTerm()" (input)="onSearchChange($event)" />
               <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-primary text-lg"></i>
             </div>
 
             <!-- Type Filter -->
-            <select
-              class="select select-bordered w-full sm:w-auto text-sm font-medium"
-              [value]="typeFilter()"
-              (change)="onTypeFilterChange($event)"
-            >
+            <select class="select select-bordered w-full sm:w-auto text-sm font-medium" [value]="typeFilter()"
+              (change)="onTypeFilterChange($event)">
               <option value="">Todos los tipos</option>
               <option [value]="ResidentType.OWNER">Propietarios</option>
               <option [value]="ResidentType.TENANT">Inquilinos</option>
@@ -143,23 +125,17 @@
             </select>
 
             <!-- Building Filter -->
-            <select
-              class="select select-bordered w-full sm:w-auto text-sm font-medium"
-              [value]="buildingFilter()"
-              (change)="onBuildingFilterChange($event)"
-            >
+            <select class="select select-bordered w-full sm:w-auto text-sm font-medium" [value]="buildingFilter()"
+              (change)="onBuildingFilterChange($event)">
               <option value="">Todos los edificios</option>
               @for (building of buildingNames(); track building) {
-                <option [value]="building">{{ building }}</option>
+              <option [value]="building">{{ building }}</option>
               }
             </select>
 
             <!-- Status Filter -->
-            <select
-              class="select select-bordered w-full sm:w-auto text-sm font-medium"
-              [value]="statusFilter()"
-              (change)="onStatusFilterChange($event)"
-            >
+            <select class="select select-bordered w-full sm:w-auto text-sm font-medium" [value]="statusFilter()"
+              (change)="onStatusFilterChange($event)">
               <option value="">Todos los estados</option>
               <option value="active">Activos</option>
               <option value="inactive">Inactivos</option>
@@ -206,833 +182,697 @@
       <!-- Residents Table -->
       <div class="glass rounded-2xl shadow-xl overflow-hidden">
         @if (loading()) {
-          <div class="flex flex-col items-center justify-center p-12 gap-4">
-            <span class="loading loading-spinner loading-lg text-primary"></span>
-            <p class="text-neutral-600 font-medium">Cargando residentes...</p>
-          </div>
+        <div class="flex flex-col items-center justify-center p-12 gap-4">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+          <p class="text-neutral-600 font-medium">Cargando residentes...</p>
+        </div>
         } @else if (filteredResidents().length === 0) {
-          <div class="text-center p-12">
-            <i class="ri-inbox-line text-6xl text-neutral-300 mb-4"></i>
-            <p class="text-neutral-500">No se encontraron residentes</p>
-          </div>
+        <div class="text-center p-12">
+          <i class="ri-inbox-line text-6xl text-neutral-300 mb-4"></i>
+          <p class="text-neutral-500">No se encontraron residentes</p>
+        </div>
         } @else {
-          <!-- Desktop Table -->
-          <div class="hidden lg:block overflow-x-auto">
-            <table class="table">
-              <thead class="bg-gradient-to-r from-primary to-secondary">
-                <tr>
-                  <th class="text-neutral-100">Residente</th>
-                  <th class="text-neutral-100">Documento</th>
-                  <th class="text-neutral-100">Tipo & Relación</th>
-                  <th class="text-neutral-100">Contacto</th>
-                  <th class="text-neutral-100">Ubicación</th>
-                  <th class="text-neutral-100">Estado</th>
-                  <th class="text-neutral-100">Deuda</th>
-                  <th class="text-neutral-100">Acciones</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white">
-                @for (resident of filteredResidents(); track resident.id) {
-                  <tr class="hover:bg-sky-50 transition-colors border-b border-neutral-200">
-                    <td class="text-neutral-800">
-                      <div class="flex items-center gap-3">
-                        <div class="avatar placeholder">
-                          <div class="bg-primary/20 text-primary rounded-full w-10">
-                            <span class="text-sm font-semibold">
-                              {{ resident.firstName.charAt(0) }}{{ resident.lastName.charAt(0) }}
-                            </span>
-                          </div>
-                        </div>
-                        <div>
-                          <div class="font-semibold">{{ getFullName(resident) }}</div>
-                          <div class="text-xs text-neutral-500">Desde {{ formatDate(resident.moveInDate) }}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="text-neutral-700">
-                      <div class="text-sm">
-                        <div class="font-medium">{{ resident.documentNumber }}</div>
-                        <div class="text-xs text-neutral-500">{{ getDocumentTypeLabel(resident.documentType) }}</div>
-                      </div>
-                    </td>
-                    <td>
-                      <div class="flex items-center gap-2">
-                        <span class="badge badge-sm" [ngClass]="getTypeBadgeClass(resident.type)">
-                          {{ getTypeLabel(resident.type) }}
-                        </span>
-                        @if (resident.type === ResidentType.OWNER) {
-                          <div class="tooltip tooltip-top" data-tip="Propietario">
-                            <i class="ri-vip-crown-line text-warning text-sm"></i>
-                          </div>
-                        } @else if (resident.type === ResidentType.TENANT) {
-                          <div class="tooltip tooltip-top" data-tip="Inquilino">
-                            <i class="ri-home-line text-info text-sm"></i>
-                          </div>
-                        }
-                      </div>
-                    </td>
-                    <td class="text-neutral-700">
-                      <div class="text-sm">
-                        <div class="flex items-center gap-1">
-                          <i class="ri-mail-line text-xs"></i>
-                          <span>{{ resident.email }}</span>
-                        </div>
-                        <div class="flex items-center gap-1 text-neutral-500">
-                          <i class="ri-phone-line text-xs"></i>
-                          <span>{{ resident.phone }}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="text-neutral-700">
-                      <div class="space-y-1">
-                        @if (resident.buildingName) {
-                          <div class="flex items-center gap-2 bg-primary/10 px-2 py-1 rounded-lg">
-                            <i class="ri-building-line text-xs text-primary"></i>
-                            <span class="text-sm font-medium text-primary">{{ resident.buildingName }}</span>
-                          </div>
-                          <div class="flex items-center gap-2">
-                            <i class="ri-door-line text-xs text-secondary"></i>
-                            <span class="text-sm font-semibold">Unidad {{ resident.unitNumber }}</span>
-                          </div>
-                        } @else {
-                          <div class="flex items-center gap-1 text-neutral-400">
-                            <i class="ri-question-mark text-xs"></i>
-                            <span class="text-xs">Ubicación no especificada</span>
-                          </div>
-                        }
-                      </div>
-                    </td>
-                    <td>
-                      @if (resident.isActive) {
-                        <span class="badge badge-success">Activo</span>
-                      } @else {
-                        <span class="badge badge-ghost">Inactivo</span>
-                      }
-                    </td>
-                    <td class="text-neutral-700">
-                      @if (resident.totalDebt > 0) {
-                        <span class="font-semibold text-error">{{ formatCurrency(resident.totalDebt) }}</span>
-                      } @else {
-                        <span class="text-success">Sin deuda</span>
-                      }
-                    </td>
-                    <td>
-                      <div class="flex gap-1">
-                        <button
-                          class="btn btn-ghost btn-xs hover:bg-sky-100"
-                          (click)="openViewModal(resident)"
-                          title="Ver detalles"
-                        >
-                          <i class="ri-eye-line"></i>
-                        </button>
-                        <button
-                          class="btn btn-ghost btn-xs text-primary hover:bg-sky-100"
-                          (click)="openEditModal(resident)"
-                          title="Editar"
-                        >
-                          <i class="ri-edit-line"></i>
-                        </button>
-                        @if (resident.isActive) {
-                          <button
-                            class="btn btn-ghost btn-xs text-warning hover:bg-yellow-50"
-                            (click)="deactivateResident(resident)"
-                            title="Desactivar"
-                          >
-                            <i class="ri-user-unfollow-line"></i>
-                          </button>
-                        }
-                        <button
-                          class="btn btn-ghost btn-xs text-error hover:bg-red-50"
-                          (click)="openDeleteModal(resident)"
-                          title="Eliminar permanentemente"
-                        >
-                          <i class="ri-delete-bin-line"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Mobile Cards -->
-          <div class="lg:hidden divide-y divide-neutral-200">
-            @for (resident of filteredResidents(); track resident.id) {
-              <div class="p-4 bg-white hover:bg-sky-50 transition-colors">
-                <div class="flex items-start justify-between mb-3">
+        <!-- Desktop Table -->
+        <div class="hidden lg:block overflow-x-auto">
+          <table class="table">
+            <thead class="bg-gradient-to-r from-primary to-secondary">
+              <tr>
+                <th class="text-neutral-100">Residente</th>
+                <th class="text-neutral-100">Documento</th>
+                <th class="text-neutral-100">Tipo & Relación</th>
+                <th class="text-neutral-100">Contacto</th>
+                <th class="text-neutral-100">Ubicación</th>
+                <th class="text-neutral-100">Estado</th>
+                <th class="text-neutral-100">Deuda</th>
+                <th class="text-neutral-100">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white">
+              @for (resident of filteredResidents(); track resident.id) {
+              <tr class="hover:bg-sky-50 transition-colors border-b border-neutral-200">
+                <td class="text-neutral-800">
                   <div class="flex items-center gap-3">
                     <div class="avatar placeholder">
-                      <div class="bg-primary/20 text-primary rounded-full w-12">
+                      <div class="bg-primary/20 text-primary rounded-full w-10">
                         <span class="text-sm font-semibold">
-                          {{ resident.firstName.charAt(0) }}{{ resident.lastName.charAt(0) }}
+                          {{ resident.name.charAt(0) }}
                         </span>
                       </div>
                     </div>
                     <div>
-                      <div class="font-bold text-base text-neutral-800">{{ getFullName(resident) }}</div>
-                      <div class="text-xs text-neutral-500">{{ getDocumentTypeLabel(resident.documentType) }}: {{ resident.documentNumber }}</div>
+                      <div class="font-semibold">{{ resident.name }}</div>
+                      <div class="text-xs text-neutral-500">Desde {{ formatDate(resident.moveInDate) }}</div>
                     </div>
                   </div>
-                  <span class="badge badge-sm" [ngClass]="getTypeBadgeClass(resident.type)">
-                    {{ getTypeLabel(resident.type) }}
-                  </span>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-2 text-sm mb-3">
-                  <div>
-                    <span class="text-neutral-500"><i class="ri-mail-line"></i></span>
-                    <span class="text-neutral-700 ml-1 text-xs">{{ resident.email }}</span>
+                </td>
+                <td class="text-neutral-700">
+                  <div class="text-sm">
+                    <div class="font-medium">{{ resident.documentNumber }}</div>
+                    <div class="text-xs text-neutral-500">{{ getDocumentTypeLabel(resident.documentType) }}</div>
                   </div>
-                  <div>
-                    <span class="text-neutral-500"><i class="ri-phone-line"></i></span>
-                    <span class="text-neutral-700 ml-1 text-xs">{{ resident.phone }}</span>
-                  </div>
-                  <div>
-                    <span class="text-neutral-500">Unidad:</span>
-                    <span class="text-neutral-700 ml-1">{{ resident.unitNumber }}</span>
-                  </div>
-                  <div>
-                    <span class="text-neutral-500">Estado:</span>
-                    @if (resident.isActive) {
-                      <span class="badge badge-success badge-xs ml-1">Activo</span>
-                    } @else {
-                      <span class="badge badge-ghost badge-xs ml-1">Inactivo</span>
+                </td>
+                <td>
+                  <div class="flex items-center gap-2">
+                    <span class="badge badge-sm" [ngClass]="getTypeBadgeClass(resident.type)">
+                      {{ getTypeLabel(resident.type) }}
+                    </span>
+                    @if (resident.type === ResidentType.OWNER) {
+                    <div class="tooltip tooltip-top" data-tip="Propietario">
+                      <i class="ri-vip-crown-line text-warning text-sm"></i>
+                    </div>
+                    } @else if (resident.type === ResidentType.TENANT) {
+                    <div class="tooltip tooltip-top" data-tip="Inquilino">
+                      <i class="ri-home-line text-info text-sm"></i>
+                    </div>
                     }
                   </div>
-                </div>
-
-                <div class="flex items-center justify-between">
-                  <div>
-                    <div class="text-xs text-neutral-500">Deuda</div>
-                    @if (resident.totalDebt > 0) {
-                      <div class="font-bold text-base text-error">{{ formatCurrency(resident.totalDebt) }}</div>
+                </td>
+                <td class="text-neutral-700">
+                  <div class="text-sm">
+                    <div class="flex items-center gap-1">
+                      <i class="ri-mail-line text-xs"></i>
+                      <span>{{ resident.email }}</span>
+                    </div>
+                    <div class="flex items-center gap-1 text-neutral-500">
+                      <i class="ri-phone-line text-xs"></i>
+                      <span>{{ resident.phone }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-neutral-700">
+                  <div class="space-y-1">
+                    @if (resident.buildingName) {
+                    <div class="flex items-center gap-2 bg-primary/10 px-2 py-1 rounded-lg">
+                      <i class="ri-building-line text-xs text-primary"></i>
+                      <span class="text-sm font-medium text-primary">{{ resident.buildingName }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <i class="ri-door-line text-xs text-secondary"></i>
+                      <span class="text-sm font-semibold">Unidad {{ resident.unitNumber }}</span>
+                    </div>
                     } @else {
-                      <div class="font-semibold text-sm text-success">Sin deuda</div>
+                    <div class="flex items-center gap-1 text-neutral-400">
+                      <i class="ri-question-mark text-xs"></i>
+                      <span class="text-xs">Ubicación no especificada</span>
+                    </div>
                     }
                   </div>
+                </td>
+                <td>
+                  @if (resident.isActive) {
+                  <span class="badge badge-success">Activo</span>
+                  } @else {
+                  <span class="badge badge-ghost">Inactivo</span>
+                  }
+                </td>
+                <td class="text-neutral-700">
+                  @if (resident.totalDebt > 0) {
+                  <span class="font-semibold text-error">{{ formatCurrency(resident.totalDebt) }}</span>
+                  } @else {
+                  <span class="text-success">Sin deuda</span>
+                  }
+                </td>
+                <td>
                   <div class="flex gap-1">
-                    <button
-                      class="btn btn-sm btn-ghost"
-                      (click)="openViewModal(resident)"
-                    >
+                    <button class="btn btn-ghost btn-xs hover:bg-sky-100" (click)="openViewModal(resident)"
+                      title="Ver detalles">
                       <i class="ri-eye-line"></i>
                     </button>
-                    <button
-                      class="btn btn-sm btn-ghost text-primary"
-                      (click)="openEditModal(resident)"
-                    >
+                    <button class="btn btn-ghost btn-xs text-primary hover:bg-sky-100" (click)="openEditModal(resident)"
+                      title="Editar">
                       <i class="ri-edit-line"></i>
                     </button>
                     @if (resident.isActive) {
-                      <button
-                        class="btn btn-sm btn-ghost text-warning"
-                        (click)="deactivateResident(resident)"
-                      >
-                        <i class="ri-user-unfollow-line"></i>
-                      </button>
+                    <button class="btn btn-ghost btn-xs text-warning hover:bg-yellow-50"
+                      (click)="deactivateResident(resident)" title="Desactivar">
+                      <i class="ri-user-unfollow-line"></i>
+                    </button>
                     }
-                    <button
-                      class="btn btn-sm btn-ghost text-error"
-                      (click)="openDeleteModal(resident)"
-                    >
+                    <button class="btn btn-ghost btn-xs text-error hover:bg-red-50" (click)="openDeleteModal(resident)"
+                      title="Eliminar permanentemente">
                       <i class="ri-delete-bin-line"></i>
                     </button>
                   </div>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Cards -->
+        <div class="lg:hidden divide-y divide-neutral-200">
+          @for (resident of filteredResidents(); track resident.id) {
+          <div class="p-4 bg-white hover:bg-sky-50 transition-colors">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="avatar placeholder">
+                  <div class="bg-primary/20 text-primary rounded-full w-12">
+                    <span class="text-sm font-semibold">
+                      {{ resident.name.charAt(0) }}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <div class="font-bold text-base text-neutral-800">{{ resident.name }}</div>
+                  <div class="text-xs text-neutral-500">{{ getDocumentTypeLabel(resident.documentType) }}: {{
+                    resident.documentNumber }}</div>
                 </div>
               </div>
-            }
-          </div>
+              <span class="badge badge-sm" [ngClass]="getTypeBadgeClass(resident.type)">
+                {{ getTypeLabel(resident.type) }}
+              </span>
+            </div>
 
-          <!-- Pagination -->
-          <div class="flex flex-col sm:flex-row items-center justify-between p-4 bg-neutral-50 gap-3">
-            <div class="text-sm text-neutral-600 text-center sm:text-left">
-              Mostrando {{ (currentPage() - 1) * pageSize() + 1 }} - 
-              {{ Math.min(currentPage() * pageSize(), totalItems()) }} de {{ totalItems() }}
+            <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+              <div>
+                <span class="text-neutral-500"><i class="ri-mail-line"></i></span>
+                <span class="text-neutral-700 ml-1 text-xs">{{ resident.email }}</span>
+              </div>
+              <div>
+                <span class="text-neutral-500"><i class="ri-phone-line"></i></span>
+                <span class="text-neutral-700 ml-1 text-xs">{{ resident.phone }}</span>
+              </div>
+              <div>
+                <span class="text-neutral-500">Unidad:</span>
+                <span class="text-neutral-700 ml-1">{{ resident.unitNumber }}</span>
+              </div>
+              <div>
+                <span class="text-neutral-500">Estado:</span>
+                @if (resident.isActive) {
+                <span class="badge badge-success badge-xs ml-1">Activo</span>
+                } @else {
+                <span class="badge badge-ghost badge-xs ml-1">Inactivo</span>
+                }
+              </div>
             </div>
-            <div class="btn-group">
-              <button
-                class="btn btn-sm"
-                [disabled]="currentPage() === 1"
-                (click)="previousPage()"
-              >
-                <i class="ri-arrow-left-s-line"></i>
-              </button>
-              @for (page of [].constructor(totalPages()); track $index) {
-                <button
-                  class="btn btn-sm"
-                  [class.btn-active]="currentPage() === $index + 1"
-                  (click)="goToPage($index + 1)"
-                >
-                  {{ $index + 1 }}
+
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xs text-neutral-500">Deuda</div>
+                @if (resident.totalDebt > 0) {
+                <div class="font-bold text-base text-error">{{ formatCurrency(resident.totalDebt) }}</div>
+                } @else {
+                <div class="font-semibold text-sm text-success">Sin deuda</div>
+                }
+              </div>
+              <div class="flex gap-1">
+                <button class="btn btn-sm btn-ghost" (click)="openViewModal(resident)">
+                  <i class="ri-eye-line"></i>
                 </button>
-              }
-              <button
-                class="btn btn-sm"
-                [disabled]="currentPage() === totalPages()"
-                (click)="nextPage()"
-              >
-                <i class="ri-arrow-right-s-line"></i>
-              </button>
+                <button class="btn btn-sm btn-ghost text-primary" (click)="openEditModal(resident)">
+                  <i class="ri-edit-line"></i>
+                </button>
+                @if (resident.isActive) {
+                <button class="btn btn-sm btn-ghost text-warning" (click)="deactivateResident(resident)">
+                  <i class="ri-user-unfollow-line"></i>
+                </button>
+                }
+                <button class="btn btn-sm btn-ghost text-error" (click)="openDeleteModal(resident)">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              </div>
             </div>
           </div>
+          }
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex flex-col sm:flex-row items-center justify-between p-4 bg-neutral-50 gap-3">
+          <div class="text-sm text-neutral-600 text-center sm:text-left">
+            Mostrando {{ (currentPage() - 1) * pageSize() + 1 }} -
+            {{ Math.min(currentPage() * pageSize(), totalItems()) }} de {{ totalItems() }}
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-sm" [disabled]="currentPage() === 1" (click)="previousPage()">
+              <i class="ri-arrow-left-s-line"></i>
+            </button>
+            @for (page of [].constructor(totalPages()); track $index) {
+            <button class="btn btn-sm" [class.btn-active]="currentPage() === $index + 1" (click)="goToPage($index + 1)">
+              {{ $index + 1 }}
+            </button>
+            }
+            <button class="btn btn-sm" [disabled]="currentPage() === totalPages()" (click)="nextPage()">
+              <i class="ri-arrow-right-s-line"></i>
+            </button>
+          </div>
+        </div>
         }
       </div>
     </main>
   </div>
 
   <!-- Modals y notificaciones fuera del contenedor principal -->
-  
+
   <!-- Modal -->
   @if (showModal()) {
-    <div class="modal modal-open">
-      <div class="modal-box max-w-4xl glass">
-        <h3 class="font-bold text-2xl mb-6">
-          @if (modalMode() === 'create') {
-            <i class="ri-add-line text-primary"></i> Nuevo Residente
-          } @else if (modalMode() === 'edit') {
-            <i class="ri-edit-line text-primary"></i> Editar Residente
-          } @else {
-            <i class="ri-eye-line text-primary"></i> Detalles de Residente
-          }
-        </h3>
-
-        @if (modalMode() === 'view' && selectedResident()) {
-          <!-- View Mode -->
-          <div class="grid grid-cols-2 gap-6">
-            <div>
-              <h4 class="font-semibold mb-2 text-neutral-700">Información Personal</h4>
-              <div class="space-y-2">
-                <div>
-                  <span class="text-sm text-neutral-500">Nombre Completo:</span>
-                  <p class="font-medium">{{ getFullName(selectedResident()!) }}</p>
-                </div>
-                <div>
-                  <span class="text-sm text-neutral-500">Documento:</span>
-                  <p class="font-medium">{{ selectedResident()!.documentNumber }} ({{ getDocumentTypeLabel(selectedResident()!.documentType) }})</p>
-                </div>
-                <div>
-                  <span class="text-sm text-neutral-500">Tipo:</span>
-                  <p><span class="badge" [ngClass]="getTypeBadgeClass(selectedResident()!.type)">
-                    {{ getTypeLabel(selectedResident()!.type) }}
-                  </span></p>
-                </div>
-                <div>
-                  <span class="text-sm text-neutral-500">Estado:</span>
-                  <p>
-                    @if (selectedResident()!.isActive) {
-                      <span class="badge badge-success">Activo</span>
-                    } @else {
-                      <span class="badge badge-ghost">Inactivo</span>
-                    }
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h4 class="font-semibold mb-2 text-neutral-700">Contacto</h4>
-              <div class="space-y-2">
-                <div>
-                  <span class="text-sm text-neutral-500">Email:</span>
-                  <p class="font-medium">{{ selectedResident()!.email }}</p>
-                </div>
-                <div>
-                  <span class="text-sm text-neutral-500">Teléfono:</span>
-                  <p class="font-medium">{{ selectedResident()!.phone }}</p>
-                </div>
-                @if (selectedResident()!.emergencyContactName) {
-                  <div>
-                    <span class="text-sm text-neutral-500">Contacto de Emergencia:</span>
-                    <p class="font-medium">{{ selectedResident()!.emergencyContactName }}</p>
-                    <p class="text-sm text-neutral-600">{{ selectedResident()!.emergencyContactPhone }}</p>
-                  </div>
-                }
-              </div>
-            </div>
-
-            <div class="col-span-2">
-              <h4 class="font-semibold mb-2 text-neutral-700">Unidades</h4>
-              <div class="space-y-2">
-                @if (selectedResident()!.buildingName) {
-                  <div>
-                    <span class="text-sm text-neutral-500">Edificio/Torre:</span>
-                    <p class="font-medium flex items-center gap-2">
-                      <i class="ri-building-line text-primary"></i>
-                      {{ selectedResident()!.buildingName }}
-                    </p>
-                  </div>
-                }
-                <div>
-                  <span class="text-sm text-neutral-500">Unidad:</span>
-                  <div class="flex flex-wrap gap-2 mt-1">
-                    <span class="badge badge-lg badge-primary">{{ selectedResident()!.unitNumber }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-span-2">
-              <h4 class="font-semibold mb-2 text-neutral-700">Información Financiera</h4>
-              <div class="grid grid-cols-3 gap-4">
-                <div>
-                  <span class="text-sm text-neutral-500">Deuda Total:</span>
-                  @if (selectedResident()!.totalDebt > 0) {
-                    <p class="font-medium text-lg text-error">{{ formatCurrency(selectedResident()!.totalDebt) }}</p>
-                  } @else {
-                    <p class="font-medium text-lg text-success">Sin deuda</p>
-                  }
-                </div>
-                <div>
-                  <span class="text-sm text-neutral-500">Historial de Pagos:</span>
-                  <p class="font-medium text-lg">{{ selectedResident()!.paymentHistory }}</p>
-                </div>
-                <div>
-                  <span class="text-sm text-neutral-500">Retraso Promedio:</span>
-                  <p class="font-medium text-lg">{{ selectedResident()!.averagePaymentDelay }} días</p>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-span-2">
-              <h4 class="font-semibold mb-2 text-neutral-700">Fechas</h4>
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <span class="text-sm text-neutral-500">Fecha de Ingreso:</span>
-                  <p class="font-medium">{{ formatDate(selectedResident()!.moveInDate) }}</p>
-                </div>
-                @if (selectedResident()!.moveOutDate) {
-                  <div>
-                    <span class="text-sm text-neutral-500">Fecha de Salida:</span>
-                    <p class="font-medium">{{ formatDate(selectedResident()!.moveOutDate) }}</p>
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
+  <div class="modal modal-open">
+    <div class="modal-box max-w-4xl glass">
+      <h3 class="font-bold text-2xl mb-6">
+        @if (modalMode() === 'create') {
+        <i class="ri-add-line text-primary"></i> Nuevo Residente
+        } @else if (modalMode() === 'edit') {
+        <i class="ri-edit-line text-primary"></i> Editar Residente
         } @else {
-          <!-- Create/Edit Form -->
-          <form (submit)="$event.preventDefault(); saveResident()">
-            <div class="grid grid-cols-2 gap-4">
-              <!-- Personal Info -->
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Nombres *</span>
-                </label>
-                <input
-                  type="text"
-                  class="input input-bordered"
-                  [(ngModel)]="formData().firstName"
-                  name="firstName"
-                  required
-                />
-              </div>
+        <i class="ri-eye-line text-primary"></i> Detalles de Residente
+        }
+      </h3>
 
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Apellidos *</span>
-                </label>
-                <input
-                  type="text"
-                  class="input input-bordered"
-                  [(ngModel)]="formData().lastName"
-                  name="lastName"
-                  required
-                />
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Email *</span>
-                </label>
-                <input
-                  type="email"
-                  class="input input-bordered"
-                  [(ngModel)]="formData().email"
-                  name="email"
-                  required
-                />
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Teléfono *</span>
-                </label>
-                <input
-                  type="tel"
-                  class="input input-bordered"
-                  [(ngModel)]="formData().phone"
-                  name="phone"
-                  required
-                />
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Tipo de Documento *</span>
-                </label>
-                <select
-                  class="select select-bordered"
-                  [(ngModel)]="formData().documentType"
-                  name="documentType"
-                  required
-                >
-                  <option [value]="DocumentType.CURP">CURP</option>
-                  <option [value]="DocumentType.RFC">RFC</option>
-                  <option [value]="DocumentType.INE">INE</option>
-                  <option [value]="DocumentType.PASSPORT">Pasaporte</option>
-                  <option [value]="DocumentType.FM3">FM3</option>
-                </select>
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Número de Documento *</span>
-                </label>
-                <input
-                  type="text"
-                  class="input input-bordered"
-                  [(ngModel)]="formData().documentNumber"
-                  name="documentNumber"
-                  required
-                />
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Tipo de Residente *</span>
-                </label>
-                <select
-                  class="select select-bordered"
-                  [(ngModel)]="formData().type"
-                  name="type"
-                  required
-                >
-                  <option [value]="ResidentType.OWNER">Propietario</option>
-                  <option [value]="ResidentType.TENANT">Inquilino</option>
-                  <option [value]="ResidentType.FAMILY_MEMBER">Familiar</option>
-                  <option [value]="ResidentType.COHABITANT">Residente</option>
-                </select>
-              </div>
-
-              <!-- Condominio Dropdown -->
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Condominio *</span>
-                </label>
-                <select
-                  class="select select-bordered"
-                  [value]="formData().condominiumId"
-                  (change)="onCondominiumChange($event)"
-                  name="condominiumId"
-                  required
-                >
-                  <option value="">Seleccione un condominio</option>
-                  @for (condo of availableCondominiums(); track condo.id) {
-                    <option [value]="condo.id">{{ condo.name }}</option>
-                  }
-                </select>
-              </div>
-
-              <!-- Edificio/Torre Dropdown -->
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Edificio/Torre *</span>
-                </label>
-                <select
-                  class="select select-bordered"
-                  [value]="formData().buildingId"
-                  (change)="onBuildingChange($event)"
-                  name="buildingId"
-                  [disabled]="!formData().condominiumId"
-                  required
-                >
-                  <option value="">
-                    @if (!formData().condominiumId) {
-                      Primero seleccione un condominio
-                    } @else {
-                      Seleccione un edificio
-                    }
-                  </option>
-                  @for (building of availableBuildings(); track building.id) {
-                    <option [value]="building.id">{{ building.name }}</option>
-                  }
-                </select>
-              </div>
-
-              <!-- Unidad Dropdown -->
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Unidad *</span>
-                </label>
-                <select
-                  class="select select-bordered"
-                  [value]="formData().unitId"
-                  (change)="onUnitChange($event)"
-                  name="unitId"
-                  [disabled]="!formData().buildingId"
-                  required
-                >
-                  <option value="">
-                    @if (!formData().buildingId) {
-                      Primero seleccione un edificio
-                    } @else {
-                      Seleccione una unidad
-                    }
-                  </option>
-                  @for (unit of availableUnits(); track unit.id) {
-                    <option [value]="unit.id">
-                      {{ unit.unitNumber }} - {{ unit.tower }} - Piso {{ unit.floor }}
-                      @if (unit.status === 'occupied') {
-                        (Ocupada)
-                      }
-                    </option>
-                  }
-                </select>
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Fecha de Ingreso *</span>
-                </label>
-                <input
-                  type="date"
-                  class="input input-bordered"
-                  [value]="formatDateForInput(formData().moveInDate)"
-                  (change)="onDateChange('moveInDate', $any($event.target).value)"
-                  name="moveInDate"
-                  required
-                />
-              </div>
-
-              <!-- Emergency Contact -->
-              <div class="col-span-2">
-                <h4 class="font-semibold mb-2">Contacto de Emergencia (Opcional)</h4>
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Nombre</span>
-                </label>
-                <input
-                  type="text"
-                  class="input input-bordered"
-                  [(ngModel)]="formData().emergencyContactName"
-                  name="emergencyContactName"
-                />
-              </div>
-
-              <div class="form-control">
-                <label class="label">
-                  <span class="label-text font-semibold">Teléfono</span>
-                </label>
-                <input
-                  type="tel"
-                  class="input input-bordered"
-                  [(ngModel)]="formData().emergencyContactPhone"
-                  name="emergencyContactPhone"
-                />
-              </div>
+      @if (modalMode() === 'view' && selectedResident()) {
+      <!-- View Mode -->
+      <div class="grid grid-cols-2 gap-6">
+        <div>
+          <h4 class="font-semibold mb-2 text-neutral-700">Información Personal</h4>
+          <div class="space-y-2">
+            <div>
+              <span class="text-sm text-neutral-500">Nombre Completo:</span>
+              <p class="font-medium">{{ selectedResident()!.name }}</p>
             </div>
-
-            <!-- Modal Actions -->
-            <div class="modal-action">
-              <button type="button" class="btn btn-ghost" (click)="closeModal()">
-                Cancelar
-              </button>
-              <button type="submit" class="btn btn-primary" [disabled]="loading()">
-                @if (loading()) {
-                  <span class="loading loading-spinner"></span>
+            <div>
+              <span class="text-sm text-neutral-500">Documento:</span>
+              <p class="font-medium">{{ selectedResident()!.documentNumber }} ({{
+                getDocumentTypeLabel(selectedResident()!.documentType) }})</p>
+            </div>
+            <div>
+              <span class="text-sm text-neutral-500">Tipo:</span>
+              <p><span class="badge" [ngClass]="getTypeBadgeClass(selectedResident()!.type)">
+                  {{ getTypeLabel(selectedResident()!.type) }}
+                </span></p>
+            </div>
+            <div>
+              <span class="text-sm text-neutral-500">Estado:</span>
+              <p>
+                @if (selectedResident()!.isActive) {
+                <span class="badge badge-success">Activo</span>
+                } @else {
+                <span class="badge badge-ghost">Inactivo</span>
                 }
-                {{ modalMode() === 'create' ? 'Crear' : 'Guardar' }}
-              </button>
+              </p>
             </div>
-          </form>
-        }
-
-        @if (modalMode() === 'view') {
-          <div class="modal-action">
-            <button class="btn btn-ghost" (click)="closeModal()">Cerrar</button>
           </div>
-        }
+        </div>
+
+        <div>
+          <h4 class="font-semibold mb-2 text-neutral-700">Contacto</h4>
+          <div class="space-y-2">
+            <div>
+              <span class="text-sm text-neutral-500">Email:</span>
+              <p class="font-medium">{{ selectedResident()!.email }}</p>
+            </div>
+            <div>
+              <span class="text-sm text-neutral-500">Teléfono:</span>
+              <p class="font-medium">{{ selectedResident()!.phone }}</p>
+            </div>
+            @if (selectedResident()!.emergencyContactName) {
+            <div>
+              <span class="text-sm text-neutral-500">Contacto de Emergencia:</span>
+              <p class="font-medium">{{ selectedResident()!.emergencyContactName }}</p>
+              <p class="text-sm text-neutral-600">{{ selectedResident()!.emergencyContactPhone }}</p>
+            </div>
+            }
+          </div>
+        </div>
+
+        <div class="col-span-2">
+          <h4 class="font-semibold mb-2 text-neutral-700">Unidades</h4>
+          <div class="space-y-2">
+            @if (selectedResident()!.buildingName) {
+            <div>
+              <span class="text-sm text-neutral-500">Edificio/Torre:</span>
+              <p class="font-medium flex items-center gap-2">
+                <i class="ri-building-line text-primary"></i>
+                {{ selectedResident()!.buildingName }}
+              </p>
+            </div>
+            }
+            <div>
+              <span class="text-sm text-neutral-500">Unidad:</span>
+              <div class="flex flex-wrap gap-2 mt-1">
+                <span class="badge badge-lg badge-primary">{{ selectedResident()!.unitNumber }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-span-2">
+          <h4 class="font-semibold mb-2 text-neutral-700">Información Financiera</h4>
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <span class="text-sm text-neutral-500">Deuda Total:</span>
+              @if (selectedResident()!.totalDebt > 0) {
+              <p class="font-medium text-lg text-error">{{ formatCurrency(selectedResident()!.totalDebt) }}</p>
+              } @else {
+              <p class="font-medium text-lg text-success">Sin deuda</p>
+              }
+            </div>
+            <div>
+              <span class="text-sm text-neutral-500">Historial de Pagos:</span>
+              <p class="font-medium text-lg">{{ selectedResident()!.paymentHistory }}</p>
+            </div>
+            <div>
+              <span class="text-sm text-neutral-500">Retraso Promedio:</span>
+              <p class="font-medium text-lg">{{ selectedResident()!.averagePaymentDelay }} días</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-span-2">
+          <h4 class="font-semibold mb-2 text-neutral-700">Fechas</h4>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <span class="text-sm text-neutral-500">Fecha de Ingreso:</span>
+              <p class="font-medium">{{ formatDate(selectedResident()!.moveInDate) }}</p>
+            </div>
+            @if (selectedResident()!.moveOutDate) {
+            <div>
+              <span class="text-sm text-neutral-500">Fecha de Salida:</span>
+              <p class="font-medium">{{ formatDate(selectedResident()!.moveOutDate) }}</p>
+            </div>
+            }
+          </div>
+        </div>
       </div>
-      <div class="modal-backdrop" (click)="closeModal()"></div>
+      } @else {
+      <!-- Create/Edit Form -->
+      <form (submit)="$event.preventDefault(); saveResident()">
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Personal Info -->
+          <div class="form-control col-span-2">
+            <label class="label">
+              <span class="label-text font-semibold">Nombre Completo *</span>
+            </label>
+            <input type="text" class="input input-bordered" [(ngModel)]="formData().name" name="name" required />
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Email *</span>
+            </label>
+            <input type="email" class="input input-bordered" [(ngModel)]="formData().email" name="email" required />
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Teléfono *</span>
+            </label>
+            <input type="tel" class="input input-bordered" [(ngModel)]="formData().phone" name="phone" required />
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Tipo de Documento *</span>
+            </label>
+            <select class="select select-bordered" [(ngModel)]="formData().documentType" name="documentType" required>
+              <option [value]="DocumentType.CURP">CURP</option>
+              <option [value]="DocumentType.RFC">RFC</option>
+              <option [value]="DocumentType.INE">INE</option>
+              <option [value]="DocumentType.PASSPORT">Pasaporte</option>
+              <option [value]="DocumentType.FM3">FM3</option>
+            </select>
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Número de Documento *</span>
+            </label>
+            <input type="text" class="input input-bordered" [(ngModel)]="formData().documentNumber"
+              name="documentNumber" required />
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Tipo de Residente *</span>
+            </label>
+            <select class="select select-bordered" [(ngModel)]="formData().type" name="type" required>
+              <option [value]="ResidentType.OWNER">Propietario</option>
+              <option [value]="ResidentType.TENANT">Inquilino</option>
+              <option [value]="ResidentType.FAMILY_MEMBER">Familiar</option>
+              <option [value]="ResidentType.COHABITANT">Residente</option>
+            </select>
+          </div>
+
+          <!-- Condominio Dropdown -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Condominio *</span>
+            </label>
+            <select class="select select-bordered" [value]="formData().condominiumId"
+              (change)="onCondominiumChange($event)" name="condominiumId" required>
+              <option value="">Seleccione un condominio</option>
+              @for (condo of availableCondominiums(); track condo.id) {
+              <option [value]="condo.id">{{ condo.name }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Edificio/Torre Dropdown -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Edificio/Torre *</span>
+            </label>
+            <select class="select select-bordered" [value]="formData().buildingId" (change)="onBuildingChange($event)"
+              name="buildingId" [disabled]="!formData().condominiumId" required>
+              <option value="">
+                @if (!formData().condominiumId) {
+                Primero seleccione un condominio
+                } @else {
+                Seleccione un edificio
+                }
+              </option>
+              @for (building of availableBuildings(); track building.id) {
+              <option [value]="building.id">{{ building.name }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Unidad Dropdown -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Unidad *</span>
+            </label>
+            <select class="select select-bordered" [value]="formData().unitId" (change)="onUnitChange($event)"
+              name="unitId" [disabled]="!formData().buildingId" required>
+              <option value="">
+                @if (!formData().buildingId) {
+                Primero seleccione un edificio
+                } @else {
+                Seleccione una unidad
+                }
+              </option>
+              @for (unit of availableUnits(); track unit.id) {
+              <option [value]="unit.id">
+                {{ unit.unitNumber }} - {{ unit.tower }} - Piso {{ unit.floor }}
+                @if (unit.status === 'occupied') {
+                (Ocupada)
+                }
+              </option>
+              }
+            </select>
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Fecha de Ingreso *</span>
+            </label>
+            <input type="date" class="input input-bordered" [value]="formatDateForInput(formData().moveInDate)"
+              (change)="onDateChange('moveInDate', $any($event.target).value)" name="moveInDate" required />
+          </div>
+
+          <!-- Emergency Contact -->
+          <div class="col-span-2">
+            <h4 class="font-semibold mb-2">Contacto de Emergencia (Opcional)</h4>
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Nombre</span>
+            </label>
+            <input type="text" class="input input-bordered" [(ngModel)]="formData().emergencyContactName"
+              name="emergencyContactName" />
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Teléfono</span>
+            </label>
+            <input type="tel" class="input input-bordered" [(ngModel)]="formData().emergencyContactPhone"
+              name="emergencyContactPhone" />
+          </div>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="modal-action">
+          <button type="button" class="btn btn-ghost" (click)="closeModal()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading()">
+            @if (loading()) {
+            <span class="loading loading-spinner"></span>
+            }
+            {{ modalMode() === 'create' ? 'Crear' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+      }
+
+      @if (modalMode() === 'view') {
+      <div class="modal-action">
+        <button class="btn btn-ghost" (click)="closeModal()">Cerrar</button>
+      </div>
+      }
     </div>
+    <div class="modal-backdrop" (click)="closeModal()"></div>
+  </div>
   }
 
   <!-- Deactivate Confirmation Modal -->
   @if (showDeactivateModal()) {
-    <div class="modal modal-open">
-      <div class="modal-box glass max-w-md">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="p-3 bg-error/10 rounded-full">
-            <i class="ri-user-unfollow-line text-3xl text-error"></i>
-          </div>
-          <div>
-            <h3 class="font-bold text-xl text-neutral-800">Desactivar Residente</h3>
-          </div>
+  <div class="modal modal-open">
+    <div class="modal-box glass max-w-md">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="p-3 bg-error/10 rounded-full">
+          <i class="ri-user-unfollow-line text-3xl text-error"></i>
         </div>
-
-        @if (residentToDeactivate()) {
-          <div class="mb-6">
-            <p class="text-neutral-700 mb-4">
-              ¿Está seguro que desea desactivar a este residente?
-            </p>
-            <div class="bg-neutral-100 rounded-xl p-4 space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-neutral-600">Nombre:</span>
-                <span class="font-bold text-neutral-800">
-                  {{ residentToDeactivate()!.firstName }} {{ residentToDeactivate()!.lastName }}
-                </span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-neutral-600">Documento:</span>
-                <span class="font-mono font-semibold text-neutral-700">{{ residentToDeactivate()!.documentNumber }}</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-neutral-600">Tipo:</span>
-                <span [class]="'badge badge-sm ' + getTypeBadgeClass(residentToDeactivate()!.type)">
-                  {{ getTypeLabel(residentToDeactivate()!.type) }}
-                </span>
-              </div>
-            </div>
-            <div class="alert alert-warning mt-4">
-              <i class="ri-alert-line"></i>
-              <span class="text-sm">El residente dejará de tener acceso al sistema</span>
-            </div>
-          </div>
-        }
-
-        <div class="modal-action">
-          <button 
-            type="button" 
-            class="btn btn-ghost" 
-            (click)="closeDeactivateModal()"
-            [disabled]="isDeactivating()"
-          >
-            Cancelar
-          </button>
-          <button 
-            type="button" 
-            class="btn btn-error gap-2" 
-            (click)="confirmDeactivate()"
-            [disabled]="isDeactivating()"
-          >
-            @if (isDeactivating()) {
-              <span class="loading loading-spinner loading-sm"></span>
-              Desactivando...
-            } @else {
-              <i class="ri-user-unfollow-line"></i>
-              Desactivar
-            }
-          </button>
+        <div>
+          <h3 class="font-bold text-xl text-neutral-800">Desactivar Residente</h3>
         </div>
       </div>
-      <div class="modal-backdrop" (click)="closeDeactivateModal()"></div>
+
+      @if (residentToDeactivate()) {
+      <div class="mb-6">
+        <p class="text-neutral-700 mb-4">
+          ¿Está seguro que desea desactivar a este residente?
+        </p>
+        <div class="bg-neutral-100 rounded-xl p-4 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-neutral-600">Nombre:</span>
+            <span class="font-bold text-neutral-800">
+              {{ residentToDeactivate()!.name }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-neutral-600">Documento:</span>
+            <span class="font-mono font-semibold text-neutral-700">{{ residentToDeactivate()!.documentNumber }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-neutral-600">Tipo:</span>
+            <span [class]="'badge badge-sm ' + getTypeBadgeClass(residentToDeactivate()!.type)">
+              {{ getTypeLabel(residentToDeactivate()!.type) }}
+            </span>
+          </div>
+        </div>
+        <div class="alert alert-warning mt-4">
+          <i class="ri-alert-line"></i>
+          <span class="text-sm">El residente dejará de tener acceso al sistema</span>
+        </div>
+      </div>
+      }
+
+      <div class="modal-action">
+        <button type="button" class="btn btn-ghost" (click)="closeDeactivateModal()" [disabled]="isDeactivating()">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-error gap-2" (click)="confirmDeactivate()" [disabled]="isDeactivating()">
+          @if (isDeactivating()) {
+          <span class="loading loading-spinner loading-sm"></span>
+          Desactivando...
+          } @else {
+          <i class="ri-user-unfollow-line"></i>
+          Desactivar
+          }
+        </button>
+      </div>
     </div>
+    <div class="modal-backdrop" (click)="closeDeactivateModal()"></div>
+  </div>
   }
 
   <!-- Delete Confirmation Modal -->
   @if (showDeleteModal()) {
-    <div class="modal modal-open">
-      <div class="modal-box glass max-w-md">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="p-3 bg-error/10 rounded-full">
-            <i class="ri-error-warning-line text-3xl text-error"></i>
-          </div>
-          <div>
-            <h3 class="font-bold text-xl text-neutral-800">Eliminar Residente</h3>
-          </div>
+  <div class="modal modal-open">
+    <div class="modal-box glass max-w-md">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="p-3 bg-error/10 rounded-full">
+          <i class="ri-error-warning-line text-3xl text-error"></i>
         </div>
-
-        @if (residentToDelete()) {
-          <div class="mb-6">
-            <p class="text-neutral-700 mb-4">
-              ¿Está seguro que desea <strong class="text-error">eliminar permanentemente</strong> a este residente?
-            </p>
-            <div class="bg-neutral-100 rounded-xl p-4 space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-neutral-600">Nombre:</span>
-                <span class="font-bold text-neutral-800">
-                  {{ residentToDelete()!.firstName }} {{ residentToDelete()!.lastName }}
-                </span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-neutral-600">Email:</span>
-                <span class="font-semibold text-neutral-700">{{ residentToDelete()!.email }}</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-neutral-600">Documento:</span>
-                <span class="font-mono font-semibold text-neutral-700">{{ residentToDelete()!.documentNumber }}</span>
-              </div>
-            </div>
-            <div class="alert alert-error mt-4">
-              <i class="ri-alert-line"></i>
-              <span class="text-sm font-semibold">⚠️ Esta acción NO se puede deshacer. Todos los datos del residente serán eliminados permanentemente.</span>
-            </div>
-          </div>
-        }
-
-        <div class="modal-action">
-          <button 
-            type="button" 
-            class="btn btn-ghost" 
-            (click)="closeDeleteModal()"
-            [disabled]="isDeleting()"
-          >
-            Cancelar
-          </button>
-          <button 
-            type="button" 
-            class="btn btn-error gap-2" 
-            (click)="confirmDelete()"
-            [disabled]="isDeleting()"
-          >
-            @if (isDeleting()) {
-              <span class="loading loading-spinner loading-sm"></span>
-              Eliminando...
-            } @else {
-              <i class="ri-delete-bin-line"></i>
-              Eliminar Permanentemente
-            }
-          </button>
+        <div>
+          <h3 class="font-bold text-xl text-neutral-800">Eliminar Residente</h3>
         </div>
       </div>
-      <div class="modal-backdrop" (click)="closeDeleteModal()"></div>
+
+      @if (residentToDelete()) {
+      <div class="mb-6">
+        <p class="text-neutral-700 mb-4">
+          ¿Está seguro que desea <strong class="text-error">eliminar permanentemente</strong> a este residente?
+        </p>
+        <div class="bg-neutral-100 rounded-xl p-4 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-neutral-600">Nombre:</span>
+            <span class="font-bold text-neutral-800">
+              {{ residentToDelete()!.name }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-neutral-600">Email:</span>
+            <span class="font-semibold text-neutral-700">{{ residentToDelete()!.email }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-neutral-600">Documento:</span>
+            <span class="font-mono font-semibold text-neutral-700">{{ residentToDelete()!.documentNumber }}</span>
+          </div>
+        </div>
+        <div class="alert alert-error mt-4">
+          <i class="ri-alert-line"></i>
+          <span class="text-sm font-semibold">⚠️ Esta acción NO se puede deshacer. Todos los datos del residente serán
+            eliminados permanentemente.</span>
+        </div>
+      </div>
+      }
+
+      <div class="modal-action">
+        <button type="button" class="btn btn-ghost" (click)="closeDeleteModal()" [disabled]="isDeleting()">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-error gap-2" (click)="confirmDelete()" [disabled]="isDeleting()">
+          @if (isDeleting()) {
+          <span class="loading loading-spinner loading-sm"></span>
+          Eliminando...
+          } @else {
+          <i class="ri-delete-bin-line"></i>
+          Eliminar Permanentemente
+          }
+        </button>
+      </div>
     </div>
+    <div class="modal-backdrop" (click)="closeDeleteModal()"></div>
+  </div>
   }
 
   <!-- Toast Notification -->
   @if (showToast()) {
-    <div class="toast toast-top toast-end z-50">
-      <div 
-        class="alert shadow-xl glass"
-        [ngClass]="{
+  <div class="toast toast-top toast-end z-50">
+    <div class="alert shadow-xl glass" [ngClass]="{
           'alert-success': toastType() === 'success',
           'alert-error': toastType() === 'error',
           'alert-info': toastType() === 'info'
-        }"
-      >
-        @if (toastType() === 'success') {
-          <i class="ri-checkbox-circle-fill text-xl"></i>
-        } @else if (toastType() === 'error') {
-          <i class="ri-error-warning-fill text-xl"></i>
-        } @else {
-          <i class="ri-information-fill text-xl"></i>
-        }
-        <span class="font-medium">{{ toastMessage() }}</span>
-        <button class="btn btn-sm btn-ghost btn-circle" (click)="showToast.set(false)">
-          <i class="ri-close-line"></i>
-        </button>
-      </div>
+        }">
+      @if (toastType() === 'success') {
+      <i class="ri-checkbox-circle-fill text-xl"></i>
+      } @else if (toastType() === 'error') {
+      <i class="ri-error-warning-fill text-xl"></i>
+      } @else {
+      <i class="ri-information-fill text-xl"></i>
+      }
+      <span class="font-medium">{{ toastMessage() }}</span>
+      <button class="btn btn-sm btn-ghost btn-circle" (click)="showToast.set(false)">
+        <i class="ri-close-line"></i>
+      </button>
     </div>
+  </div>
   }
 
   <!-- Resident Wizard -->
-  <app-resident-wizard
-    [condominiumId]="selectedCondo()?.id === 'all' ? '' : (selectedCondo()?.id || '')"
-    [isVisible]="showWizard()"
-    (onComplete)="onWizardComplete($event)"
-    (onCancel)="onWizardCancel()"
-  ></app-resident-wizard>
+  <app-resident-wizard [condominiumId]="selectedCondo()?.id === 'all' ? '' : (selectedCondo()?.id || '')"
+    [isVisible]="showWizard()" (onComplete)="onWizardComplete($event)"
+    (onCancel)="onWizardCancel()"></app-resident-wizard>
 </div>

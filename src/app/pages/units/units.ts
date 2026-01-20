@@ -1370,8 +1370,7 @@ export class UnitsComponent implements OnInit, OnDestroy {
     // Crear solo los residentes nuevos
     const residentPromises = newResidents.map(resident => {
       const residentData: CreateResidentDto = {
-        firstName: resident.name.split(' ')[0] || '',
-        lastName: resident.name.split(' ').slice(1).join(' ') || '',
+        name: resident.name,
         phone: resident.phone,
         email: resident.email || '',
         unitId: unitId,
@@ -1456,8 +1455,7 @@ export class UnitsComponent implements OnInit, OnDestroy {
         // Ahora crear los residentes
         const residentPromises = residents.map(resident => {
           const residentData: CreateResidentDto = {
-            firstName: resident.name.split(' ')[0] || '',
-            lastName: resident.name.split(' ').slice(1).join(' ') || '',
+            name: resident.name,
             phone: resident.phone,
             email: resident.email || '',
             unitId: unitId,

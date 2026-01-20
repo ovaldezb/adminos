@@ -214,13 +214,11 @@ export class ResidentWizardComponent implements OnInit {
       isCreatingResident: [false],
       ownerInhabits: [true],
       // Owner creation fields
-      ownerFirstName: ['', [Validators.required, Validators.minLength(2)]],
-      ownerLastName: ['', [Validators.required, Validators.minLength(2)]],
+      ownerName: ['', [Validators.required, Validators.minLength(2)]],
       ownerEmail: ['', [Validators.required, Validators.email], [this.emailAsyncValidator('owner')]],
       ownerPhone: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       // Resident creation fields
-      residentFirstName: ['', [Validators.minLength(2)]],
-      residentLastName: ['', [Validators.minLength(2)]],
+      residentName: ['', [Validators.minLength(2)]],
       residentEmail: ['', [Validators.email], [this.emailAsyncValidator('resident')]],
       residentPhone: ['', [Validators.pattern(/^[0-9]{10}$/)]],
       // Assignment fields
@@ -316,7 +314,7 @@ export class ResidentWizardComponent implements OnInit {
   }
 
   private toggleOwnerFormValidators(isCreating: boolean): void {
-    const ownerFields = ['ownerFirstName', 'ownerLastName', 'ownerEmail', 'ownerPhone'];
+    const ownerFields = ['ownerName', 'ownerEmail', 'ownerPhone'];
 
     ownerFields.forEach(field => {
       const control = this.step3Form.get(field);
@@ -334,7 +332,7 @@ export class ResidentWizardComponent implements OnInit {
   }
 
   private toggleResidentFormValidators(isCreating: boolean): void {
-    const residentFields = ['residentFirstName', 'residentLastName', 'residentEmail', 'residentPhone'];
+    const residentFields = ['residentName', 'residentEmail', 'residentPhone'];
 
     residentFields.forEach(field => {
       const control = this.step3Form.get(field);
@@ -644,14 +642,13 @@ export class ResidentWizardComponent implements OnInit {
   }
 
   quickCreateOwner(): void {
-    const ownerControls = ['ownerFirstName', 'ownerLastName', 'ownerEmail', 'ownerPhone'];
+    const ownerControls = ['ownerName', 'ownerEmail', 'ownerPhone'];
     const hasValidOwnerData = ownerControls.every(field => this.step3Form.get(field)?.valid);
 
     if (!hasValidOwnerData) return;
 
     const ownerData: CreatePersonDto = {
-      firstName: this.step3Form.get('ownerFirstName')?.value,
-      lastName: this.step3Form.get('ownerLastName')?.value,
+      name: this.step3Form.get('ownerName')?.value,
       email: this.step3Form.get('ownerEmail')?.value,
       phone: this.step3Form.get('ownerPhone')?.value,
       type: PersonType.OWNER
@@ -675,14 +672,13 @@ export class ResidentWizardComponent implements OnInit {
   }
 
   quickCreateResident(): void {
-    const residentControls = ['residentFirstName', 'residentLastName', 'residentEmail', 'residentPhone'];
+    const residentControls = ['residentName', 'residentEmail', 'residentPhone'];
     const hasValidResidentData = residentControls.every(field => this.step3Form.get(field)?.valid);
 
     if (!hasValidResidentData) return;
 
     const residentData: CreatePersonDto = {
-      firstName: this.step3Form.get('residentFirstName')?.value,
-      lastName: this.step3Form.get('residentLastName')?.value,
+      name: this.step3Form.get('residentName')?.value,
       email: this.step3Form.get('residentEmail')?.value,
       phone: this.step3Form.get('residentPhone')?.value,
       type: PersonType.RESIDENT
@@ -876,8 +872,7 @@ export class ResidentWizardComponent implements OnInit {
 
   private async createOwnerFromForm(): Promise<ApiResponse<Person>> {
     const ownerData: CreatePersonDto = {
-      firstName: this.step3Form.get('ownerFirstName')?.value,
-      lastName: this.step3Form.get('ownerLastName')?.value,
+      name: this.step3Form.get('ownerName')?.value,
       email: this.step3Form.get('ownerEmail')?.value,
       phone: this.step3Form.get('ownerPhone')?.value,
       type: PersonType.OWNER
@@ -899,8 +894,7 @@ export class ResidentWizardComponent implements OnInit {
 
   private async createResidentFromForm(): Promise<ApiResponse<Person>> {
     const residentData: CreatePersonDto = {
-      firstName: this.step3Form.get('residentFirstName')?.value,
-      lastName: this.step3Form.get('residentLastName')?.value,
+      name: this.step3Form.get('residentName')?.value,
       email: this.step3Form.get('residentEmail')?.value,
       phone: this.step3Form.get('residentPhone')?.value,
       type: PersonType.RESIDENT

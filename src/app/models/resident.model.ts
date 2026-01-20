@@ -1,8 +1,7 @@
 // Resident/Owner Interface
 export interface Resident {
   id: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   phone: string;
   documentType: DocumentType;
@@ -55,8 +54,7 @@ export interface ResidentDetails extends Resident {
 
 // DTOs for creating/updating residents
 export interface CreateResidentDto {
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   phone: string;
   documentType: DocumentType;

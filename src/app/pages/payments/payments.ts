@@ -450,7 +450,7 @@ export class PaymentsComponent {
       unitId: typeof resident.unit === 'object' ? resident.unit.id : resident.unitId,
       buildingId: typeof resident.unit === 'object' ? resident.unit.buildingId : resident.buildingId
     }));
-    this.selectedResidentName.set(`${resident.firstName} ${resident.lastName}`);
+    this.selectedResidentName.set(resident.name);
     this.residentSearchQuery.set('');
     this.residentSearchResults.set([]);
 

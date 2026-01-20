@@ -7,10 +7,10 @@ import { SideMenuComponent } from '../../components/side-menu/side-menu';
 import { ResidentWizardComponent, WizardCompletedData } from '../../components/resident-wizard/resident-wizard';
 import { Condominium } from '../../models';
 import { ResidentService, UnitService, BuildingService, CondominiumService } from '../../services';
-import { 
-  Resident, 
-  ResidentDetails, 
-  ResidentType, 
+import {
+  Resident,
+  ResidentDetails,
+  ResidentType,
   DocumentType,
   CreateResidentDto,
   UpdateResidentDto,
@@ -29,59 +29,58 @@ export class ResidentsComponent {
   protected readonly userName = signal('Administrador');
   protected readonly selectedCondo = signal<Condominium | null>(null);
   protected readonly isOverviewMode = computed(() => !this.selectedCondo() || this.selectedCondo()?.id === 'all');
-  
+
   // Expose Math for template
   protected readonly Math = Math;
-  
+
   // Dropdown data
   protected readonly availableCondominiums = signal<Condominium[]>([]);
   protected readonly availableBuildings = signal<BuildingDetails[]>([]);
   protected readonly availableUnits = signal<UnitDetails[]>([]);
-  
+
   // Data signals
   protected readonly residents = signal<ResidentDetails[]>([]);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
-  
+
   // Pagination
   protected readonly currentPage = signal(1);
   protected readonly pageSize = signal(10);
   protected readonly totalPages = signal(1);
   protected readonly totalItems = signal(0);
-  
+
   // Filters
   protected readonly searchTerm = signal('');
   protected readonly typeFilter = signal<ResidentType | ''>('');
   protected readonly statusFilter = signal<'active' | 'inactive' | ''>('');
   protected readonly buildingFilter = signal<string>('');
-  
+
   // Modal state
   protected readonly showModal = signal(false);
   protected readonly modalMode = signal<'create' | 'edit' | 'view'>('create');
   protected readonly selectedResident = signal<ResidentDetails | null>(null);
-  
+
   // Toast notifications
   protected readonly showToast = signal(false);
   protected readonly toastMessage = signal('');
   protected readonly toastType = signal<'success' | 'error' | 'info'>('success');
-  
+
   // Deactivate confirmation modal
   protected readonly showDeactivateModal = signal(false);
   protected readonly residentToDeactivate = signal<ResidentDetails | null>(null);
   protected readonly isDeactivating = signal(false);
-  
+
   // Delete confirmation modal
   protected readonly showDeleteModal = signal(false);
   protected readonly residentToDelete = signal<ResidentDetails | null>(null);
   protected readonly isDeleting = signal(false);
-  
+
   // Wizard state
   protected readonly showWizard = signal(false);
-  
+
   // Form data
   protected readonly formData = signal<Partial<CreateResidentDto>>({
-    firstName: '',
-    lastName: '',
+    name: '',
     email: '',
     phone: '',
     documentType: DocumentType.CURP,
@@ -94,42 +93,41 @@ export class ResidentsComponent {
     emergencyContactName: '',
     emergencyContactPhone: ''
   });
-  
+
   // Enums for template
   protected readonly ResidentType = ResidentType;
   protected readonly DocumentType = DocumentType;
-  
+
   // Computed filtered residents
   protected readonly filteredResidents = computed(() => {
     let filtered = this.residents();
-    
+
     const search = this.searchTerm().toLowerCase();
     if (search) {
       filtered = filtered.filter(r =>
-        r.firstName.toLowerCase().includes(search) ||
-        r.lastName.toLowerCase().includes(search) ||
+        r.name.toLowerCase().includes(search) ||
         r.email.toLowerCase().includes(search) ||
         r.documentNumber.toLowerCase().includes(search)
       );
     }
-    
+
     const type = this.typeFilter();
     if (type) {
       filtered = filtered.filter(r => r.type === type);
     }
-    
+
     const status = this.statusFilter();
     if (status === 'active') {
       filtered = filtered.filter(r => r.isActive);
     } else if (status === 'inactive') {
       filtered = filtered.filter(r => !r.isActive);
     }
-    
+
     const building = this.buildingFilter();
     if (building) {
       filtered = filtered.filter(r => r.buildingName === building);
     }
-    
+
     return filtered;
   });
 
@@ -145,19 +143,19 @@ export class ResidentsComponent {
   });
 
   // Computed statistics
-  protected readonly totalOwners = computed(() => 
+  protected readonly totalOwners = computed(() =>
     this.filteredResidents().filter(r => r.type === ResidentType.OWNER).length
   );
 
-  protected readonly totalTenants = computed(() => 
+  protected readonly totalTenants = computed(() =>
     this.filteredResidents().filter(r => r.type === ResidentType.TENANT).length
   );
 
-  protected readonly totalWithDebt = computed(() => 
+  protected readonly totalWithDebt = computed(() =>
     this.filteredResidents().filter(r => r.totalDebt > 0).length
   );
 
-  protected readonly totalActive = computed(() => 
+  protected readonly totalActive = computed(() =>
     this.filteredResidents().filter(r => r.isActive).length
   );
 
@@ -209,13 +207,13 @@ export class ResidentsComponent {
         this.loadResidents();
       }
     });
-    
+
     // Load initial data based on selected condo
     effect(() => {
       const condo = this.selectedCondo();
       this.loadResidents();
     });
-    
+
     // Load condominiums for dropdown
     this.loadCondominiums();
   }
@@ -266,10 +264,10 @@ export class ResidentsComponent {
     }
 
     const condominiumId = this.formData().condominiumId;
-    
-    this.unitService.getUnits({ 
+
+    this.unitService.getUnits({
       page: 1,
-      condominiumId, 
+      condominiumId,
       pageSize: 1000 // Obtener todas las unidades
     }).subscribe({
       next: (response) => {
@@ -308,7 +306,7 @@ export class ResidentsComponent {
     const unitId = (event.target as HTMLSelectElement).value;
     // Buscar la unidad seleccionada para obtener el buildingId automáticamente
     const selectedUnit = this.availableUnits().find(u => u.id === unitId);
-    
+
     this.formData.update(current => ({
       ...current,
       unitId,
@@ -319,9 +317,9 @@ export class ResidentsComponent {
   loadResidents(): void {
     this.loading.set(true);
     this.error.set(null);
-    
+
     const condoId = this.selectedCondo()?.id;
-    
+
     this.residentService.getResidents({
       page: this.currentPage(),
       pageSize: this.pageSize(),
@@ -347,26 +345,25 @@ export class ResidentsComponent {
 
   openCreateModal(): void {
     const selectedCondoId = this.selectedCondo()?.id;
-    
+
     // Validar que hay un condominio seleccionado
     if (!selectedCondoId || selectedCondoId === 'all') {
       this.showToastMessage('⚠️ Por favor seleccione un condominio específico desde el menú superior para crear residentes', 'error');
       return;
     }
-    
+
     // Validar que el condominio tiene unidades
     const selectedCondo = this.selectedCondo();
     if (selectedCondo && selectedCondo.totalUnits === 0) {
       this.showToastMessage('📋 Este condominio no tiene unidades registradas. Por favor cree edificios y unidades primero.', 'info');
       return;
     }
-    
+
     this.modalMode.set('create');
     this.selectedResident.set(null);
-    
+
     this.formData.set({
-      firstName: '',
-      lastName: '',
+      name: '',
       email: '',
       phone: '',
       documentType: DocumentType.CURP,
@@ -381,10 +378,10 @@ export class ResidentsComponent {
       isAdministrator: false,
       canReceiveNotifications: true
     });
-    
+
     // Cargar edificios del condominio seleccionado
     this.loadBuildingsByCondominium(selectedCondoId);
-    
+
     this.showModal.set(true);
   }
 
@@ -392,8 +389,7 @@ export class ResidentsComponent {
     this.modalMode.set('edit');
     this.selectedResident.set(resident);
     this.formData.set({
-      firstName: resident.firstName,
-      lastName: resident.lastName,
+      name: resident.name,
       email: resident.email,
       phone: resident.phone,
       documentType: resident.documentType,
@@ -406,7 +402,7 @@ export class ResidentsComponent {
       emergencyContactName: resident.emergencyContactName,
       emergencyContactPhone: resident.emergencyContactPhone
     });
-    
+
     // Cargar edificios y unidades del condominio actual
     if (resident.condominiumId) {
       this.loadBuildingsByCondominium(resident.condominiumId);
@@ -414,7 +410,7 @@ export class ResidentsComponent {
     if (resident.buildingId) {
       this.loadUnitsByBuilding(resident.buildingId);
     }
-    
+
     this.showModal.set(true);
   }
 
@@ -431,7 +427,7 @@ export class ResidentsComponent {
 
   saveResident(): void {
     const data = this.formData();
-    
+
     if (!this.validateForm(data)) {
       return;
     }
@@ -520,7 +516,7 @@ export class ResidentsComponent {
     this.toastMessage.set(message);
     this.toastType.set(type);
     this.showToast.set(true);
-    
+
     // Auto hide after 3 seconds
     setTimeout(() => {
       this.showToast.set(false);
@@ -569,19 +565,19 @@ export class ResidentsComponent {
   }
 
   private validateForm(data: Partial<CreateResidentDto>): boolean {
-    if (!data.firstName || !data.lastName || !data.email || !data.phone || 
-        !data.documentNumber || !data.condominiumId || !data.buildingId || !data.unitId) {
+    if (!data.name || !data.email || !data.phone ||
+      !data.documentNumber || !data.condominiumId || !data.buildingId || !data.unitId) {
       this.error.set('Por favor complete todos los campos obligatorios');
       return false;
     }
-    
+
     // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(data.email)) {
       this.error.set('Por favor ingrese un email válido');
       return false;
     }
-    
+
     return true;
   }
 
@@ -658,7 +654,7 @@ export class ResidentsComponent {
 
   openWizard(): void {
     const selectedCondoId = this.selectedCondo()?.id;
-    
+
     // Validar que hay un condominio seleccionado
     if (!selectedCondoId || selectedCondoId === 'all') {
       this.showToastMessage('⚠️ Por favor seleccione un condominio específico desde el menú superior', 'error');
@@ -747,6 +743,6 @@ export class ResidentsComponent {
   }
 
   getFullName(resident: ResidentDetails): string {
-    return `${resident.firstName} ${resident.lastName}`;
+    return resident.name;
   }
 }

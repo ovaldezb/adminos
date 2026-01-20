@@ -93,12 +93,12 @@
                   <div class="avatar placeholder">
                     <div
                       class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 text-white font-bold text-2xl shadow-lg group-hover:scale-110 transition-transform">
-                      <span>{{ resident.firstName.charAt(0) }}{{ resident.lastName.charAt(0) }}</span>
+                      <span>{{ resident.name.charAt(0) }}</span>
                     </div>
                   </div>
                   <div class="flex-1">
                     <h3 class="font-bold text-xl text-neutral-800 group-hover:text-primary transition-colors">
-                      {{ resident.firstName }} {{ resident.lastName }}
+                      {{ resident.name }}
                     </h3>
                     <div class="flex gap-4 mt-1">
                       <span class="text-neutral-500 flex items-center gap-1.5 font-medium">
@@ -182,7 +182,7 @@
                 @for (resident of residentSearchResults(); track $index) {
                 <li>
                   <a (click)="selectResident(resident)" class="flex flex-col items-start gap-1 py-3">
-                    <span class="font-medium">{{ resident.firstName }} {{ resident.lastName }}</span>
+                    <span class="font-medium">{{ resident.name }}</span>
                     <div class="flex gap-2 text-xs text-neutral-500">
                       <span><i class="ri-building-line mr-1"></i>{{ resident.unitNumber || 'Sin Unidad' }}</span>
                       <span><i class="ri-mail-line mr-1"></i>{{ resident.email }}</span>

@@ -18,8 +18,7 @@ export interface UnitAssignment {
 // Person Interface - Represents both owners and residents
 export interface Person {
   id: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string; // Único
   phone: string;
   type: PersonType;
@@ -30,7 +29,7 @@ export interface Person {
 
 export enum PersonType {
   OWNER = 'owner',
-  RESIDENT = 'resident', 
+  RESIDENT = 'resident',
   BOTH = 'both'
 }
 
@@ -43,8 +42,7 @@ export interface PersonDetails extends Person {
 
 // DTOs for creating persons
 export interface CreatePersonDto {
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   phone: string;
   type: PersonType;
