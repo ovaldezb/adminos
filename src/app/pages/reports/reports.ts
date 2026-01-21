@@ -23,6 +23,7 @@ export class ReportsComponent implements OnInit {
     protected readonly selectedBuildingReport = signal<any>(null);
     protected readonly showReportDetail = signal(false);
     protected readonly currentYear = signal(new Date().getFullYear());
+    protected readonly activeMonthTab = signal<number | null>(null);
 
     // Breadcrumbs
     protected readonly breadcrumbs: BreadcrumbItem[] = [
@@ -84,7 +85,68 @@ export class ReportsComponent implements OnInit {
         this.buildingService.getBuildingReport(building.id, this.currentYear()).subscribe({
             next: (response) => {
                 if (response.success) {
-                    this.selectedBuildingReport.set(response.data);
+                    const data = response.data;
+
+                    // Pre-process resident data for monthly statements
+                    if (data.residents && data.paymentConfigs) {
+                        const configs = data.paymentConfigs[0]?.monthlyAmounts || [];
+
+                        data.residents = data.residents.map((res: any) => {
+                            let runningBalance = 0;
+                            const monthlyMovements: any = {};
+
+                            // Process month by month
+                            for (let m = 1; m <= 12; m++) {
+                                const config = configs.find((c: any) => c.month === m);
+                                const cargoDelMes = config ? config.amount : 0;
+
+                                const paymentsInMonth = res.payments?.payments?.filter((d: any) => {
+                                    const pDate = new Date(d.paymentDate);
+                                    return pDate.getMonth() + 1 === m;
+                                }) || [];
+
+                                const maintenancePaid = paymentsInMonth
+                                    .filter((p: any) => !p.fundName || p.fundName === 'Mantenimiento')
+                                    .reduce((sum: number, p: any) => sum + p.amount, 0);
+
+                                const fundPaid = paymentsInMonth
+                                    .filter((p: any) => p.fundName && p.fundName !== 'Mantenimiento')
+                                    .reduce((sum: number, p: any) => sum + p.amount, 0);
+
+                                const saldoAnterior = runningBalance;
+                                const totalAPagar = saldoAnterior + cargoDelMes;
+                                const saldoActual = totalAPagar - (maintenancePaid + fundPaid);
+
+                                const lastPayment = paymentsInMonth.length > 0 ? paymentsInMonth[paymentsInMonth.length - 1] : null;
+
+                                monthlyMovements[m] = {
+                                    saldoAnterior,
+                                    cargoDelMes,
+                                    cuotaFondo: 0, // Placeholder
+                                    cuotaExtra: 0, // Placeholder
+                                    otro: 0, // Placeholder
+                                    totalAPagar,
+                                    mantenimiento: maintenancePaid,
+                                    fondo: fundPaid,
+                                    saldoActual,
+                                    formaDePago: lastPayment ? lastPayment.paymentType : '-',
+                                    fecha: lastPayment ? lastPayment.paymentDate : null
+                                };
+
+                                runningBalance = saldoActual;
+                            }
+
+                            return { ...res, monthlyMovements };
+                        });
+                    }
+
+                    this.selectedBuildingReport.set(data);
+
+                    // Set default tab to the first month available
+                    if (data.funds && data.funds.length > 0) {
+                        this.activeMonthTab.set(data.funds[0].month);
+                    }
+
                     this.showReportDetail.set(true);
                 }
                 this.loading.set(false);
@@ -99,6 +161,14 @@ export class ReportsComponent implements OnInit {
     closeReport(): void {
         this.showReportDetail.set(false);
         this.selectedBuildingReport.set(null);
+    }
+
+    getMonthName(month: number): string {
+        const months = [
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+        ];
+        return months[month - 1] || `Mes ${month}`;
     }
 
     getCondoName(): string {

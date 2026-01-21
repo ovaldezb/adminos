@@ -129,97 +129,163 @@
                             <div>
                                 <h3 class="text-xl font-bold text-neutral-800 mb-6 flex items-center gap-2">
                                     <i class="ri-group-line text-primary"></i>
-                                    Estado de Cuenta por Residentes
+                                    Estado de Cuenta por Residentes ({{ getMonthName(activeMonthTab() || 1) }})
                                 </h3>
-                                <div class="overflow-x-auto rounded-3xl border border-white/40 shadow-sm">
-                                    <table class="table table-zebra w-full bg-white/40">
+                                <div
+                                    class="overflow-x-auto rounded-3xl border border-white/40 shadow-sm bg-white/40 backdrop-blur-sm">
+                                    <table class="table table-sm table-zebra w-full">
                                         <thead>
-                                            <tr class="bg-neutral-800/5 text-neutral-700">
-                                                <th class="rounded-tl-2xl">Residente</th>
-                                                <th>Unidad</th>
-                                                <th class="text-center">Estatus Pago</th>
-                                                <th class="text-right rounded-tr-2xl">Total Pagado (Año)</th>
+                                            <tr
+                                                class="bg-neutral-800/5 text-neutral-700 uppercase text-[10px] tracking-wider">
+                                                <th class="rounded-tl-2xl">Depto</th>
+                                                <th>Saldo Anterior</th>
+                                                <th>Cargo del Mes</th>
+                                                <th>Cuota Fondo</th>
+                                                <th>Cuota Extra</th>
+                                                <th>Otro</th>
+                                                <th class="bg-primary/5 font-black text-primary">Total A Pagar</th>
+                                                <th>Mantenimiento</th>
+                                                <th>Fondo</th>
+                                                <th class="bg-success/5 font-black text-success">Saldo Actual</th>
+                                                <th>Forma de Pago</th>
+                                                <th class="rounded-tr-2xl">Fecha</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody class="text-[11px]">
                                             @for (res of selectedBuildingReport()?.residents; track res.name) {
+                                            @if (res.monthlyMovements && res.monthlyMovements[activeMonthTab() || 1]; as
+                                            mv) {
                                             <tr class="hover:bg-white/60 transition-colors border-b border-white/10">
-                                                <td class="font-bold text-neutral-800">{{ res.name }}</td>
+                                                <td class="font-bold text-neutral-800">
+                                                    {{ res.unit.unitNumber }}
+                                                </td>
+                                                <td class="font-mono text-neutral-600">$ {{ (mv.saldoAnterior || 0) |
+                                                    number:'1.2-2' }}</td>
+                                                <td class="font-mono text-neutral-600">$ {{ (mv.cargoDelMes || 0) |
+                                                    number:'1.2-2' }}</td>
+                                                <td class="font-mono text-neutral-400">$ {{ (mv.cuotaFondo || 0) |
+                                                    number:'1.2-2' }}</td>
+                                                <td class="font-mono text-neutral-400">$ {{ (mv.cuotaExtra || 0) |
+                                                    number:'1.2-2' }}</td>
+                                                <td class="font-mono text-neutral-400">$ {{ (mv.otro || 0) |
+                                                    number:'1.2-2' }}</td>
+                                                <td class="font-mono font-bold text-primary bg-primary/5">$ {{
+                                                    (mv.totalAPagar || 0) | number:'1.2-2' }}</td>
+                                                <td class="font-mono text-success-600 font-bold">$ {{ (mv.mantenimiento
+                                                    || 0) | number:'1.2-2' }}</td>
+                                                <td class="font-mono text-indigo-600 font-bold">$ {{ (mv.fondo || 0) |
+                                                    number:'1.2-2' }}</td>
+                                                <td class="font-mono font-bold text-success bg-success/5"
+                                                    [class.text-error]="mv.saldoActual > 0">
+                                                    $ {{ (mv.saldoActual || 0) | number:'1.2-2' }}
+                                                </td>
                                                 <td>
-                                                    <div class="badge badge-ghost font-medium">
-                                                        {{ res.unit.number }}
-                                                    </div>
+                                                    <span class="badge badge-ghost badge-sm text-[9px] uppercase">{{
+                                                        mv.formaDePago }}</span>
                                                 </td>
-                                                <td class="text-center">
-                                                    @if (res.payments) {
-                                                    <span class="badge badge-success gap-1 font-bold">
-                                                        <i class="ri-checkbox-circle-line"></i> Al corriente
-                                                    </span>
-                                                    } @else {
-                                                    <span class="badge badge-warning gap-1 font-bold">
-                                                        <i class="ri-error-warning-line"></i> Sin pagos registrados
-                                                    </span>
-                                                    }
-                                                </td>
-                                                <td class="text-right font-mono font-bold text-primary">
-                                                    $ {{ (res.payments?.totalPaid || 0) | number }}
+                                                <td class="whitespace-nowrap">
+                                                    {{ mv.fecha ? (mv.fecha | date:'dd/MM/yy') : '-' }}
                                                 </td>
                                             </tr>
+                                            }
                                             }
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
 
-                            <!-- Fund Movements Section -->
+                            <!-- Fund Movements Section (Tabs) -->
                             <div>
                                 <h3 class="text-xl font-bold text-neutral-800 mb-6 flex items-center gap-2">
                                     <i class="ri-bank-line text-indigo-600"></i>
-                                    Movimientos de Fondos
+                                    Movimientos de Fondos mensual
                                 </h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    @for (fund of selectedBuildingReport()?.funds; track fund.month) {
-                                    <div class="glass p-6 rounded-3xl border border-white/50 shadow-sm">
-                                        <div class="flex items-center justify-between mb-4">
-                                            <span
-                                                class="text-lg font-bold text-neutral-700 uppercase tracking-wider">Mes
-                                                {{ fund.month }}</span>
-                                            <div class="badge badge-outline badge-primary font-bold">Resumen Mensual
+
+                                <!-- Month Tabs -->
+                                <div
+                                    class="flex flex-wrap gap-2 mb-6 bg-neutral-800/5 p-2 rounded-2xl border border-white/20">
+                                    @for (monthData of selectedBuildingReport()?.funds; track monthData.month) {
+                                    <button (click)="activeMonthTab.set(monthData.month)"
+                                        class="px-6 py-2.5 rounded-xl font-bold transition-all duration-300 transform active:scale-95"
+                                        [class.bg-white]="activeMonthTab() === monthData.month"
+                                        [class.text-primary]="activeMonthTab() === monthData.month"
+                                        [class.shadow-md]="activeMonthTab() === monthData.month"
+                                        [class.text-neutral-500]="activeMonthTab() !== monthData.month"
+                                        [class.hover:bg-white/40]="activeMonthTab() !== monthData.month">
+                                        {{ getMonthName(monthData.month) }}
+                                    </button>
+                                    }
+                                </div>
+
+                                <!-- Active Month Content -->
+                                <div class="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                    @for (monthData of selectedBuildingReport()?.funds; track monthData.month) {
+                                    @if (activeMonthTab() === monthData.month) {
+                                    <div class="glass p-8 rounded-[2rem] border border-white/50 shadow-lg">
+                                        <div class="flex items-center justify-between mb-6">
+                                            <div class="flex items-center gap-3">
+                                                <div
+                                                    class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                                    <i class="ri-calendar-check-line text-xl"></i>
+                                                </div>
                                             </div>
+                                            <div class="badge badge-indigo badge-outline font-bold px-4 py-3">Resumen
+                                                del Mes</div>
                                         </div>
-                                        <div class="space-y-3">
-                                            @for (f of fund.funds; track f.fundName) {
+
+                                        <div class="flex flex-wrap gap-6">
+                                            @for (f of monthData.funds; track f.fundName) {
                                             <div
-                                                class="flex items-center justify-between p-3 rounded-2xl bg-white/40 group hover:bg-white/60 transition-all">
-                                                <div>
-                                                    <p class="font-bold text-neutral-800">{{ f.fundName }}</p>
-                                                    <div class="flex gap-4 text-xs mt-1">
-                                                        <span class="text-success flex items-center gap-1">
-                                                            <i class="ri-arrow-down-line"></i> +${{ (f.incomes || 0) |
-                                                            number }}
-                                                        </span>
-                                                        <span class="text-error flex items-center gap-1">
-                                                            <i class="ri-arrow-up-line"></i> -${{ (f.expenses || 0) |
-                                                            number }}
+                                                class="bg-white/40 p-6 rounded-2xl border border-white/60 shadow-sm flex-1 min-w-[240px] hover:bg-white/60 transition-all duration-300">
+                                                <h4
+                                                    class="text-center font-extrabold text-neutral-800 border-b border-neutral-300 pb-3 mb-4 tracking-wide uppercase text-sm">
+                                                    {{ f.fundName }}</h4>
+                                                <div class="space-y-2 text-sm">
+                                                    <div class="flex items-center">
+                                                        <span class="text-neutral-600 whitespace-nowrap">Saldo
+                                                            anterior</span>
+                                                        <span
+                                                            class="flex-1 border-b border-dotted border-neutral-400 mx-2 mb-1"></span>
+                                                        <span class="font-mono text-neutral-700">$ {{ (f.previousBalance
+                                                            || 0) | number:'1.2-2' }}</span>
+                                                    </div>
+                                                    <div class="flex items-center">
+                                                        <span class="text-neutral-600 whitespace-nowrap">Ingresos del
+                                                            mes</span>
+                                                        <span
+                                                            class="flex-1 border-b border-dotted border-neutral-400 mx-2 mb-1"></span>
+                                                        <span class="font-mono text-neutral-700">$ {{ (f.incomes || 0) |
+                                                            number:'1.2-2' }}</span>
+                                                    </div>
+                                                    <div class="flex items-center">
+                                                        <span class="text-neutral-600 whitespace-nowrap">Egresos del
+                                                            mes</span>
+                                                        <span
+                                                            class="flex-1 border-b border-dotted border-neutral-400 mx-2 mb-1"></span>
+                                                        <span class="font-mono text-neutral-700">$ {{ (f.expenses || 0)
+                                                            | number:'1.2-2' }}</span>
+                                                    </div>
+                                                    <div
+                                                        class="flex items-center font-black text-neutral-900 mt-4 pt-3 border-t border-neutral-300">
+                                                        <span class="whitespace-nowrap text-[11px] uppercase">Saldo
+                                                            Final del fondo</span>
+                                                        <span
+                                                            class="flex-1 border-b border-dotted border-neutral-900 mx-2 mb-1"></span>
+                                                        <span class="font-mono text-base"
+                                                            [class.text-red-600]="f.finalBalance < 0"
+                                                            [class.text-success-600]="f.finalBalance >= 0">
+                                                            $ {{ (f.finalBalance || 0) | number:'1.2-2' }}
                                                         </span>
                                                     </div>
-                                                </div>
-                                                <div class="text-right">
-                                                    <p class="text-sm font-mono font-bold"
-                                                        [class]="f.finalBalance >= 0 ? 'text-success' : 'text-error'">
-                                                        ${{ (f.finalBalance || 0) | number }}
-                                                    </p>
-                                                    <p class="text-[10px] text-neutral-500 uppercase font-bold">Balance
-                                                    </p>
                                                 </div>
                                             </div>
                                             }
                                         </div>
                                     </div>
                                     }
+                                    }
                                 </div>
                             </div>
-
                         </div>
 
                         <!-- Footer -->
