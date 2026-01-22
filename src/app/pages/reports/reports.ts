@@ -101,8 +101,7 @@ export class ReportsComponent implements OnInit {
                                 const cargoDelMes = config ? config.amount : 0;
 
                                 const paymentsInMonth = res.payments?.payments?.filter((d: any) => {
-                                    const pDate = new Date(d.paymentDate);
-                                    return pDate.getMonth() + 1 === m;
+                                    return d.targetMonth === m;
                                 }) || [];
 
                                 const maintenancePaid = paymentsInMonth
@@ -114,7 +113,12 @@ export class ReportsComponent implements OnInit {
                                     .reduce((sum: number, p: any) => sum + p.amount, 0);
 
                                 const saldoAnterior = runningBalance;
-                                const totalAPagar = saldoAnterior + cargoDelMes;
+
+                                const cuotaFondo = 0; // Placeholder
+                                const cuotaExtra = 0; // Placeholder
+                                const otro = 0; // Placeholder
+
+                                const totalAPagar = cargoDelMes + cuotaFondo + cuotaExtra + otro + saldoAnterior;
                                 const saldoActual = totalAPagar - (maintenancePaid + fundPaid);
 
                                 const lastPayment = paymentsInMonth.length > 0 ? paymentsInMonth[paymentsInMonth.length - 1] : null;
@@ -122,9 +126,9 @@ export class ReportsComponent implements OnInit {
                                 monthlyMovements[m] = {
                                     saldoAnterior,
                                     cargoDelMes,
-                                    cuotaFondo: 0, // Placeholder
-                                    cuotaExtra: 0, // Placeholder
-                                    otro: 0, // Placeholder
+                                    cuotaFondo,
+                                    cuotaExtra,
+                                    otro,
                                     totalAPagar,
                                     mantenimiento: maintenancePaid,
                                     fondo: fundPaid,

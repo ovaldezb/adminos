@@ -155,10 +155,14 @@ export class PaymentService {
   /**
    * GET /payment - Get payment by resident and year
    */
-  getPaymentByResidentAndYear(residentId: string, year: number): Observable<ApiResponse<any>> {
-    const params = new HttpParams()
+  getPaymentByResidentAndYear(residentId: string, year: number, month?: number): Observable<ApiResponse<any>> {
+    let params = new HttpParams()
       .set('residentId', residentId)
       .set('year', year.toString());
+
+    if (month !== undefined) {
+      params = params.set('month', month.toString());
+    }
 
     return this.http.get<ApiResponse<any>>(this.apiUrl, { params }).pipe(
       catchError((error) => {

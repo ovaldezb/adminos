@@ -24,6 +24,7 @@ export interface AppPaymentRequest {
   residentId: string;
   payments: PaymentDetailRequest[];
   year: number;
+  month: number;
 }
 
 export interface PaymentDetailRequest {

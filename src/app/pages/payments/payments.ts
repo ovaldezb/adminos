@@ -479,21 +479,33 @@ export class PaymentsComponent {
       });
     }
 
-    // NEW: Fetch existing payments for this resident and year
+    // NEW: Fetch ALL existing payments for this resident and year for history display
     this.paymentService.getPaymentByResidentAndYear(resident.id, currentYear).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          this.existingResidentPayment.set(response.data);
-          console.log('Existing payment found:', response.data);
+        if (response.success && response.data && Array.isArray(response.data)) {
+          // Flatten all payments from all months into a single array
+          const allPayments = response.data.reduce((acc: any[], doc: any) => {
+            return [...acc, ...(doc.payments || [])];
+          }, []);
+
+          this.existingResidentPayment.set({
+            year: currentYear,
+            payments: allPayments,
+            docs: response.data
+          });
+          console.log('Total resident payments for year loaded:', allPayments.length);
         } else {
           this.existingResidentPayment.set(null);
         }
       },
       error: (err) => {
-        console.error('Error loading existing resident payment:', err);
+        console.error('Error loading resident payment history:', err);
         this.existingResidentPayment.set(null);
       }
     });
+
+    // Clear existing resident payment state until data is loaded
+    this.existingResidentPayment.set(null);
 
     // NEW: Fetch funds configuration for resident's building
     if (buildingId) {
@@ -523,6 +535,7 @@ export class PaymentsComponent {
       amount: amount,
       notes: `Pago ${item?.title || this.monthNames[monthIndex]} ${new Date().getFullYear()}`
     }));
+
   }
 
   toggleSidebar(): void {
@@ -708,10 +721,10 @@ export class PaymentsComponent {
       this.error.set('Por favor seleccione un residente');
       return;
     }
-    if (this.selectedMonth() === null) {
-      this.error.set('Por favor seleccione una mensualidad');
-      return;
-    }
+
+    // Strictly use the current actual month for the database document
+    const targetMonth = new Date().getMonth() + 1;
+
     if (!data.amount || data.amount <= 0) {
       this.error.set('El monto debe ser mayor a cero');
       return;
@@ -722,9 +735,11 @@ export class PaymentsComponent {
     }
 
     this.loading.set(true);
-    this.error.set(null); // Reset error before new operation
+    this.error.set(null);
 
-    const existing = this.existingResidentPayment();
+    const existingHistory = this.existingResidentPayment();
+    // Find if we already have a record for this specific month in the year history
+    const existingDocForMonth = existingHistory?.docs?.find((doc: any) => doc.month === targetMonth);
 
     const newPaymentDetail = {
       paymentDate: data.paymentDate || new Date(),
@@ -732,23 +747,23 @@ export class PaymentsComponent {
       reference: data.reference || undefined,
       paymentType: data.paymentMethod || PaymentMethod.CASH,
       fundName: data.fundName,
-      notes: data.notes || `Pago Mantenimiento ${this.monthNames[this.selectedMonth()!]} ${currentYear}`
+      notes: data.notes || `Pago Mantenimiento ${this.monthNames[targetMonth - 1]} ${currentYear}`
     };
 
-    if (existing) {
-      // Perform UPDATE (PUT) - Append to existing array
+    if (existingDocForMonth) {
+      // Perform UPDATE (PUT) - Append to the specific month's array
       const payload: AppPaymentRequest = {
-        residentId: existing.residentId,
-        year: existing.year,
-        payments: [...existing.payments, newPaymentDetail]
+        residentId: existingDocForMonth.residentId,
+        year: existingDocForMonth.year,
+        month: existingDocForMonth.month,
+        payments: [...(existingDocForMonth.payments || []), newPaymentDetail]
       };
 
-      this.paymentService.updatePayment(existing.id || existing._id!, payload).subscribe({
+      this.paymentService.updatePayment(existingDocForMonth.id || existingDocForMonth._id!, payload).subscribe({
         next: (response) => {
           if (response.success) {
             this.showToastMessage('Pago registrado correctamente (actualización)', 'success');
 
-            // NEW: Trigger Fund Balance Update
             if (data.buildingId && data.amount && data.fundName) {
               this.triggerFundMovementUpdate(data.buildingId, data.amount, data.fundName);
             }
@@ -767,10 +782,11 @@ export class PaymentsComponent {
         }
       });
     } else {
-      // Perform CREATE (POST) - New record
+      // Perform CREATE (POST) - New record for this month
       const payload: AppPaymentRequest = {
         residentId: data.residentId!,
         year: currentYear,
+        month: targetMonth,
         payments: [newPaymentDetail]
       };
 
@@ -779,7 +795,6 @@ export class PaymentsComponent {
           if (response.success) {
             this.showToastMessage('Pago registrado correctamente', 'success');
 
-            // NEW: Trigger Fund Balance Update
             if (data.buildingId && data.amount && data.fundName) {
               this.triggerFundMovementUpdate(data.buildingId, data.amount, data.fundName);
             }

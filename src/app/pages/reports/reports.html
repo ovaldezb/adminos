@@ -13,21 +13,6 @@
                 <!-- Breadcrumbs -->
                 <app-breadcrumbs [items]="breadcrumbs" />
 
-                <!-- Header -->
-                <div class="mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h1 class="text-4xl font-bold text-neutral-800 mb-2">
-                                <i class="ri-bar-chart-box-line mr-3 text-primary"></i>
-                                Módulo de Reportes
-                            </h1>
-                            <p class="text-neutral-600 flex items-center gap-2">
-                                <span class="badge badge-primary badge-outline">{{ getCondoName() }}</span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Buildings Grid -->
                 @if (buildings().length > 0) {
                 <div class="mb-12">
@@ -35,47 +20,48 @@
                         <i class="ri-building-line text-primary"></i>
                         Resumen por Edificio/Torre
                     </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         @for (building of buildings(); track building.id) {
                         <div (click)="onBuildingClick(building)"
-                            class="glass rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group border border-white/50">
-                            <div class="flex items-start justify-between mb-4">
+                            class="glass rounded-3xl p-5 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group border border-white/50">
+                            <div class="flex items-start justify-between mb-3">
                                 <div
-                                    class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                                    <i class="ri-building-4-fill text-xl"></i>
+                                    class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                                    <i class="ri-building-4-fill text-lg"></i>
                                 </div>
                                 <div class="text-right">
                                     <div
-                                        class="text-2xl font-bold bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
+                                        class="text-xl font-bold bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
                                         {{ building.occupancyRate || 0 }}%
                                     </div>
-                                    <p class="text-xs text-neutral-500">Ocupación</p>
+                                    <p class="text-[10px] text-neutral-500">Ocupación</p>
                                 </div>
                             </div>
-                            <h3 class="text-xl font-bold text-neutral-800 mb-3">{{ building.name }}</h3>
-                            <div class="space-y-3">
-                                <div class="flex items-center justify-between text-sm p-2 rounded-xl bg-white/50">
+                            <h3 class="text-lg font-bold text-neutral-800 mb-3 truncate" title="{{ building.name }}">{{
+                                building.name }}</h3>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between text-xs p-2 rounded-xl bg-white/50">
                                     <span class="text-neutral-600">
                                         <i class="ri-home-4-line mr-1 text-primary"></i>
-                                        Unidades Totales
+                                        Unidades
                                     </span>
                                     <span class="font-bold text-neutral-800">{{ building.totalUnits }}</span>
                                 </div>
-                                <div class="flex items-center justify-between text-sm p-2 rounded-xl bg-white/50">
+                                <div class="flex items-center justify-between text-xs p-2 rounded-xl bg-white/50">
                                     <span class="text-neutral-600">
                                         <i class="ri-money-dollar-circle-line mr-1 text-success"></i>
-                                        Ingresos Mensuales
+                                        Ingresos
                                     </span>
                                     <span class="font-bold text-success">${{ (building.monthlyRevenue || 0) | number
                                         }}</span>
                                 </div>
                             </div>
-                            <div class="mt-6">
-                                <div class="flex justify-between text-xs mb-1 font-medium text-neutral-500">
-                                    <span>Progreso de Ocupación</span>
+                            <div class="mt-4">
+                                <div class="flex justify-between text-[10px] mb-1 font-medium text-neutral-500">
+                                    <span>Progreso</span>
                                     <span>{{ building.occupiedUnits }}/{{ building.totalUnits }}</span>
                                 </div>
-                                <progress class="progress progress-primary w-full h-3 shadow-inner"
+                                <progress class="progress progress-primary w-full h-2 shadow-inner"
                                     [value]="building.occupancyRate || 0" max="100">
                                 </progress>
                             </div>
@@ -85,18 +71,17 @@
                 </div>
                 }
 
-                <!-- Placeholder Content -->
+                <!-- Loading State (Overlay) -->
+                @if (loading()) {
                 <div
-                    class="flex flex-col items-center justify-center min-h-[40vh] bg-white/40 backdrop-blur-md rounded-3xl border border-white/50 shadow-xl p-12 text-center animate-in zoom-in-95 duration-700">
-                    <div class="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-6">
-                        <i class="ri-tools-line text-5xl text-primary animate-pulse"></i>
+                    class="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div class="bg-white/90 p-8 rounded-3xl shadow-2xl flex flex-col items-center border border-white">
+                        <span class="loading loading-spinner loading-lg text-primary mb-4"></span>
+                        <p class="text-neutral-700 font-bold animate-pulse">Cargando información...</p>
                     </div>
-                    <h2 class="text-2xl font-bold text-neutral-800 mb-4">Módulo de Reportes</h2>
-                    <p class="text-neutral-600 max-w-md">
-                        Selecciona un edificio para ver el reporte detallado o explora las tarjetas de resumen arriba.
-                        Estamos trabajando para añadir más filtros y tipos de reportes financieros.
-                    </p>
                 </div>
+                }
+
 
                 <!-- Report Detail Overlay -->
                 @if (showReportDetail()) {
@@ -131,6 +116,22 @@
                                     <i class="ri-group-line text-primary"></i>
                                     Estado de Cuenta por Residentes ({{ getMonthName(activeMonthTab() || 1) }})
                                 </h3>
+
+                                <!-- Month Tabs (Residents) -->
+                                <div
+                                    class="flex flex-wrap gap-2 mb-6 bg-neutral-800/5 p-2 rounded-2xl border border-white/20">
+                                    @for (monthData of selectedBuildingReport()?.funds; track monthData.month) {
+                                    <button (click)="activeMonthTab.set(monthData.month)"
+                                        class="px-6 py-2.5 rounded-xl font-bold transition-all duration-300 transform active:scale-95"
+                                        [class.bg-white]="activeMonthTab() === monthData.month"
+                                        [class.text-primary]="activeMonthTab() === monthData.month"
+                                        [class.shadow-md]="activeMonthTab() === monthData.month"
+                                        [class.text-neutral-500]="activeMonthTab() !== monthData.month"
+                                        [class.hover:bg-white/40]="activeMonthTab() !== monthData.month">
+                                        {{ getMonthName(monthData.month) }}
+                                    </button>
+                                    }
+                                </div>
                                 <div
                                     class="overflow-x-auto rounded-3xl border border-white/40 shadow-sm bg-white/40 backdrop-blur-sm">
                                     <table class="table table-sm table-zebra w-full">
@@ -222,17 +223,6 @@
                                     @for (monthData of selectedBuildingReport()?.funds; track monthData.month) {
                                     @if (activeMonthTab() === monthData.month) {
                                     <div class="glass p-8 rounded-[2rem] border border-white/50 shadow-lg">
-                                        <div class="flex items-center justify-between mb-6">
-                                            <div class="flex items-center gap-3">
-                                                <div
-                                                    class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
-                                                    <i class="ri-calendar-check-line text-xl"></i>
-                                                </div>
-                                            </div>
-                                            <div class="badge badge-indigo badge-outline font-bold px-4 py-3">Resumen
-                                                del Mes</div>
-                                        </div>
-
                                         <div class="flex flex-wrap gap-6">
                                             @for (f of monthData.funds; track f.fundName) {
                                             <div
