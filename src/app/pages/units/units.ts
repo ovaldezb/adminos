@@ -142,7 +142,7 @@ export class UnitsComponent implements OnInit, OnDestroy {
     parkingSpaces: 0,
     storageSpaces: 0,
     status: UnitStatus.VACANT,
-    monthlyFee: 0,
+    indivizoPercentage: 0,
     propertyType: PropertyType.APARTMENT,
     orientation: '',
     hasBalcony: false,
@@ -598,7 +598,7 @@ export class UnitsComponent implements OnInit, OnDestroy {
       parkingSpaces: 0,
       storageSpaces: 0,
       status: UnitStatus.VACANT,
-      monthlyFee: 0,
+      indivizoPercentage: 0,
       propertyType: PropertyType.APARTMENT,
       orientation: '',
       hasBalcony: false,
@@ -733,7 +733,7 @@ export class UnitsComponent implements OnInit, OnDestroy {
         parkingSpaces: unit.parkingSpaces || 0,
         storageSpaces: unit.storageSpaces || 0,
         status: unit.status || UnitStatus.VACANT,
-        monthlyFee: unit.monthlyFee || 0,
+        indivizoPercentage: unit.indivizoPercentage || 0,
         propertyType: unit.propertyType || PropertyType.APARTMENT,
         orientation: unit.orientation || '',
         hasBalcony: unit.hasBalcony || false,
@@ -831,7 +831,7 @@ export class UnitsComponent implements OnInit, OnDestroy {
       parkingSpaces: unit.parkingSpaces || 0,
       storageSpaces: unit.storageSpaces || 0,
       status: unit.status || UnitStatus.VACANT,
-      monthlyFee: unit.monthlyFee || 0,
+      indivizoPercentage: unit.indivizoPercentage || 0,
       propertyType: unit.propertyType || PropertyType.APARTMENT,
       orientation: unit.orientation || '',
       hasBalcony: unit.hasBalcony || false,
@@ -1013,8 +1013,8 @@ export class UnitsComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    if (data.monthlyFee === undefined || data.monthlyFee === null || data.monthlyFee < 0) {
-      this.error.set('La cuota mensual debe ser mayor o igual a 0');
+    if (data.indivizoPercentage === undefined || data.indivizoPercentage === null || data.indivizoPercentage < 0) {
+      this.error.set('El indivizo debe ser mayor o igual a 0');
       return false;
     }
 

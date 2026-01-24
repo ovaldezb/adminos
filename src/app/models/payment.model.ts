@@ -22,6 +22,7 @@ export interface Payment {
 // Payment Request for registration
 export interface AppPaymentRequest {
   residentId: string;
+  unitId: string;
   payments: PaymentDetailRequest[];
   year: number;
   month: number;

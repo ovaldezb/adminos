@@ -34,20 +34,27 @@ export class BuildingService {
   // Get all buildings - SIMPLE VERSION (sin paginación por ahora)
   // Backend: GET /buildings - Returns { success, message, data: { buildings: [], count } }
   getBuildings(params: GetBuildingsParams = {}): Observable<ApiResponse<PaginatedResponse<BuildingDetails>>> {
+    let httpParams = new HttpParams()
+      .set('page', (params.page || 1).toString())
+      .set('pageSize', (params.pageSize || 10).toString());
+
+    if (params.search) httpParams = httpParams.set('search', params.search);
+    if (params.type) httpParams = httpParams.set('type', params.type);
+    if (params.status) httpParams = httpParams.set('status', params.status);
 
     let url = this.apiUrl;
     if (params.condominiumId && params.condominiumId !== 'all') {
       url += '/' + params.condominiumId;
     }
 
-    return this.http.get<any>(url).pipe(
+    return this.http.get<any>(url, { params: httpParams }).pipe(
       map(response => {
-
-        // La Lambda retorna { success, message, data: { buildings: [], count } }
         const rawBuildings = response.data?.buildings || [];
         const total = response.data?.count || 0;
+        const page = response.data?.page || params.page || 1;
+        const pageSize = response.data?.pageSize || params.pageSize || 10;
+        const totalPages = response.data?.totalPages || Math.ceil(total / pageSize);
 
-        // Normalizar buildings
         const buildings = rawBuildings.map((building: any) => ({
           ...building,
           id: building.id || building._id,
@@ -60,11 +67,11 @@ export class BuildingService {
           data: {
             items: buildings,
             total: total,
-            page: 1,
-            pageSize: total,
-            totalPages: 1,
-            hasNext: false,
-            hasPrevious: false
+            page: page,
+            pageSize: pageSize,
+            totalPages: totalPages,
+            hasNext: page < totalPages,
+            hasPrevious: page > 1
           },
           timestamp: response.timestamp || new Date()
         };

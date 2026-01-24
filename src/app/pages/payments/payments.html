@@ -38,96 +38,175 @@
         </div>
       </div>
 
-      <!-- Resident Search Header Section -->
-      <div class="max-w-4xl mx-auto mt-12 mb-12 text-center">
-        <h2 class="text-3xl font-extrabold text-neutral-800 mb-4">
-          Control de Cobranza por Residente
-        </h2>
-        <p class="text-neutral-600 mb-8 max-w-2xl mx-auto">
-          Busca un residente para consultar su historial de pagos, registrar nuevas mensualidades o configurar cobros
-          especiales.
-        </p>
+      <!-- New Split Layout for Selection -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-4 mb-12">
+        <!-- Buildings Table (Left Column) -->
+        <div
+          class="lg:col-span-1 bg-white rounded-3xl shadow-xl border border-neutral-100 overflow-hidden flex flex-col h-[600px]">
+          <div class="p-6 border-b border-neutral-100 bg-gradient-to-r from-neutral-50 to-white">
+            <h3 class="text-xl font-bold text-neutral-800 flex items-center gap-2">
+              <i class="ri-building-line text-primary"></i>
+              Edificios / Torres
+            </h3>
+            <p class="text-sm text-neutral-500 mt-1">Doble clic para ver unidades</p>
+          </div>
 
-        <!-- Search Bar -->
-        <div class="relative max-w-2xl mx-auto">
-          <div class="relative group">
-            <input type="text" [value]="residentSearchQuery()" (input)="onResidentSearchInput($event)"
-              placeholder="Nombre del residente, unidad o torre..."
-              class="input input-lg input-bordered w-full pl-14 h-20 rounded-3xl shadow-2xl focus:shadow-primary/20 bg-white border-2 border-transparent focus:border-primary transition-all text-xl font-medium" />
-            <div class="absolute left-5 top-1/2 -translate-y-1/2">
-              <i class="ri-search-2-line text-3xl text-primary transition-transform group-focus-within:scale-110"></i>
+          <div class="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-200">
+            <table class="table w-full selection-table">
+              <thead class="sticky top-0 bg-white z-10 shadow-sm">
+                <tr>
+                  <th class="bg-neutral-50 text-neutral-600 font-bold uppercase text-xs tracking-wider">Nombre</th>
+                  <th class="bg-neutral-50 text-neutral-600 font-bold uppercase text-xs tracking-wider text-right">Cant.
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (building of buildings(); track building.id) {
+                <tr class="group" [class.active]="selectedBuildingId() === building.id"
+                  (dblclick)="selectBuilding(building)">
+                  <td class="py-4">
+                    <div class="flex items-center gap-3">
+                      <div
+                        class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                        <i class="ri-building-4-line text-lg"></i>
+                      </div>
+                      <span class="font-bold text-neutral-700">{{ building.name }}</span>
+                    </div>
+                  </td>
+                  <td class="text-right py-4">
+                    <span class="badge badge-ghost font-medium">{{ building.totalUnits }}</span>
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Building Pagination -->
+          @if (buildingTotalPages() > 1) {
+          <div class="p-4 border-t border-neutral-100 bg-neutral-50/50 flex justify-center">
+            <div class="join shadow-sm bg-white rounded-xl border border-neutral-200">
+              <button class="join-item btn btn-sm btn-ghost" [disabled]="buildingPage() === 1"
+                (click)="onBuildingPageChange(buildingPage() - 1)">«</button>
+              <button class="join-item btn btn-sm btn-ghost no-animation">Pág {{ buildingPage() }} de {{
+                buildingTotalPages() }}</button>
+              <button class="join-item btn btn-sm btn-ghost" [disabled]="buildingPage() === buildingTotalPages()"
+                (click)="onBuildingPageChange(buildingPage() + 1)">»</button>
             </div>
-            @if (isSearchingResident()) {
-            <div class="absolute right-5 top-1/2 -translate-y-1/2">
-              <span class="loading loading-spinner loading-md text-primary"></span>
+          </div>
+          }
+        </div>
+
+        <!-- Units & Residents Table (Right Column) -->
+        <div
+          class="lg:col-span-2 bg-white rounded-3xl shadow-xl border border-neutral-100 overflow-hidden flex flex-col h-[600px] animate-in fade-in slide-in-from-right-4 duration-500">
+          <div
+            class="p-6 border-b border-neutral-100 bg-gradient-to-r from-neutral-50 to-white flex justify-between items-center">
+            <div>
+              <h3 class="text-xl font-bold text-neutral-800 flex items-center gap-2">
+                <i class="ri-community-line text-primary"></i>
+                @if (selectedBuildingName()) {
+                Unidades en {{ selectedBuildingName() }}
+                } @else {
+                Seleccione un edificio
+                }
+              </h3>
+              <p class="text-sm text-neutral-500 mt-1">Clic en un residente para registrar pago</p>
+            </div>
+            @if (isSearchingUnits()) {
+            <span class="loading loading-spinner text-primary"></span>
+            }
+          </div>
+
+          <div class="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-200">
+            @if (selectedBuildingId()) {
+            @if (unitsWithResidents().length > 0) {
+            <table class="table w-full">
+              <thead class="sticky top-0 bg-white z-10 shadow-sm">
+                <tr>
+                  <th class="bg-neutral-50 text-neutral-600 font-bold uppercase text-xs tracking-wider">Unidad</th>
+                  <th class="bg-neutral-50 text-neutral-600 font-bold uppercase text-xs tracking-wider">Residentes</th>
+                  <th class="bg-neutral-50 text-neutral-600 font-bold uppercase text-xs tracking-wider text-right">
+                    Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (unit of unitsWithResidents(); track unit.id) {
+                <tr>
+                  <td class="py-4 font-bold text-neutral-700">
+                    <div class="flex items-center gap-2">
+                      <i class="ri-door-open-line text-primary"></i>
+                      {{ unit.unitNumber }}
+                    </div>
+                  </td>
+                  <td class="py-4">
+                    <div class="flex flex-col gap-1">
+                      @if (unit.residents && unit.residents.length > 0) {
+                      @for (res of unit.residents; track res.id) {
+                      <button (click)="selectUnitResident(res, unit)" class="resident-item group">
+                        <div class="avatar-placeholder">
+                          {{ res.name.charAt(0) }}
+                        </div>
+                        <div class="flex flex-col">
+                          <span class="text-sm font-bold">{{ res.name }}</span>
+                          <div class="flex gap-1 items-center">
+                            @if (res.isOwner) {
+                            <span class="badge badge-xs badge-outline badge-primary text-[8px]">Dueño</span>
+                            }
+                            @if (res.isResident) {
+                            <span class="badge badge-xs badge-outline badge-neutral text-[8px]">Residente</span>
+                            }
+                          </div>
+                        </div>
+                      </button>
+                      }
+                      } @else {
+                      <span class="text-xs italic text-neutral-400">Sin residentes</span>
+                      }
+                    </div>
+                  </td>
+                  <td class="text-right py-4">
+                    <button class="btn btn-ghost btn-circle btn-sm text-primary hover:bg-primary/10"
+                      title="Ver historial de unidad">
+                      <i class="ri-history-line"></i>
+                    </button>
+                  </td>
+                </tr>
+                }
+              </tbody>
+            </table>
+            } @else if (!isSearchingUnits()) {
+            <div class="flex flex-col items-center justify-center h-full p-12 text-center">
+              <div class="w-20 h-20 bg-neutral-50 rounded-full flex items-center justify-center mb-4">
+                <i class="ri-door-lock-line text-4xl text-neutral-300"></i>
+              </div>
+              <h4 class="text-lg font-bold text-neutral-700">No hay unidades registradas</h4>
+              <p class="text-neutral-500">Este edificio aún no tiene unidades configuradas.</p>
+            </div>
+            }
+            } @else {
+            <div class="flex flex-col items-center justify-center h-full p-12 text-center animate-pulse">
+              <div class="w-20 h-20 bg-primary/5 rounded-3xl flex items-center justify-center mb-6">
+                <i class="ri-mouse-line text-4xl text-primary/30"></i>
+              </div>
+              <h4 class="text-xl font-bold text-neutral-400">Seleccione un edificio para comenzar</h4>
+              <p class="text-neutral-400 max-w-xs mx-auto mt-2">Haga doble clic en uno de los edificios de la izquierda
+                para ver su lista de unidades y residentes.</p>
             </div>
             }
           </div>
 
-          <!-- Searching State -->
-          @if (isSearchingResident() && residentSearchResults().length === 0) {
-          <div
-            class="absolute z-50 mt-4 w-full bg-white rounded-3xl shadow-2xl border border-primary/10 p-12 text-center animate-in fade-in slide-in-from-top-4 duration-300">
-            <div class="relative inline-block">
-              <span class="loading loading-spinner loading-lg text-primary"></span>
-              <div class="absolute inset-0 loading loading-spinner loading-lg text-primary opacity-30 blur-sm"></div>
+          <!-- Unit Pagination -->
+          @if (selectedBuildingId() && unitTotalPages() > 1) {
+          <div class="p-4 border-t border-neutral-100 bg-neutral-50/50 flex justify-center">
+            <div class="join shadow-sm bg-white rounded-xl border border-neutral-200">
+              <button class="join-item btn btn-sm btn-ghost" [disabled]="unitPage() === 1"
+                (click)="onUnitPageChange(unitPage() - 1)">«</button>
+              <button class="join-item btn btn-sm btn-ghost no-animation">Pág {{ unitPage() }} de {{ unitTotalPages()
+                }}</button>
+              <button class="join-item btn btn-sm btn-ghost" [disabled]="unitPage() === unitTotalPages()"
+                (click)="onUnitPageChange(unitPage() + 1)">»</button>
             </div>
-            <p class="text-neutral-500 mt-4 font-medium italic">Buscando residentes...</p>
-          </div>
-          }
-
-          <!-- Search Results Dropdown-style -->
-          @if (residentSearchResults().length > 0) {
-          <div
-            class="absolute z-50 mt-4 w-full bg-white rounded-3xl shadow-2xl border border-primary/10 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
-            <div class="p-4 bg-primary/5 border-b border-primary/10 flex justify-between items-center">
-              <span class="text-sm font-bold text-primary uppercase tracking-wider">Resultados de búsqueda</span>
-              <span class="badge badge-primary badge-sm font-bold">{{ residentSearchResults().length }}
-                encontrados</span>
-            </div>
-            <ul class="max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20">
-              @for (resident of residentSearchResults(); track $index) {
-              <li class="border-b border-neutral-50 last:border-0">
-                <button (click)="selectResident(resident)"
-                  class="w-full flex items-center gap-6 p-6 hover:bg-primary/5 transition-all text-left group">
-                  <div class="avatar placeholder">
-                    <div
-                      class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 text-white font-bold text-2xl shadow-lg group-hover:scale-110 transition-transform">
-                      <span>{{ resident.name.charAt(0) }}</span>
-                    </div>
-                  </div>
-                  <div class="flex-1">
-                    <h3 class="font-bold text-xl text-neutral-800 group-hover:text-primary transition-colors">
-                      {{ resident.name }}
-                    </h3>
-                    <div class="flex gap-4 mt-1">
-                      <span class="text-neutral-500 flex items-center gap-1.5 font-medium">
-                        <i class="ri-building-line text-primary"></i>
-                        {{ resident.buildingName || 'N/A' }}
-                      </span>
-                      <span class="text-neutral-500 flex items-center gap-1.5 font-medium">
-                        <i class="ri-door-open-line text-primary"></i>
-                        Unidad {{ resident.unitNumber }}
-                      </span>
-                    </div>
-                  </div>
-                  <div
-                    class="text-primary opacity-0 group-hover:opacity-100 transition-opacity -translate-x-4 group-hover:translate-x-0">
-                    <i class="ri-arrow-right-line text-3xl"></i>
-                  </div>
-                </button>
-              </li>
-              }
-            </ul>
-          </div>
-          } @else if (residentSearchQuery().length >= 3 && !isSearchingResident()) {
-          <div
-            class="absolute z-50 mt-4 w-full bg-white rounded-3xl shadow-2xl border border-error/10 p-12 text-center animate-in fade-in slide-in-from-top-4 duration-300">
-            <div class="w-20 h-20 bg-error/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <i class="ri-user-search-line text-4xl text-error"></i>
-            </div>
-            <h3 class="text-xl font-bold text-neutral-800">No se encontraron residentes</h3>
-            <p class="text-neutral-500 mt-2">Intenta con otro nombre, unidad o torre.</p>
           </div>
           }
         </div>
@@ -158,45 +237,29 @@
       <!-- Register Form -->
       <form (ngSubmit)="registerPayment()">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Resident Search -->
+          <!-- Selected Resident Display -->
           <div class="col-span-2">
-            <label class="label">
-              <span class="label-text font-medium">
-                <i class="ri-user-search-line mr-2"></i>
-                Buscar Residente
-              </span>
-            </label>
-            <div class="relative">
-              <input type="text" [value]="residentSearchQuery()" (input)="onResidentSearchInput($event)"
-                class="input input-bordered w-full rounded-2xl pr-10" placeholder="Nombre del residente..." />
-              @if (isSearchingResident()) {
-              <div class="absolute right-4 top-1/2 -translate-y-1/2 z-10">
-                <span class="loading loading-spinner loading-xs text-primary"></span>
-              </div>
-              }
-
-              <!-- Search Results Dropdown -->
-              @if (residentSearchResults().length > 0) {
-              <ul
-                class="absolute z-50 menu p-2 shadow-lg bg-base-100 rounded-box w-full mt-1 border border-base-200 max-h-60 overflow-y-auto">
-                @for (resident of residentSearchResults(); track $index) {
-                <li>
-                  <a (click)="selectResident(resident)" class="flex flex-col items-start gap-1 py-3">
-                    <span class="font-medium">{{ resident.name }}</span>
-                    <div class="flex gap-2 text-xs text-neutral-500">
-                      <span><i class="ri-building-line mr-1"></i>{{ resident.unitNumber || 'Sin Unidad' }}</span>
-                      <span><i class="ri-mail-line mr-1"></i>{{ resident.email }}</span>
-                    </div>
-                  </a>
-                </li>
-                }
-              </ul>
-              }
-            </div>
             @if (selectedResidentName()) {
-            <div class="mt-2 flex items-center gap-2 text-sm text-success font-medium px-1">
-              <i class="ri-check-circle-line"></i>
-              Residente seleccionado: {{ selectedResidentName() }}
+            <div
+              class="bg-primary/5 rounded-2xl p-4 border border-primary/10 flex items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div class="avatar placeholder">
+                <div class="w-12 h-12 rounded-xl bg-primary text-white font-bold text-xl">
+                  <span>{{ selectedResidentName().charAt(0) }}</span>
+                </div>
+              </div>
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-primary">Residente Seleccionado</span>
+                <h4 class="text-xl font-bold text-neutral-800">{{ selectedResidentName() }}</h4>
+              </div>
+              <div class="ml-auto">
+                <i class="ri-checkbox-circle-fill text-2xl text-primary"></i>
+              </div>
+            </div>
+            } @else {
+            <div class="alert alert-warning rounded-2xl">
+              <i class="ri-error-warning-line"></i>
+              <span>No se ha seleccionado ningún residente. Por favor, cierre el modal y seleccione uno de la
+                lista.</span>
             </div>
             }
           </div>

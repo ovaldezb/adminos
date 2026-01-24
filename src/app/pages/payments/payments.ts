@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { SideMenuComponent } from '../../components/side-menu/side-menu';
 import { Condominium } from '../../models';
-import { PaymentService, InvoiceService, BuildingService, ResidentService } from '../../services';
+import { PaymentService, InvoiceService, BuildingService, ResidentService, UnitService } from '../../services';
 import { ResidentDetails } from '../../models/resident.model';
 import {
   Payment,
@@ -15,6 +15,7 @@ import {
   InvoiceWithDetails,
   ApiResponse,
   BuildingDetails,
+  UnitDetails,
   PaymentConfig,
   MonthlyAmount,
   AppPaymentRequest,
@@ -303,6 +304,82 @@ export class PaymentsComponent {
   // Computed statistics
   protected readonly totalPayments = computed(() => (this.filteredPayments() || []).length);
 
+  // Building and Unit Selection for Registration
+  protected readonly selectedBuildingId = signal<string | null>(null);
+  protected readonly selectedBuildingName = signal<string>('');
+  protected readonly unitsWithResidents = signal<UnitDetails[]>([]);
+  protected readonly isSearchingUnits = signal(false);
+
+  // Pagination for Selection
+  protected readonly buildingPage = signal(1);
+  protected readonly buildingTotalPages = signal(1);
+  protected readonly buildingPageSize = signal(10);
+  protected readonly unitPage = signal(1);
+  protected readonly unitTotalPages = signal(1);
+  protected readonly unitPageSize = signal(10);
+
+  selectUnitResident(res: any, unit: UnitDetails): void {
+    const resident: any = {
+      id: res.id,
+      name: res.name,
+      email: res.email,
+      phone: res.phone,
+      condominiumId: unit.condominiumId,
+      unitId: unit.id,
+      buildingId: unit.buildingId,
+      unitNumber: unit.unitNumber
+    };
+    this.selectResident(resident);
+  }
+
+  selectBuilding(building: BuildingDetails): void {
+    if (this.selectedBuildingId() === building.id) return;
+
+    this.selectedBuildingId.set(building.id);
+    this.selectedBuildingName.set(building.name);
+    this.unitPage.set(1); // Reset unit page when selection changes
+    this.loadUnitsForBuilding(building.id);
+  }
+
+  loadUnitsForBuilding(buildingId: string): void {
+    this.isSearchingUnits.set(true);
+    this.unitService.getUnits({
+      buildingId,
+      page: this.unitPage(),
+      pageSize: this.unitPageSize()
+    }).subscribe({
+      next: (response: ApiResponse<any>) => {
+        if (response.success && response.data) {
+          this.unitsWithResidents.set(response.data.items);
+          this.unitTotalPages.set(response.data.totalPages || 1);
+        } else {
+          this.unitsWithResidents.set([]);
+          this.unitTotalPages.set(1);
+        }
+        this.isSearchingUnits.set(false);
+      },
+      error: (err: any) => {
+        console.error('Error loading units for building:', err);
+        this.unitsWithResidents.set([]);
+        this.unitTotalPages.set(1);
+        this.isSearchingUnits.set(false);
+      }
+    });
+  }
+
+  onBuildingPageChange(page: number): void {
+    this.buildingPage.set(page);
+    this.loadBuildings();
+  }
+
+  onUnitPageChange(page: number): void {
+    const buildingId = this.selectedBuildingId();
+    if (!buildingId) return;
+
+    this.unitPage.set(page);
+    this.loadUnitsForBuilding(buildingId);
+  }
+
   protected readonly totalAmount = computed(() =>
     (this.filteredPayments() || []).reduce((sum, p) => sum + p.totalAmount, 0)
   );
@@ -378,7 +455,8 @@ export class PaymentsComponent {
     private paymentService: PaymentService,
     private invoiceService: InvoiceService,
     private buildingService: BuildingService,
-    private residentService: ResidentService
+    private residentService: ResidentService,
+    private unitService: UnitService
   ) {
     // Load initial data
     effect(() => {
@@ -402,54 +480,14 @@ export class PaymentsComponent {
 
 
 
-  onResidentSearchInput(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.residentSearchQuery.set(input.value);
-
-    // Simple debounce
-    if (this.searchDebounce()) {
-      clearTimeout(this.searchDebounce());
-    }
-
-    if (input.value.length >= 3) {
-      const timeout = setTimeout(() => {
-        this.searchResident();
-      }, 500);
-      this.searchDebounce.set(timeout);
-    } else {
-      this.residentSearchResults.set([]);
-    }
-  }
-
-  searchResident(): void {
-    const query = this.residentSearchQuery();
-    if (!query || query.length < 3) return;
-
-    this.isSearchingResident.set(true);
-    this.residentService.searchResidents(query).subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          this.residentSearchResults.set(response.data.residents);
-        } else {
-          this.residentSearchResults.set([]);
-        }
-        this.isSearchingResident.set(false);
-      },
-      error: (err) => {
-        console.error('Error searching residents:', err);
-        this.isSearchingResident.set(false);
-        this.residentSearchResults.set([]);
-      }
-    });
-  }
 
   selectResident(resident: ResidentDetails): void {
     this.formData.update(curr => ({
       ...curr,
       residentId: resident.id,
       condominiumId: resident.condominiumId,
-      unitId: typeof resident.unit === 'object' ? resident.unit.id : resident.unitId,
-      buildingId: typeof resident.unit === 'object' ? resident.unit.buildingId : resident.buildingId
+      unitId: resident.unitId || (typeof resident.unit === 'object' ? resident.unit?.id : '') || '',
+      buildingId: resident.buildingId || (typeof resident.unit === 'object' ? resident.unit?.buildingId : '') || ''
     }));
     this.selectedResidentName.set(resident.name);
     this.residentSearchQuery.set('');
@@ -646,12 +684,17 @@ export class PaymentsComponent {
 
   loadBuildings(): void {
     const condoId = this.selectedCondo()?.id;
-    const params = (condoId && condoId !== 'all') ? { condominiumId: condoId } : {};
+    const params = {
+      ...(condoId && condoId !== 'all' ? { condominiumId: condoId } : {}),
+      page: this.buildingPage(),
+      pageSize: this.buildingPageSize()
+    };
 
     this.buildingService.getBuildings(params).subscribe({
       next: (response) => {
         if (response.success && response.data) {
           this.buildings.set(response.data.items);
+          this.buildingTotalPages.set(response.data.totalPages || 1);
         }
       },
       error: (err) => console.error('Error loading buildings:', err)
@@ -775,8 +818,18 @@ export class PaymentsComponent {
     // Strictly use the current actual month for the database document
     const targetMonth = new Date().getMonth() + 1;
 
-    const totalAmount = data.totalAmount;
+    const totalAmount = Number(data.totalAmount || 0);
     const pendingAmount = this.calculatePendingAmount();
+
+    if (!data.residentId) {
+      this.error.set('Por favor seleccione un residente');
+      return;
+    }
+
+    if (!data.unitId) {
+      this.error.set('El residente seleccionado no tiene una unidad asociada');
+      return;
+    }
 
     if (totalAmount <= 0) {
       this.error.set('El monto total debe ser mayor a cero');
@@ -806,11 +859,18 @@ export class PaymentsComponent {
 
     if (existingDocForMonth) {
       // Perform UPDATE (PUT) - Append to the specific month's array
+      // Map existing payments to ensure they use totalAmount (handle migration)
+      const sanitizedPayments = (existingDocForMonth.payments || []).map((p: any) => ({
+        ...p,
+        totalAmount: p.totalAmount !== undefined ? p.totalAmount : p.amount
+      }));
+
       const payload: AppPaymentRequest = {
-        residentId: existingDocForMonth.residentId,
+        residentId: existingDocForMonth.residentId || data.residentId,
+        unitId: data.unitId || existingDocForMonth.unitId || '',
         year: existingDocForMonth.year,
         month: existingDocForMonth.month,
-        payments: [...(existingDocForMonth.payments || []), newPaymentDetail]
+        payments: [...sanitizedPayments, newPaymentDetail]
       };
 
       this.paymentService.updatePayment(existingDocForMonth.id || existingDocForMonth._id!, payload).subscribe({
@@ -843,7 +903,8 @@ export class PaymentsComponent {
     } else {
       // Perform CREATE (POST) - New record for this month
       const payload: AppPaymentRequest = {
-        residentId: data.residentId!,
+        residentId: data.residentId,
+        unitId: data.unitId,
         year: currentYear,
         month: targetMonth,
         payments: [newPaymentDetail]

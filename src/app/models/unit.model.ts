@@ -25,7 +25,7 @@ export interface Unit {
   parkingSpaces: number;
   storageSpaces?: number;
   status: UnitStatus;
-  monthlyFee: number;
+  indivizoPercentage: number;
   propertyType: PropertyType;
   orientation?: string; // Norte, Sur, Este, Oeste
   hasBalcony?: boolean;
@@ -106,7 +106,7 @@ export interface CreateUnitDto {
   parkingSpaces: number;
   storageSpaces?: number;
   status: UnitStatus;
-  monthlyFee: number;
+  indivizoPercentage: number;
   propertyType: PropertyType;
   orientation?: string;
   hasBalcony?: boolean;
