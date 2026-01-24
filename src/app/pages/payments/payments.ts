@@ -17,7 +17,6 @@ import {
   BuildingDetails,
   UnitDetails,
   PaymentConfig,
-  MonthlyAmount,
   AppPaymentRequest,
   FundConfig,
   FundItem,
@@ -94,9 +93,6 @@ export class PaymentsComponent {
   // Configuration State
   protected readonly configYear = signal(new Date().getFullYear());
   protected readonly configAnnualTotal = signal(0);
-  protected readonly configMonthlyAmounts = signal<MonthlyAmount[]>(
-    this.monthNames.map((name, i) => ({ month: i + 1, amount: 0, title: name }))
-  );
   protected readonly configBuildingId = signal('');
   protected readonly configId = signal<string | null>(null);
 
@@ -107,48 +103,6 @@ export class PaymentsComponent {
   protected readonly configFunds = signal<{ name: string }[]>([]);
   protected readonly isUpdatingFunds = signal(false);
 
-  updateAnnualTotal(amount: number): void {
-    const monthly = Number((amount / 12).toFixed(2));
-
-    this.configMonthlyAmounts.update(current =>
-      current.map((item, i) => (i < 12 ? { ...item, amount: monthly } : item))
-    );
-
-    // Update the overall annual total sum (maintenance + special payments)
-    const sum = this.configMonthlyAmounts().reduce((acc, curr) => acc + curr.amount, 0);
-    this.configAnnualTotal.set(Number(sum.toFixed(2)));
-  }
-
-  updateMonthlyAmount(index: number, amount: number): void {
-    this.configMonthlyAmounts.update(current => {
-      const updated = [...current];
-      updated[index] = { ...updated[index], amount };
-      return updated;
-    });
-
-    // Update total to match sum of months
-    const sum = this.configMonthlyAmounts().reduce((acc, curr) => acc + curr.amount, 0);
-    this.configAnnualTotal.set(Number(sum.toFixed(2)));
-  }
-
-  updateMonthlyTitle(index: number, title: string): void {
-    this.configMonthlyAmounts.update(current => {
-      const updated = [...current];
-      updated[index] = { ...updated[index], title };
-      return updated;
-    });
-  }
-
-  addSpecialPayment(): void {
-    this.configMonthlyAmounts.update(current => [
-      ...current,
-      {
-        month: current.length + 1,
-        amount: 0,
-        title: 'Nuevo Pago'
-      }
-    ]);
-  }
 
   openFundsModal(): void {
     this.modalMode.set('funds');
@@ -397,44 +351,17 @@ export class PaymentsComponent {
       next: (response) => {
         if (response.success && response.data) {
           this.configId.set(response.data.id || response.data._id || null);
-          const amounts: MonthlyAmount[] = this.monthNames.map((name, i) => ({
-            month: i + 1,
-            amount: 0,
-            title: name
-          }));
-          let total = 0;
-
-          if (response.data.monthlyAmounts) {
-            response.data.monthlyAmounts.forEach(m => {
-              if (m.month >= 1 && m.month <= 12) {
-                amounts[m.month - 1] = {
-                  month: m.month,
-                  amount: m.amount,
-                  title: m.title || this.monthNames[m.month - 1]
-                };
-                total += m.amount;
-              }
-            });
-          }
-
-          this.configMonthlyAmounts.set(amounts);
-          this.configAnnualTotal.set(Number(total.toFixed(2)));
+          this.configAnnualTotal.set(response.data.anualBudget || 0);
         } else {
           // Reset if not found
           this.configId.set(null);
           this.configAnnualTotal.set(0);
-          this.configMonthlyAmounts.set(
-            this.monthNames.map((name, i) => ({ month: i + 1, amount: 0, title: name }))
-          );
         }
       },
       error: (err) => {
         console.error('Error fetching payment config:', err);
         this.configId.set(null);
         this.configAnnualTotal.set(0);
-        this.configMonthlyAmounts.set(
-          this.monthNames.map((name, i) => ({ month: i + 1, amount: 0, title: name }))
-        );
       }
     });
   }
@@ -566,31 +493,34 @@ export class PaymentsComponent {
     this.openRegisterModal(false);
   }
 
+  // Computed virtual monthly amounts for the UI
+  protected readonly virtualMonthlyAmounts = computed(() => {
+    const config = this.selectedResidentConfig();
+    if (!config || !config.anualBudget) return [];
+
+    const monthlyAmount = config.anualBudget / 12;
+    return this.monthNames.map((name, i) => ({
+      month: i + 1,
+      amount: monthlyAmount,
+      title: name
+    }));
+  });
+
   onMonthSelect(monthIndex: number, amount: number): void {
-    const item = this.selectedResidentConfig()?.monthlyAmounts[monthIndex];
     this.selectedMonth.set(monthIndex);
 
-    // If there is only one fund, assign the full amount to it automatically
-    let fundDetails = [];
-    if (this.selectedResidentFunds().length === 1) {
-      fundDetails = [{
-        fundName: this.selectedResidentFunds()[0].fundName,
-        amount: amount
-      }];
-    } else {
-      // For multiple funds, initialize them with 0 or however the user prefers
-      // Usually, maintenance is the main fund. Let's initialize with 0 for all.
-      fundDetails = this.selectedResidentFunds().map(f => ({
-        fundName: f.fundName,
-        amount: 0
-      }));
-    }
+    // For multiple funds, initialize them with 0 or however the user prefers
+    // Usually, maintenance is the main fund. Let's initialize with 0 for all.
+    const fundDetails = this.selectedResidentFunds().map(f => ({
+      fundName: f.fundName,
+      amount: 0
+    }));
 
-    this.formData.update(curr => ({
+    this.formData.update((curr: any) => ({
       ...curr,
       totalAmount: amount,
       paymentFundDetails: fundDetails,
-      notes: `Pago ${item?.title || this.monthNames[monthIndex]} ${new Date().getFullYear()}`
+      notes: `Pago ${this.monthNames[monthIndex]} ${new Date().getFullYear()}`
     }));
   }
 
@@ -733,9 +663,8 @@ export class PaymentsComponent {
     this.modalMode.set('config');
     this.configBuildingId.set('');
     this.configAnnualTotal.set(0);
-    this.configMonthlyAmounts.set(
-      this.monthNames.map((name, i) => ({ month: i + 1, amount: 0, title: name }))
-    );
+    this.configBuildingId.set('');
+    this.configAnnualTotal.set(0);
     this.loadBuildings();
     this.showModal.set(true);
   }
@@ -749,8 +678,8 @@ export class PaymentsComponent {
     this.loading.set(true);
     const config: PaymentConfig = {
       buildingId: this.configBuildingId(),
-      paymentYear: this.configYear(),
-      monthlyAmounts: this.configMonthlyAmounts()
+      fiscalYear: this.configYear(),
+      anualBudget: this.configAnnualTotal()
     };
 
     const request$ = this.configId()

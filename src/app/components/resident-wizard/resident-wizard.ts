@@ -197,7 +197,6 @@ export class ResidentWizardComponent implements OnInit {
       parkingSpaces: [1, [Validators.required, Validators.min(0)]],
       storageSpaces: [0, Validators.min(0)],
       status: [UnitStatus.VACANT, Validators.required],
-      monthlyFee: [1000, [Validators.required, Validators.min(0)]],
       propertyType: [PropertyType.APARTMENT, Validators.required],
       orientation: [''],
       hasBalcony: [false],
@@ -295,14 +294,14 @@ export class ResidentWizardComponent implements OnInit {
   }
 
   private toggleUnitFormValidators(isCreating: boolean): void {
-    const unitFields = ['unitNumber', 'floor', 'area', 'bedrooms', 'bathrooms', 'parkingSpaces', 'monthlyFee'];
+    const unitFields = ['unitNumber', 'floor', 'area', 'bedrooms', 'bathrooms', 'parkingSpaces'];
 
     unitFields.forEach(field => {
       const control = this.step2Form.get(field);
       if (control) {
         if (isCreating) {
           control.addValidators(Validators.required);
-          if (['floor', 'area', 'bedrooms', 'bathrooms', 'parkingSpaces', 'monthlyFee'].includes(field)) {
+          if (['floor', 'area', 'bedrooms', 'bathrooms', 'parkingSpaces'].includes(field)) {
             control.addValidators(Validators.min(0));
           }
         } else {
@@ -955,7 +954,6 @@ export class ResidentWizardComponent implements OnInit {
       parkingSpaces: 1,
       storageSpaces: 0,
       status: UnitStatus.VACANT,
-      monthlyFee: 1000,
       propertyType: PropertyType.APARTMENT,
       hasBalcony: false,
       hasGarden: false,

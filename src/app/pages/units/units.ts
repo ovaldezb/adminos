@@ -1018,6 +1018,11 @@ export class UnitsComponent implements OnInit, OnDestroy {
       return false;
     }
 
+    if (data.indivizoPercentage > 100) {
+      this.error.set('El indivizo no puede ser mayor al 100%');
+      return false;
+    }
+
     // Validar residentes si existen
     if (!this.validateResidents()) {
       return false;

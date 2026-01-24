@@ -83,8 +83,8 @@ export class UnitService {
       count: number;
     }
 
-    // Corregir la URL según las lambdas: GET /unit/{buildingId} para obtener unidades por edificio
-    const url = params?.buildingId ? `${this.apiUrl}/${params.buildingId}` : this.apiUrl;
+    // Use standard query parameters for filtering
+    const url = this.apiUrl;
 
     return this.http.get<ApiResponse<BackendUnitsResponse>>(url, { params: httpParams }).pipe(
       map((response) => {

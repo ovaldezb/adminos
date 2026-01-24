@@ -8,8 +8,8 @@ export interface PaymentConfig {
     id?: string;
     _id?: string;
     buildingId: string;
-    paymentYear: number;
-    monthlyAmounts: MonthlyAmount[];
+    fiscalYear: number;
+    anualBudget: number;
     createdAt?: string;
     updatedAt?: string;
 }
