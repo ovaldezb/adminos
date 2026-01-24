@@ -70,18 +70,19 @@ export class PaymentsComponent {
   protected readonly toastType = signal<'success' | 'error' | 'info'>('success');
 
   // Form data
-  protected readonly formData = signal<Partial<Payment>>({
+  protected readonly formData = signal<any>({
     invoiceId: '',
     condominiumId: '',
     unitId: '',
     residentId: '',
-    amount: 0,
+    totalAmount: 0,
     paymentDate: new Date(),
     paymentMethod: PaymentMethod.CASH,
     reference: '',
     notes: '',
     fundName: '',
-    buildingId: ''
+    buildingId: '',
+    paymentFundDetails: []
   });
 
   protected readonly monthNames = [
@@ -303,7 +304,7 @@ export class PaymentsComponent {
   protected readonly totalPayments = computed(() => (this.filteredPayments() || []).length);
 
   protected readonly totalAmount = computed(() =>
-    (this.filteredPayments() || []).reduce((sum, p) => sum + p.amount, 0)
+    (this.filteredPayments() || []).reduce((sum, p) => sum + p.totalAmount, 0)
   );
 
   protected readonly totalPending = computed(() =>
@@ -530,12 +531,60 @@ export class PaymentsComponent {
   onMonthSelect(monthIndex: number, amount: number): void {
     const item = this.selectedResidentConfig()?.monthlyAmounts[monthIndex];
     this.selectedMonth.set(monthIndex);
+
+    // If there is only one fund, assign the full amount to it automatically
+    let fundDetails = [];
+    if (this.selectedResidentFunds().length === 1) {
+      fundDetails = [{
+        fundName: this.selectedResidentFunds()[0].fundName,
+        amount: amount
+      }];
+    } else {
+      // For multiple funds, initialize them with 0 or however the user prefers
+      // Usually, maintenance is the main fund. Let's initialize with 0 for all.
+      fundDetails = this.selectedResidentFunds().map(f => ({
+        fundName: f.fundName,
+        amount: 0
+      }));
+    }
+
     this.formData.update(curr => ({
       ...curr,
-      amount: amount,
+      totalAmount: amount,
+      paymentFundDetails: fundDetails,
       notes: `Pago ${item?.title || this.monthNames[monthIndex]} ${new Date().getFullYear()}`
     }));
+  }
 
+  getFundAmount(fundName: string): number {
+    const details = this.formData().paymentFundDetails || [];
+    const fund = details.find((f: any) => f.fundName === fundName);
+    return fund ? fund.amount : 0;
+  }
+
+  onFundAmountChange(fundName: string, amount: number): void {
+    const details = [...(this.formData().paymentFundDetails || [])];
+    const index = details.findIndex((f: any) => f.fundName === fundName);
+
+    if (index !== -1) {
+      details[index] = { ...details[index], amount };
+    } else {
+      details.push({ fundName, amount });
+    }
+
+    this.formData.update(curr => ({
+      ...curr,
+      paymentFundDetails: details
+    }));
+  }
+
+  calculatePendingAmount(): number {
+    const total = this.formData().totalAmount || 0;
+    const assigned = (this.formData().paymentFundDetails || []).reduce(
+      (sum: number, fund: any) => sum + (fund.amount || 0),
+      0
+    );
+    return Number((total - assigned).toFixed(2));
   }
 
   toggleSidebar(): void {
@@ -619,7 +668,7 @@ export class PaymentsComponent {
           this.selectedCondo()?.id === 'all' ? '' : this.selectedCondo()?.id || '',
         unitId: '',
         residentId: '',
-        amount: 0,
+        totalAmount: 0,
         paymentDate: new Date(),
         paymentMethod: PaymentMethod.CASH,
         reference: '',
@@ -695,11 +744,12 @@ export class PaymentsComponent {
       condominiumId: this.selectedCondo()?.id === 'all' ? '' : this.selectedCondo()?.id || '',
       unitId: '',
       residentId: '',
-      amount: 0,
+      totalAmount: 0,
       paymentDate: new Date(),
       paymentMethod: PaymentMethod.CASH,
       reference: '',
       notes: '',
+      paymentFundDetails: []
     });
 
     // Reset Search & Selection State
@@ -725,12 +775,16 @@ export class PaymentsComponent {
     // Strictly use the current actual month for the database document
     const targetMonth = new Date().getMonth() + 1;
 
-    if (!data.amount || data.amount <= 0) {
-      this.error.set('El monto debe ser mayor a cero');
+    const totalAmount = data.totalAmount;
+    const pendingAmount = this.calculatePendingAmount();
+
+    if (totalAmount <= 0) {
+      this.error.set('El monto total debe ser mayor a cero');
       return;
     }
-    if (this.selectedResidentFunds().length > 0 && !data.fundName) {
-      this.error.set('Por favor seleccione el fondo a destinar');
+
+    if (pendingAmount !== 0) {
+      this.error.set(`Monto pendiente de asignar: $${pendingAmount}. Por favor distribuya el monto total entre los fondos para que el monto pendiente sea $0.`);
       return;
     }
 
@@ -743,10 +797,10 @@ export class PaymentsComponent {
 
     const newPaymentDetail = {
       paymentDate: data.paymentDate || new Date(),
-      amount: data.amount!,
+      totalAmount: totalAmount,
       reference: data.reference || undefined,
       paymentType: data.paymentMethod || PaymentMethod.CASH,
-      fundName: data.fundName,
+      paymentFundDetails: data.paymentFundDetails,
       notes: data.notes || `Pago Mantenimiento ${this.monthNames[targetMonth - 1]} ${currentYear}`
     };
 
@@ -764,8 +818,13 @@ export class PaymentsComponent {
           if (response.success) {
             this.showToastMessage('Pago registrado correctamente (actualización)', 'success');
 
-            if (data.buildingId && data.amount && data.fundName) {
-              this.triggerFundMovementUpdate(data.buildingId, data.amount, data.fundName);
+            if (data.buildingId && totalAmount && data.paymentFundDetails) {
+              // Trigger movement for each fund
+              data.paymentFundDetails.forEach((fund: any) => {
+                if (fund.amount > 0) {
+                  this.triggerFundMovementUpdate(data.buildingId, fund.amount, fund.fundName);
+                }
+              });
             }
 
             this.closeModal();
@@ -795,8 +854,13 @@ export class PaymentsComponent {
           if (response.success) {
             this.showToastMessage('Pago registrado correctamente', 'success');
 
-            if (data.buildingId && data.amount && data.fundName) {
-              this.triggerFundMovementUpdate(data.buildingId, data.amount, data.fundName);
+            if (data.buildingId && totalAmount && data.paymentFundDetails) {
+              // Trigger movement for each fund
+              data.paymentFundDetails.forEach((fund: any) => {
+                if (fund.amount > 0) {
+                  this.triggerFundMovementUpdate(data.buildingId, fund.amount, fund.fundName);
+                }
+              });
             }
 
             this.closeModal();
@@ -832,14 +896,14 @@ export class PaymentsComponent {
     }, 3000);
   }
 
-  private validateForm(data: Partial<Payment>): boolean {
+  private validateForm(data: any): boolean {
     // Legacy validation - kept for potential future use
-    if (!data.residentId || !data.amount) {
+    if (!data.residentId || !data.totalAmount) {
       this.error.set('Por favor complete todos los campos obligatorios');
       return false;
     }
 
-    if (data.amount <= 0) {
+    if (data.totalAmount <= 0) {
       this.error.set('El monto debe ser mayor a cero');
       return false;
     }
@@ -973,7 +1037,7 @@ export class PaymentsComponent {
         condominiumId: invoice.condominiumId,
         unitId: invoice.unitId,
         residentId: invoice.residentId,
-        amount: invoice.totalAmount,
+        totalAmount: invoice.totalAmount,
       }));
     }
   }

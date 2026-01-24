@@ -260,7 +260,7 @@
                   @for (p of existingResidentPayment().payments; track $index) {
                   <tr class="hover:bg-base-200/50 border-base-200">
                     <td class="py-2 text-neutral-600 font-medium">{{ formatDate(p.paymentDate) }}</td>
-                    <td class="py-2 font-bold text-primary">${{ p.amount }}</td>
+                    <td class="py-2 font-bold text-primary">${{ p.totalAmount }}</td>
                     <td class="py-2 text-neutral-500 max-w-[150px] truncate" [title]="p.notes">{{ p.notes }}</td>
                   </tr>
                   }
@@ -270,32 +270,8 @@
           </div>
           }
 
-          <!-- Fund Selection -->
-          <div class="col-span-2">
-            <label class="label">
-              <span class="label-text font-medium">
-                <i class="ri-bank-line mr-2"></i>
-                Fondo a Destinar *
-              </span>
-            </label>
-            <select [value]="formData().fundName" (change)="onFormFieldChange('fundName', $any($event.target).value)"
-              class="select select-bordered w-full rounded-2xl" [disabled]="selectedResidentFunds().length === 0"
-              required>
-              <option value="" disabled selected>Seleccione un fondo...</option>
-              @for (fund of selectedResidentFunds(); track fund.fundName) {
-              <option [value]="fund.fundName">{{ fund.fundName }}</option>
-              }
-            </select>
-            @if (selectedResidentFunds().length === 0 && selectedResidentName()) {
-            <p class="text-[10px] text-error mt-1 px-1 flex items-center gap-1">
-              <i class="ri-error-warning-line"></i>
-              No hay fondos configurados para este edificio.
-            </p>
-            }
-          </div>
-
           <!-- Payment Date -->
-          <div>
+          <div class="col-span-2">
             <label class="label">
               <span class="label-text font-medium">
                 <i class="ri-calendar-line mr-2"></i>
@@ -307,17 +283,63 @@
               required />
           </div>
 
-          <!-- Amount -->
-          <div>
+          <!-- Total and Pending Amount -->
+          <div class="col-span-1">
             <label class="label">
               <span class="label-text font-medium">
                 <i class="ri-money-dollar-circle-line mr-2"></i>
-                Monto (MXN) *
+                Monto Total (MXN) *
               </span>
             </label>
-            <input type="number" [value]="formData().amount"
-              (input)="onFormFieldChange('amount', +$any($event.target).value)"
-              class="input input-bordered w-full rounded-2xl" min="0" step="0.01" required />
+            <input type="number" [value]="formData().totalAmount"
+              (input)="onFormFieldChange('totalAmount', +$any($event.target).value)"
+              class="input input-bordered w-full rounded-2xl font-bold text-primary" step="0.01" required />
+          </div>
+
+          <div class="col-span-1">
+            <label class="label">
+              <span class="label-text font-medium">
+                <i class="ri-scales-3-line mr-2"></i>
+                Monto Pendiente
+              </span>
+            </label>
+            <input type="number" [value]="calculatePendingAmount()"
+              class="input input-bordered w-full rounded-2xl bg-base-200 font-bold transition-all border-2"
+              [class.border-pending-success]="calculatePendingAmount() === 0"
+              [class.border-pending-error]="calculatePendingAmount() !== 0" readonly />
+          </div>
+
+          <!-- Fund Distribution Section -->
+          <div class="col-span-2 mt-4">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-3 flex items-center gap-2 px-1">
+              <i class="ri-bank-line text-primary"></i>
+              Distribución por Fondo
+            </h4>
+
+            @if (selectedResidentFunds().length > 0) {
+            <div class="space-y-3">
+              @for (fund of selectedResidentFunds(); track fund.fundName) {
+              <div
+                class="flex items-center gap-4 bg-base-100 p-3 rounded-2xl border border-base-200 hover:border-primary/30 transition-all">
+                <div class="flex-1">
+                  <span class="text-sm font-medium text-neutral-700">{{ fund.fundName }}</span>
+                </div>
+                <div class="w-32 relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-xs">$</span>
+                  <input type="number" [value]="getFundAmount(fund.fundName!)"
+                    (input)="onFundAmountChange(fund.fundName!, +$any($event.target).value)"
+                    class="input input-sm input-bordered w-full pl-6 rounded-xl font-bold text-right" placeholder="0.00"
+                    min="0" step="0.01" />
+                </div>
+              </div>
+              }
+            </div>
+            } @else if (selectedResidentName()) {
+            <div class="alert alert-warning rounded-2xl text-xs py-2">
+              <i class="ri-error-warning-line"></i>
+              <span>No hay fondos configurados para este edificio.</span>
+            </div>
+            }
           </div>
 
           <!-- Payment Method -->
@@ -375,7 +397,8 @@
           <button type="button" class="btn btn-outline rounded-2xl" (click)="closeModal()" [disabled]="loading()">
             Cancelar
           </button>
-          <button type="submit" class="btn btn-primary rounded-2xl" [disabled]="loading()">
+          <button type="submit" class="btn btn-primary rounded-2xl"
+            [disabled]="loading() || calculatePendingAmount() !== 0">
             @if (loading()) {
             <span class="loading loading-spinner"></span>
             } Registrar Pago
@@ -616,7 +639,7 @@
           <div class="col-span-2">
             <p class="text-sm text-neutral-600">Monto</p>
             <p class="text-2xl font-bold text-success">
-              {{ formatCurrency(selectedPayment()!.amount) }}
+              {{ formatCurrency(selectedPayment()!.totalAmount) }}
             </p>
           </div>
           @if (selectedPayment()!.notes) {

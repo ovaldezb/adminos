@@ -6,7 +6,7 @@ export interface Payment {
   condominiumId: string;
   unitId: string;
   residentId: string;
-  amount: number;
+  totalAmount: number;
   paymentDate: Date;
   paymentMethod: PaymentMethod;
   status: PaymentStatus;
@@ -27,12 +27,17 @@ export interface AppPaymentRequest {
   month: number;
 }
 
+export interface PaymentFundDetails {
+  fundName?: string;
+  amount: number
+}
+
 export interface PaymentDetailRequest {
   paymentDate: Date;
-  amount: number;
+  totalAmount: number;
   reference?: string;
   paymentType: string;
-  fundName?: string;
+  paymentFundDetails: PaymentFundDetails[];
   notes?: string;
 }
 
